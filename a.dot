@@ -1,0 +1,8 @@
+digraph code {
+	graph [fontsize=8 fontname="Courier" bgcolor=azure splines="ortho"];
+	node [fillcolor=white style=filled shape=box];
+	edge [arrowhead="normal"];
+	"0x14001178a" [URL="entry0/0x14001178a", fontcolor="#808080"fontname="Courier",label="  ;-- rip:\l24: entry0 (int64_t arg1);\l; arg int64_t arg1 @ rcx\l; var int64_t var_8h @ rsp+0x30\l0x14001178a      jmp 0x140022130\l"]
+	"0x140022130" [URL="entry0/0x140022130", fillcolor="#808000", fontname="Courier",label="; CODE XREF from entry0 @ 0x14001178a(x)\l0x140022130      mov qword [var_8h], rcx                               ; arg1\l0x140022135      sub rsp, 0x28\l0x140022139      call fcn.140021e00\l0x14002213e      add rsp, 0x28\l0x140022142      ret\l"]
+        "0x14001178a" -> "0x140022130" [color="#008080"];
+}

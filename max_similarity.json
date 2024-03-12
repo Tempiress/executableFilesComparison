@@ -1,0 +1,18 @@
+{
+    "cfg_5368778757\\_\\cfg_5368844192": {
+        "max_similarity": 0.22222,
+        "similar_to": "cfg_5368778757.txt",
+        "diff": [
+            2,
+            6
+        ]
+    },
+    "cfg_5368778762\\_\\cfg_5368844192": {
+        "max_similarity": 0.20408,
+        "similar_to": "cfg_5368779527.txt",
+        "diff": [
+            6,
+            6
+        ]
+    }
+}
