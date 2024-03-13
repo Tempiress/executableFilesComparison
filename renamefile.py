@@ -5,7 +5,7 @@ import json
 def rename_block(json_data1, json_data2):
     """
     Переименование блоков второго файла
-    :return: JSON
+    :return: JSON, Massive of lens
     """
     data1 = json.loads(json_data1)
     data2 = json.loads(json_data2)
