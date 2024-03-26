@@ -18,3 +18,9 @@ P1.remove(delStr.split(":")[0])
 
 print(len(P1))
 
+
+print('-----------')
+
+ac = [1,3,5,7,2]
+
+print(ac.item(3))

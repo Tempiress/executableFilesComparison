@@ -1,4 +1,3 @@
-from blocklinks4 import *
 from renamefile import *
 import json
 
