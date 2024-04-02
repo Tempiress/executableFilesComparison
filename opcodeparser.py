@@ -36,7 +36,7 @@ def op_parser(path):
                                 opcodes.append(op["opcode"])
                                 opcodes2 = opcodes2 + op["opcode"] + "; "
                                 hash_opcodes.append(ppdeep.hash(op["opcode"]))
-                                hash_opcodes2 = hash_opcodes2 + ppdeep.hash(op["opcode"]) + "; "
+                                hash_opcodes2 = hash_opcodes2 + (op["opcode"]) + "; "
 
                         if "jump" in op:
                             jumps = jumps + str(op["jump"]) + "; "

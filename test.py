@@ -21,6 +21,25 @@ print(len(P1))
 
 print('-----------')
 
-ac = [1,3,5,7,2]
 
-print(ac.item(3))
+def swap_columns(matrix, col1, col2):
+    for row in matrix:
+        row[col1], row[col2] = row[col2], row[col1]
+
+def swap_rows(matrix, row1, row2):
+    m1 = matrix[row1]
+    m2 = matrix[row2]
+
+    matrix[row1] = m2
+    matrix[row2] = m1
+
+
+
+matrix = [
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9]
+]
+
+swap_rows(matrix, 0, 2)
+print(matrix)

@@ -23,19 +23,31 @@ def create_cfgs_from_exe(exe_dist, save_path):
         print(func)
         # Extract and save CFG information to a text document
         cfg_info = r2.cmd(f"agj {function_address}")
-        with open( save_path + f"cfg_{function_address}.txt", "w") as file:
+        with open(save_path + f"cfg_{function_address}.txt", "w") as file:
             file.write(cfg_info)
             print("Sucsessfully!")
 
     r2.quit()
 
-# cflinks = r2.cmd("agCj")
-# with open (save_path + "cflinks.txt", "w") as fl:
-#     fl.write(cflinks)
+def call_func_graph(exe_dist, save_name):
+    r2 = r2pipe.open(exe_dist)
+    r2.cmd("aaa")
+    cflinks = r2.cmd("agCj")
+    with open(save_name, "w") as fl:
+        fl.write(cflinks)
+    r2.quit()
 
-create_cfgs_from_exe("F:\programming 2024\Sci_Research\sources\Homework2.exe", "F:\\programming 2024\\Sci_Research\\cfg2\\")
+
+#call_func_graph("F:\\programming 2024\\Sci_Research\\HW3.exe", "F:\\programming 2024\\Sci_Research\\cfgcflinks2")
+
+
+
+#create_cfgs_from_exe("F:\programming 2024\Sci_Research\sources\Homework2.exe", "F:\\programming 2024\\Sci_Research\\cfg2\\")
 
 # Close Radare2
 #r2.quit()
+
+
+
 
 

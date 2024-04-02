@@ -1,12 +1,9 @@
-import json
 from linkMatrix import *
 import os
 from new_try import similarity
 from progress.bar import Bar
-from progress.spinner import Spinner
 
-
-def main_compare(folder1, folder2):
+def main_compare2(folder1, folder2):
     # Создание списка файлов для каждой папки
     P1 = os.listdir(folder1)
     P2 = os.listdir(folder2)
@@ -105,7 +102,39 @@ def main_compare(folder1, folder2):
 #print(mc)
 
 
+def main_compare(folder1, folder2):
+    # Создание словарей файлов для каждой папки
+    print("Процесс создания словарей файлов для каждой папки")
+    P1_files = {file: os.path.join(folder1, file) for file in os.listdir(folder1)}
+    P2_files = {file: os.path.join(folder2, file) for file in os.listdir(folder2)}
 
+    print("Длина словаря P1 =>", len(P1_files))
+    print("Длина словаря P2 =>", len(P2_files))
+
+    p1_nodes = []
+    p2_nodes = []
+    print("Создание массивов меток....")
+    bar = Bar('Processing', max=len(P1_files))
+
+    for file1, path1 in P1_files.items():
+        max_sim = float('-inf')
+        max_sim_element = None
+
+        for file2, path2 in P2_files.items():
+            ssim, lndf = similarity(path1, path2)
+
+            if ssim > max_sim:
+                max_sim = ssim
+                max_sim_element = {"pair": f"{file1}:{file2}", "sim": ssim, "num_block_in_third": lndf[0], "num_block_in_second": lndf[1]}
+
+        if max_sim_element:
+            p1_nodes.append({"new_label": len(p1_nodes), "old_label": max_sim_element["pair"].split(":")[0]})
+            p2_nodes.append({"new_label": len(p2_nodes), "old_label": max_sim_element["pair"].split(":")[1]})
+            del P2_files[max_sim_element["pair"].split(":")[1]]  # Удаляем уже использованный файл из словаря
+        bar.next()
+    bar.finish()
+
+    return p1_nodes, p2_nodes
 
 
 # for file1 in P1:
