@@ -1,3 +1,5 @@
+import copy
+
 from linkMatrix import *
 import os
 from new_try import similarity
@@ -28,9 +30,7 @@ def main_compare2(folder1, folder2):
                             })
         #print(PairWithSim)
 
-
     # II
-
     counter = 0
     p1_nodes = []
     p2_nodes = []
@@ -108,6 +108,8 @@ def main_compare(folder1, folder2):
     P1_files = {file: os.path.join(folder1, file) for file in os.listdir(folder1)}
     P2_files = {file: os.path.join(folder2, file) for file in os.listdir(folder2)}
 
+    P1_files_temp = copy.copy(P1_files)
+    P2_files_temp = copy.copy(P2_files)
     print("Длина словаря P1 =>", len(P1_files))
     print("Длина словаря P2 =>", len(P2_files))
 
@@ -131,21 +133,21 @@ def main_compare(folder1, folder2):
             p1_nodes.append({"new_label": len(p1_nodes), "old_label": max_sim_element["pair"].split(":")[0]})
             p2_nodes.append({"new_label": len(p2_nodes), "old_label": max_sim_element["pair"].split(":")[1]})
             del P2_files[max_sim_element["pair"].split(":")[1]]  # Удаляем уже использованный файл из словаря
+            del P1_files_temp[max_sim_element["pair"].split(":")[0]]
+            del P2_files_temp[max_sim_element["pair"].split(":")[1]]
         bar.next()
     bar.finish()
 
+    if len(P1_files_temp) != 0:
+        for file, path in P1_files_temp.items():
+            p1_nodes.append({"new_label": len(p1_nodes), "old_label": file})
+    else:
+        for file1, path in P2_files_temp.items():
+            p2_nodes.append({"new_label": len(p2_nodes), "old_label": file1})
+
     return p1_nodes, p2_nodes
 
-
-# for file1 in P1:
-#     max_similarity = 0
-#     most_similar_file2 = ''
-#     path1 = os.path.join(folder1, file1)
-#     for file2 in P2:
-#         path2 = os.path.join(folder2, file2)
-#         sim, diff = max_similarity(path1, path2)
-#         if sim > max_similarity:
-#             max_similarity = sim
-#             most_similar_file2 = file2
-#     if most_similar_file2:
-#         Pairs.append()
+#fold1 = 'D:\\programming2024\\MyResearch\\testSets3\\cfg'
+#fold2 = 'D:\\programming2024\\MyResearch\\testSets3\\cfg2'
+#pn1, pn2 = main_compare(fold1, fold2)
+#print('a')

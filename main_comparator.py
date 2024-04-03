@@ -9,26 +9,13 @@ def similarity(cfg1, cfg2):
     # print("1.op_parser")
     op1 = op_parser(cfg1)
     op2 = op_parser(cfg2)
-    # print(op1, "\n")
 
-    # print("2.rename_block")
     rename_op2 = rename_block(op1, op2)
-    # print(rename_op2)
-    # print("3.block_links: ")
     b_links1 = block_links(op1)
     b_links2 = block_links(rename_op2)
 
-    # print(b_links2)
-
     umatrix1, umatrix2 = create_matrix2(b_links1, b_links2)
-    # print("_______________union_matrix______________")
-    # print(umatrix1)
-    # print("\n")
-    # print(umatrix2)
-
-    # print("hemming:")
     h = hemming(umatrix1, umatrix2)
-    # print(h)
     return h
 
 print("hemming:")

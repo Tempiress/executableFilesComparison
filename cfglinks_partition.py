@@ -32,8 +32,6 @@ def swap_rows(matrix, row1, row2):
     matrix[row2] = c
 
 
-
-
 def cfglinks_partition(path):
     with open(path, 'r') as f:
         text = f.read()
@@ -104,7 +102,6 @@ cfglinks_path2 = "HW8_cfgcflinks.txt"
 matrix1, matrix2 = links_two_program(folder1, folder1, cfglinks_path, cfglinks_path)
 
 print("Done!")
-
 
 
 #zo = 'fcn.1400117f3'

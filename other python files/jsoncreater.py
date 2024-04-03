@@ -1,5 +1,6 @@
 import json
-
+import os
+from pathlib import Path
 ag = [13]
 ag.append(8)
 
@@ -63,5 +64,7 @@ dts = item
 jsndts = json.dumps(dts)
 print(jsndts)
 
+
+print(os.getcwd())
 
 
