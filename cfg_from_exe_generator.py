@@ -20,15 +20,21 @@ def create_cfgs_from_exe(exe_dist, save_path):
     for func in functions:
         function_address = func["offset"]
         r2.cmd(f"agf @ {function_address}")
-        print(func)
+        #print(func)
         # Extract and save CFG information to a text document
         cfg_info = r2.cmd(f"agj {function_address}")
         with open(save_path + f"cfg_{function_address}.txt", "w") as file:
             file.write(cfg_info)
-            print("Sucsessfully!")
+            #print("Sucsessfully!")
 
     r2.quit()
 
+    """
+    Создание файла связей блоков (Imports)
+    :param exe_dist:
+    :param save_name:
+    :return: file
+    """
 def call_func_graph(exe_dist, save_name):
     r2 = r2pipe.open(exe_dist)
     r2.cmd("aaa")
@@ -36,7 +42,6 @@ def call_func_graph(exe_dist, save_name):
     with open(save_name, "w") as fl:
         fl.write(cflinks)
     r2.quit()
-
 
 #call_func_graph("F:\\programming 2024\\Sci_Research\\HW3.exe", "F:\\programming 2024\\Sci_Research\\cfgcflinks2")
 

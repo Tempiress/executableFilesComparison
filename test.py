@@ -1,5 +1,5 @@
 import os
-
+import numpy as np
 fi = 'cfg'
 files1 = os.path.join(os.path.abspath(os.curdir),"_" ,fi)
 files1 = os.path.abspath(os.curdir) + "_" + fi
@@ -42,4 +42,13 @@ matrix = [
 ]
 
 swap_rows(matrix, 0, 2)
-print(matrix)
+
+
+arr = [[1, 3, 5],
+       [7, 9, 6],
+       [3, 5, 9]]
+
+arr = np.array(arr)
+print('a')
+s = arr[:, 1]
+print(s)

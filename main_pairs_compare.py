@@ -119,13 +119,13 @@ def main_compare(folder1, folder2):
     bar = Bar('Processing', max=len(P1_files))
 
     for file1, path1 in P1_files.items():
-        max_sim = float('-inf')
+        max_sim = float('inf')
         max_sim_element = None
 
         for file2, path2 in P2_files.items():
             ssim, lndf = similarity(path1, path2)
 
-            if ssim > max_sim:
+            if ssim < max_sim:
                 max_sim = ssim
                 max_sim_element = {"pair": f"{file1}:{file2}", "sim": ssim, "num_block_in_third": lndf[0], "num_block_in_second": lndf[1]}
 
