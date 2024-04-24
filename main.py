@@ -2,7 +2,7 @@ from opcodeparser import *
 from blocklinks4 import *
 from renamefile import *
 from linkMatrix import *
-from  main_comparator import similarity
+from main_comparator import similarity
 import os
 
 print("hemming:")
@@ -27,27 +27,3 @@ def compare_files_in_directory(directory):
 
 
 compare_files_in_directory('D:\MyNauchWork\cfg')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# print(find_similar_blocks(op1, op2))
-# print("matrix 1:")
-# matrix1 = create_matrix(b_links1)
-# print(matrix1)
-# print("matrix 2:")
-# matrix2 = create_matrix(b_links2)
-# print(matrix2)

@@ -43,27 +43,3 @@ def compare_files_in_directory(directory1, directory2):
 
 
 compare_files_in_directory('F:\programming 2024\Sci_Research\cfg', 'F:\programming 2024\Sci_Research\cfg2')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# print(find_similar_blocks(op1, op2))
-# print("matrix 1:")
-# matrix1 = create_matrix(b_links1)
-# print(matrix1)
-# print("matrix 2:")
-# matrix2 = create_matrix(b_links2)
-# print(matrix2)

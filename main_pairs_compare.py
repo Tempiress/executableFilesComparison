@@ -1,5 +1,4 @@
 import copy
-
 from linkMatrix import *
 import os
 from new_try import similarity
@@ -28,7 +27,6 @@ def main_compare2(folder1, folder2):
                             "num_block_in_third": lf,
                             "num_block_in_second": lg
                             })
-        #print(PairWithSim)
 
     # II
     counter = 0
@@ -66,16 +64,6 @@ def main_compare2(folder1, folder2):
                             })
 
             json.dump(p1_nodes, f, indent=4)
-            # for pws in PairWithSim:
-            #     if(pws["pair"].split(":")[0]) == el["pair"].split(":")[0]:
-            #         PairWithSim.remove(pws)
-            #         # if(pws["pair"].split(":")[0] in P1):
-            #         #     P1.remove(el["pair"].split(":")[0])
-            #         continue
-            #     if(pws["pair"].split(":")[1]) == el["pair"].split(":")[1]:
-            #         PairWithSim.remove(pws)
-            #         # if(pws["pair"].split(":")[1] in P2):
-            #         #     P2.remove(el["pair"].split(":")[1])
             z = 0
             while z < len(PairWithSim):
                 if (PairWithSim[z]["pair"].split(":")[0]) == el["pair"].split(":")[0]:
@@ -101,12 +89,27 @@ def main_compare2(folder1, folder2):
 
 #print(mc)
 
+def hxconverter(num):
+    #if(num == 'entry0')
+    nm = int(num[4:], 16)
+    result = "cfg_" + str(nm) + ".txt"
+    return result
 
-def main_compare(folder1, folder2):
+
+
+def main_compare(folder1, folder2, matrix1, matrix2):
     # Создание словарей файлов для каждой папки
     print("Процесс создания словарей файлов для каждой папки")
-    P1_files = {file: os.path.join(folder1, file) for file in os.listdir(folder1)}
-    P2_files = {file: os.path.join(folder2, file) for file in os.listdir(folder2)}
+    _P1_files = {file: os.path.join(folder1, file) for file in os.listdir(folder1)}
+    _P2_files = {file: os.path.join(folder2, file) for file in os.listdir(folder2)}
+
+    P1_files = {}
+    for file in range(1, len(matrix1[0])):
+        P1_files[matrix1[0][file]] = os.path.join(folder1, matrix1[0][file] + ".txt")
+
+    P2_files = {}
+    for file2 in range(1, len(matrix2[0])):
+        P2_files[matrix2[0][file2]] = os.path.join(folder2, matrix2[0][file2] + ".txt")
 
     P1_files_temp = copy.copy(P1_files)
     P2_files_temp = copy.copy(P2_files)
@@ -117,6 +120,11 @@ def main_compare(folder1, folder2):
     p2_nodes = []
     print("Создание массивов меток....")
     bar = Bar('Processing', max=len(P1_files))
+
+    # Сортируем файлы по ключам
+    sorted_P1_files = sorted(P1_files.items(), key=lambda x: x[0])
+    sorted_P2_files = sorted(P2_files.items(), key=lambda x: x[0])
+
 
     for file1, path1 in P1_files.items():
         max_sim = float('inf')

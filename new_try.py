@@ -44,11 +44,11 @@ def compare_files(folder1, folder2):
                         max_similarity = sim
                         most_similar_file2 = file2
             if most_similar_file2:
-                max_similarity_dict[os.path.join(file1[:-4], "_" , file2[:-4])] = {"max_similarity": round(max_similarity, 5),
+                max_similarity_dict[os.path.join(file1[:-4], "_", file2[:-4])] = {"max_similarity": round(max_similarity, 5),
                                           "similar_to": most_similar_file2,
                                           "diff": diff
                                                    }
-                #files2.remove(most_similar_file2)
+                # files2.remove(most_similar_file2)
 
         with open('max_similarity.json', 'w') as f:
             json.dump(max_similarity_dict, f, indent=4)
@@ -58,4 +58,4 @@ def compare_files(folder1, folder2):
 # Пример использования функции
 folder1 = 'F:\\programming 2024\\Sci_Research\\cfg'
 folder2 = 'F:\\programming 2024\\Sci_Research\\cfg2'
-#compare_files(folder1, folder2)
+# compare_files(folder1, folder2)

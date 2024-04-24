@@ -91,10 +91,8 @@ def find_similar_blocks(json_data1, json_data2):
 
 
 
-
-
 op = op_parser('F:\\programming 2024\\Sci_Research\\cfg\\cfg_5368778757.txt')
-jl= json.loads(op)
+jl = json.loads(op)
 print(len(jl))
 
 

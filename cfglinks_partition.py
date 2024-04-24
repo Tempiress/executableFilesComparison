@@ -92,7 +92,7 @@ def incidence_matr_gen(path):
     for i in range(1, len(matr)):
         for j in range(1, len(matr)):
             if matr[i][j] == 1:
-                count_lks +=1
+                count_lks += 1
     print("Count lks in incidence matr:", count_lks)
     return matr
 
@@ -125,25 +125,30 @@ def incidence_matr_gen2(path):
 def links_two_program(path_cfg1, path_cfg2, label_map_path1, label_map_path2):
     matrix1 = incidence_matr_gen(label_map_path1)
     matrix2 = incidence_matr_gen(label_map_path2)
-    p1_nodes, p2_nodes = main_compare(path_cfg1, path_cfg2)
+    p1_nodes, p2_nodes = main_compare(path_cfg1, path_cfg2, matrix1, matrix2)
 
+    print('Hemming matrix before: ', hemming_prog(matrix1, matrix2))
     for p1_node in p1_nodes:
         p1_node['new_label'] + 1 # Потому что матрица сдвинута
-        if hxconverter2(p1_node['old_label']) in matrix1[0]:
-            col_index = np.where(matrix1[0] == hxconverter2(p1_node['old_label']))[0][0]
-            if col_index != p1_node['new_label'] and p1_node["new_label"] + 1 < len(matrix1):
+        #if hxconverter2(p1_node['old_label']) in matrix1[0]:
+        if p1_node['old_label'] in matrix1[0]:
+            #col_index = np.where(matrix1[0] == hxconverter2(p1_node['old_label']))[0][0]
+            col_index = np.where(matrix1[0] == p1_node['old_label'])[0][0]
+            if col_index != p1_node['new_label']:
                 swap_columns(matrix1, col_index, p1_node['new_label'] + 1)
                 swap_rows(matrix1, col_index, p1_node['new_label'] + 1)
 
     for p2_node in p2_nodes:
         p2_node['new_label'] + 1 # Потому что матрица сдвинута
-        if hxconverter2(p2_node['old_label']) in matrix2[0]:
-            col_index = np.where(matrix2[0] == hxconverter2(p2_node['old_label']))[0][0]
-            if col_index != p2_node['new_label'] and p1_node["new_label"] + 1 < len(matrix1):
+        #if hxconverter2(p2_node['old_label']) in matrix2[0]:
+        if p2_node['old_label'] in matrix2[0]:
+            #col_index = np.where(matrix2[0] == hxconverter2(p2_node['old_label']))[0][0]
+            col_index = np.where(matrix2[0] == p2_node['old_label'])[0][0]
+            if col_index != p2_node['new_label']:
                 swap_columns(matrix2, col_index, p2_node['new_label'] + 1)
                 swap_rows(matrix2, col_index, p2_node['new_label'] + 1)
 
-    #bar.finish()
+    # bar.finish()
     return matrix1, matrix2
 
 # main--------------------------------------------------
@@ -211,7 +216,7 @@ def Test3():
     return hh
 
 #print("Фактическое кол-во связей:", count_links("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt\\"))
-hh = Test1()
+hh = Test3()
 print(hh)
 
 

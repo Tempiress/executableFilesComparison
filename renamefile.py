@@ -30,9 +30,4 @@ def rename_block(json_data1, json_data2):
                 used_ids.append(i)
                 break
 
-    return json.dumps(data2), [len(data1), len(data2)] #abs(len(data1) - len(data2))
-
-
-#r = rename_block('D:\\MyNauchWork\\cfg\\cfg_5368778762.txt', 'D:\\MyNauchWork\\cfg\\cfg_5368778977.txt')
-#print("rename block:\n")
-#print(r)
+    return json.dumps(data2), [len(data1), len(data2)] # abs(len(data1) - len(data2))

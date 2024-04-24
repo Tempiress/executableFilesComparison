@@ -4,7 +4,6 @@ from thefuzz import fuzz, process
 import pdb
 
 
-# pdb.set_trace()
 def op_parser(path):
     '''
     Начальный разделитель блоков CFG
