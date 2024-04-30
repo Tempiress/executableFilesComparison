@@ -127,7 +127,6 @@ def links_two_program(path_cfg1, path_cfg2, label_map_path1, label_map_path2):
     matrix2 = incidence_matr_gen(label_map_path2)
     p1_nodes, p2_nodes = main_compare(path_cfg1, path_cfg2, matrix1, matrix2)
 
-    print('Hemming matrix before: ', hemming_prog(matrix1, matrix2))
     for p1_node in p1_nodes:
         p1_node['new_label'] + 1 # Потому что матрица сдвинута
         #if hxconverter2(p1_node['old_label']) in matrix1[0]:
