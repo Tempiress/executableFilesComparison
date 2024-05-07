@@ -91,9 +91,9 @@ def find_similar_blocks(json_data1, json_data2):
 
 
 
-op = op_parser('F:\\programming 2024\\Sci_Research\\cfg\\cfg_5368778757.txt')
-jl = json.loads(op)
-print(len(jl))
+#op = op_parser('F:\\programming 2024\\Sci_Research\\cfg\\cfg_5368778757.txt')
+#jl = json.loads(op)
+#print(len(jl))
 
 
 #result = find_similar_blocks('D:\\MyNauchWork\\cfg\\cfg_5368778762.txt', 'D:\\MyNauchWork\\cfg\\cfg_5368778977.txt')

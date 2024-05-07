@@ -6,7 +6,7 @@ import numpy as np
 from main_pairs_compare import main_compare
 from progress.bar import Bar
 from linkMatrix import hemming_prog
-from cfg_from_exe_generator import call_func_graph, create_cfgs_from_exe
+#from cfg_from_exe_generator import call_func_graph, create_cfgs_from_exe
 
 
 """
@@ -184,15 +184,15 @@ def Test1():
 
 
 def Test2():
-    call_func_graph("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt\\")
-    call_func_graph("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker_O1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker_O1_cfgcflinks.txt\\")
+    #call_func_graph("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt\\")
+    #call_func_graph("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker_O1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker_O1_cfgcflinks.txt\\")
     # Create clear program
-    create_cfgs_from_exe("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\cfgs1\\")
+    #create_cfgs_from_exe("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\cfgs1\\")
     folder1 = 'F:\\programming 2024\\Sci_Research\\C++programs\\cfgs1\\'
     cfglinks_path = "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt\\"
 
     # Create optimized O1 program
-    create_cfgs_from_exe("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker_O1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\cfgs2\\")
+    #create_cfgs_from_exe("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker_O1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\cfgs2\\")
     folder2 = 'F:\\programming 2024\\Sci_Research\\C++programs\\cfgs2\\'
     cfglinks_path2 = "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker_O1_cfgcflinks.txt\\"
     matrix1, matrix2 = links_two_program(folder1, folder2, cfglinks_path, cfglinks_path2)
@@ -202,17 +202,30 @@ def Test2():
 
 
 def Test3():
-    call_func_graph("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt\\")
+    #call_func_graph("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt\\")
     # Create clear program
-    create_cfgs_from_exe("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\cfgs1\\")
-    folder1 = 'F:\\programming 2024\\Sci_Research\\C++programs\\cfgs1\\'
-    cfglinks_path = "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt\\"
+    #create_cfgs_from_exe("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\cfgs1\\")
+    folder1 = 'D:\\programming2024\\MyResearch\\C++programs\\cfgs1'
+    cfglinks_path = "D:\\programming2024\MyResearch\\C++programs\\OddChecker1_cfgcflinks.txt"
 
 
     matrix1, matrix2 = links_two_program(folder1, folder1, cfglinks_path, cfglinks_path)
     #matrix1, matrix2 = pad_matrix(matrix1, matrix2)
     hh = hemming_prog(matrix1, matrix2)
     return hh
+
+
+
+def Test4():
+    folder1 = 'D:\\programming2024\\MyResearch\\testSets\\cfg'
+    folder2 = 'D:\\programming2024\\MyResearch\\testSets\\cfg2'
+    cfglinks_path = "D:\\programming2024\MyResearch\\C++programs\\OddChecker1_cfgcflinks.txt"
+    matrix1, matrix2 = links_two_program(folder1, folder1, cfglinks_path, cfglinks_path)
+    # matrix1, matrix2 = pad_matrix(matrix1, matrix2)
+    hh = hemming_prog(matrix1, matrix2)
+    return hh
+
+
 
 #print("Фактическое кол-во связей:", count_links("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt\\"))
 hh = Test3()
