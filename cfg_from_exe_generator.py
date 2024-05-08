@@ -31,13 +31,14 @@ def create_cfgs_from_exe(exe_dist, save_path):
 
     r2.quit()
 
+
+def call_func_graph(exe_dist, save_name):
     """
     Создание файла связей блоков (Imports)
     :param exe_dist:
     :param save_name:
     :return: file
     """
-def call_func_graph(exe_dist, save_name):
     r2 = r2pipe.open(exe_dist)
     r2.cmd("aaa")
     cflinks = r2.cmd("agCj")
@@ -47,9 +48,7 @@ def call_func_graph(exe_dist, save_name):
 
 #call_func_graph("F:\\programming 2024\\Sci_Research\\HW3.exe", "F:\\programming 2024\\Sci_Research\\cfgcflinks2")
 
-
-
-create_cfgs_from_exe("F:\programming 2024\Sci_Research\sources\Homework2.exe", "F:\\programming 2024\\Sci_Research\\cfg2\\")
+#create_cfgs_from_exe("F:\programming 2024\Sci_Research\sources\Homework2.exe", "F:\\programming 2024\\Sci_Research\\cfg2\\")
 
 # Close Radare2
 #r2.quit()

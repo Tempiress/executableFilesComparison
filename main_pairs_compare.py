@@ -1,7 +1,7 @@
 import copy
 from linkMatrix import *
 import os
-from new_try import similarity
+from similarity import similarity
 from progress.bar import Bar
 
 def main_compare(folder1, folder2, matrix1, matrix2):
@@ -28,6 +28,7 @@ def main_compare(folder1, folder2, matrix1, matrix2):
         for file2 in P2_files:
             Pairs.append([file1, file2])
 
+    ff = open('.\\Debugging\\result.txt', 'w')
     PairWithSim = []
     for f, g in Pairs:
         join = f + ':' + g
@@ -37,10 +38,12 @@ def main_compare(folder1, folder2, matrix1, matrix2):
 
         PairWithSim.append({"pair": join,
                             "sim": ssim,
-                            "num_block_in_third": lf,
+                            "num_block_in_first": lf,
                             "num_block_in_second": lg
                             })
 
+    ff.write(str(PairWithSim))
+    ff.close()
     # II
     counter = 0
     p1_nodes = []
@@ -152,6 +155,8 @@ def important_main_compare(folder1, folder2, matrix1, matrix2 ):
         if max_sim_element:
             p1_nodes.append({"new_label": len(p1_nodes), "old_label": max_sim_element["pair"].split(":")[0]})
             p2_nodes.append({"new_label": len(p2_nodes), "old_label": max_sim_element["pair"].split(":")[1]})
+            del P1_files_temp[max_sim_element["pair"].split(":")[0]]
+            del P2_files_temp[max_sim_element["pair"].split(":")[1]]
         bar.next()
     bar.finish()
     ff.close()
@@ -221,6 +226,6 @@ def main_compare2(folder1, folder2, matrix1, matrix2):
 
     return p1_nodes, p2_nodes
 
-#fold1 = 'D:\\programming2024\\MyResearch\\testSets\\cfg'
-#fold2 = 'D:\\programming2024\\MyResearch\\testSets\\cfg2'
-#pn1, pn2 = main_compare(fold1, fold2)
+#fold1 = 'F:\\programming 2024\\Sci_Research\\TestSets\\cfg'
+#fold2 = 'F:\\programming 2024\\Sci_Research\\TestSets\\cfg2'
+#pn1, pn2 = important_main_compare(fold1, fold2, fold1, fold1)

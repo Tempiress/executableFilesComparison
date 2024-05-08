@@ -1,7 +1,7 @@
 import copy
 from linkMatrix import *
 import os
-from new_try import similarity
+from similarity import similarity
 from progress.bar import Bar
 
 def important_main_compare(folder1, folder2):

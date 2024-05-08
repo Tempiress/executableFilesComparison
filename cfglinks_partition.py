@@ -3,7 +3,7 @@ import json
 import os
 from opcodeparser import *
 import numpy as np
-from main_pairs_compare import main_compare
+from main_pairs_compare import main_compare, main_compare2
 from progress.bar import Bar
 from linkMatrix import hemming_prog
 #from cfg_from_exe_generator import call_func_graph, create_cfgs_from_exe
@@ -205,8 +205,8 @@ def Test3():
     #call_func_graph("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt\\")
     # Create clear program
     #create_cfgs_from_exe("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\cfgs1\\")
-    folder1 = 'D:\\programming2024\\MyResearch\\C++programs\\cfgs1'
-    cfglinks_path = "D:\\programming2024\MyResearch\\C++programs\\OddChecker1_cfgcflinks.txt"
+    folder1 = 'F:\\programming 2024\\Sci_Research\\C++programs\\cfgs1'
+    cfglinks_path = "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt"
 
 
     matrix1, matrix2 = links_two_program(folder1, folder1, cfglinks_path, cfglinks_path)
