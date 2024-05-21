@@ -11,7 +11,7 @@ def main_compare(folder1, folder2, matrix1, matrix2):
 
     Pairs = []
 
-
+    bar = Bar('Processing', max=len(P1_files))
     _P1_files = {file: os.path.join(folder1, file) for file in os.listdir(folder1)}
     _P2_files = {file: os.path.join(folder2, file) for file in os.listdir(folder2)}
 
@@ -64,11 +64,18 @@ def main_compare(folder1, folder2, matrix1, matrix2):
         max_sim = float('inf')
         max_sim_element = None
 
+        TempPairs = []
         #Цикл по всем парам с sim
         for pr in PairWithSim:
             if pr["pair"].split(":")[index_of_short] == short_p and pr["sim"] < max_sim:
                 max_sim = pr["sim"]
                 max_sim_element = pr
+                if(pr["sim"] == 0):
+                    TempPairs.append(pr)
+
+        #for tp in range(len(TempPairs)):
+            #k = 0
+
 
 
         el = max_sim_element #PairWithSim[1]

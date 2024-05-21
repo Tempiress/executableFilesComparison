@@ -70,12 +70,33 @@ s = s.encode()
 #print(hash_object.hexdigest())
 
 #Test Similarity
-file1 = '.\\C++programs\\cfgs1\\entry0.txt'
-file2 = '.\\C++programs\\cfgs1\\fcn.140011258.txt'
-ssim, lndf = similarity(file1, file2)
-print(ssim)
-print(lndf)
+# file1 = '.\\C++programs\\cfgs1\\entry0.txt'
+# file2 = '.\\C++programs\\cfgs1\\fcn.140011258.txt'
+# ssim, lndf = similarity(file1, file2)
+# print(ssim)
+# print(lndf)
 
 print('----------')
 
-print(op_parser(file2))
+# print(op_parser(file2))
+# similar_blocks = {}
+#
+# similar_blocks[0] = {
+#     'block': 1,
+#     'similar_to': 2,
+#     'simcount': 3,
+#     'simequal': 4
+# }
+#
+# del similar_blocks[]
+#
+# print(len(similar_blocks) == 0)
+
+
+my_dict = {3: {'block': '2', 'simcount': 100, 'simequal': 1, 'similar_to': '2'}}
+first_key, first_value = my_dict.popitem()
+my_dict[first_key] = first_value
+
+print("Первый ключ:", first_key)
+print("Первое значение:", first_value)
+
