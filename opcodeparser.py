@@ -4,6 +4,7 @@ from thefuzz import fuzz, process
 import numpy as np
 import hashlib
 
+
 # Функция генерации JSON объекта, c добавлением хеша ssdeep
 def op_parser(path):
     """
@@ -96,10 +97,10 @@ def find_similar_blocks(json_data1, json_data2):
                 'simcount': similarity,
                 'simequal': hash_equal
             }
-            klen+= 1
-
+            klen += 1
     klen = 0
     similar_blocks_output = {}
+
     while len(similar_blocks) != 0:
             max_simcount = 0
             max_simcount_element = {}
@@ -131,25 +132,14 @@ def find_similar_blocks(json_data1, json_data2):
 
             # Заполняем массив индексами элементов которые нужно удалить
             for block_num, block in similar_blocks.items():
-                if block['block'] == similar_blocks_output[klen]['block'] or block['similar_to']  == similar_blocks_output[klen]['similar_to']:
+                if block['block'] == similar_blocks_output[klen]['block'] or block['similar_to'] == similar_blocks_output[klen]['similar_to']:
                     blocks_to_remove.append(block_num)
 
             # Удаляем все элементы с одинаковыми значениями block и similar_to
             for block in blocks_to_remove:
                 del similar_blocks[block]
-            klen+=1
+            klen += 1
 
-
-
-
-
-
-
-
-
-
-
-    
     return json.dumps(similar_blocks_output)
 
 

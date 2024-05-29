@@ -11,7 +11,7 @@ def main_compare(folder1, folder2, matrix1, matrix2):
 
     Pairs = []
 
-    bar = Bar('Processing', max=len(P1_files))
+
     _P1_files = {file: os.path.join(folder1, file) for file in os.listdir(folder1)}
     _P2_files = {file: os.path.join(folder2, file) for file in os.listdir(folder2)}
 
@@ -28,8 +28,9 @@ def main_compare(folder1, folder2, matrix1, matrix2):
         for file2 in P2_files:
             Pairs.append([file1, file2])
 
-    ff = open('.\\Debugging\\result.txt', 'w')
+    #ff = open('.\\Debugging\\result.txt', 'w')
     PairWithSim = []
+    bar = Bar('Processing', max=len(P1_files))
     for f, g in Pairs:
         join = f + ':' + g
         ssim, lndf = similarity(os.path.join(folder1, f + '.txt'), os.path.join(folder2, g + '.txt'))
@@ -42,8 +43,8 @@ def main_compare(folder1, folder2, matrix1, matrix2):
                             "num_block_in_second": lg
                             })
 
-    ff.write(str(PairWithSim))
-    ff.close()
+    #ff.write(str(PairWithSim))
+    #ff.close()
     # II
     counter = 0
     p1_nodes = []
@@ -63,7 +64,7 @@ def main_compare(folder1, folder2, matrix1, matrix2):
     for short_p in arr_with_min_len_p:
         max_sim = float('inf')
         max_sim_element = None
-
+        bar.next()
         TempPairs = []
         #Цикл по всем парам с sim
         for pr in PairWithSim:
@@ -72,10 +73,6 @@ def main_compare(folder1, folder2, matrix1, matrix2):
                 max_sim_element = pr
                 if(pr["sim"] == 0):
                     TempPairs.append(pr)
-
-        #for tp in range(len(TempPairs)):
-            #k = 0
-
 
 
         el = max_sim_element #PairWithSim[1]
@@ -86,7 +83,6 @@ def main_compare(folder1, folder2, matrix1, matrix2):
                         "old_label": el["pair"].split(":")[1]
                         })
 
-        #json.dump(p1_nodes[], f, indent=4)
         z = 0
         while z < len(PairWithSim):
             if (PairWithSim[z]["pair"].split(":")[0]) == el["pair"].split(":")[0]:
@@ -146,7 +142,7 @@ def important_main_compare(folder1, folder2, matrix1, matrix2 ):
     p2_nodes = []
     print("Создание массивов меток....")
     bar = Bar('Processing', max=len(P1_files))
-    ff = open('result.txt', 'w')
+    # ff = open('result.txt', 'w')
 
     for file1, path1 in sorted_P1_files.items():
         max_sim = float('inf')
@@ -155,7 +151,7 @@ def important_main_compare(folder1, folder2, matrix1, matrix2 ):
         for file2, path2 in sorted_P2_files.items():
             ssim, lndf = similarity(path1, path2)
             # print("file1 = ", file1, "file2 = ", file2, "Result = ", ssim)
-            ff.write(" file1 = " + file1 + " file2 = " + file2 + " Result = " + str(ssim) + "\n")
+            # ff.write(" file1 = " + file1 + " file2 = " + file2 + " Result = " + str(ssim) + "\n")
             if ssim < max_sim:
                 max_sim = ssim
                 max_sim_element = {"pair": f"{file1}:{file2}", "sim": ssim, "num_block_in_third": lndf[0], "num_block_in_second": lndf[1]}
@@ -199,7 +195,7 @@ def main_compare2(folder1, folder2, matrix1, matrix2):
     p2_nodes = []
     print("Создание массивов меток....")
     bar = Bar('Processing', max=len(P1_files))
-    ff = open('result.txt', 'w')
+    # ff = open('result.txt', 'w')
 
     for file1, path1 in sorted_P1_files.items():
         max_sim = float('inf')
@@ -210,7 +206,7 @@ def main_compare2(folder1, folder2, matrix1, matrix2):
             #print("file1 = ", file1, "file2 = ", file2, "Result = ", ssim)
 
 
-            ff.write(" file1 = " + file1 + " file2 = " + file2 + " Result = " + str(ssim) + "\n")
+            # ff.write(" file1 = " + file1 + " file2 = " + file2 + " Result = " + str(ssim) + "\n")
             if ssim < max_sim:
                 max_sim = ssim
                 max_sim_element = {"pair": f"{file1}:{file2}", "sim": ssim, "num_block_in_third": lndf[0], "num_block_in_second": lndf[1]}

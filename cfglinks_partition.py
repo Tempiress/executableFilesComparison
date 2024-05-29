@@ -234,7 +234,6 @@ def Test5():
     create_cfgs_from_exe(".\\HW8.exe", ".\\cfg\\")
     create_cfgs_from_exe(".\\HW3.exe", ".\\cfg2\\")
 
-
     call_func_graph(".\\HW8.exe", ".\\a.txt")
     call_func_graph(".\\HW3.exe", ".\\b.txt")
 
@@ -250,8 +249,8 @@ def Test5():
 
 
 #print("Фактическое кол-во связей:", count_links("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt\\"))
-hh = Test5()
-print(hh)
+#hh = Test5()
+#print(hh)
 
 
 
