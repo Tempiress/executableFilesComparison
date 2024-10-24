@@ -11,7 +11,6 @@ def main_compare(folder1, folder2, matrix1, matrix2):
 
     Pairs = []
 
-
     _P1_files = {file: os.path.join(folder1, file) for file in os.listdir(folder1)}
     _P2_files = {file: os.path.join(folder2, file) for file in os.listdir(folder2)}
 
@@ -162,7 +161,7 @@ def important_main_compare(folder1, folder2, matrix1, matrix2 ):
             del P2_files_temp[max_sim_element["pair"].split(":")[1]]
         bar.next()
     bar.finish()
-    ff.close()
+    # ff.close()
 
     return p1_nodes, p2_nodes
 
@@ -219,7 +218,7 @@ def main_compare2(folder1, folder2, matrix1, matrix2):
             del P2_files_temp[max_sim_element["pair"].split(":")[1]]
         bar.next()
     bar.finish()
-    ff.close()
+    #ff.close()
     if len(P1_files_temp) != 0:
         for file, path in P1_files_temp.items():
             p1_nodes.append({"new_label": len(p1_nodes), "old_label": file})

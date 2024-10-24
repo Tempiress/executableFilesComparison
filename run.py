@@ -20,6 +20,7 @@ def deletefiles(dir):
 
 
 def run(p1, p2):
+
     workdir1 = ".\\lcfg\\"
     workdir2 = ".\\lcfg2\\"
     deletefiles(workdir1)
@@ -38,8 +39,8 @@ def run(p1, p2):
     return hh
 
 
-p1 = input("Program 1: ")
-p2 = input("Program 2: ")
-print("\n similarity of this programs is:", run(p1, p2))
+#p1 = input("Program 1: ")
+#p2 = input("Program 2: ")
+#print("\n similarity of this programs is:", run(p1, p2))
 # run(".\\HW8.exe", ".\\HW3.exe")
 
