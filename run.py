@@ -21,6 +21,7 @@ def deletefiles(dir):
 
 def run(p1, p2):
 
+    print("Compare two programs:" + p1 + p2)
     workdir1 = ".\\lcfg\\"
     workdir2 = ".\\lcfg2\\"
     deletefiles(workdir1)

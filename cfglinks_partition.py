@@ -1,6 +1,7 @@
 import copy
 import json
 import os
+
 from opcodeparser import *
 import numpy as np
 from main_pairs_compare import main_compare, main_compare2
@@ -126,33 +127,40 @@ def links_two_program(path_cfg1, path_cfg2, label_map_path1, label_map_path2):
     matrix1 = incidence_matr_gen(label_map_path1)
     matrix2 = incidence_matr_gen(label_map_path2)
     p1_nodes, p2_nodes = main_compare(path_cfg1, path_cfg2, matrix1, matrix2)
-
+    bar = Bar('Processing', max=len(p1_nodes))
+    print("processing p1_nodes: ")
     for p1_node in p1_nodes:
         p1_node['new_label'] + 1 # Потому что матрица сдвинута
-        #if hxconverter2(p1_node['old_label']) in matrix1[0]:
+        # if hxconverter2(p1_node['old_label']) in matrix1[0]:
         if p1_node['old_label'] in matrix1[0]:
-            #col_index = np.where(matrix1[0] == hxconverter2(p1_node['old_label']))[0][0]
+            # col_index = np.where(matrix1[0] == hxconverter2(p1_node['old_label']))[0][0]
             col_index = np.where(matrix1[0] == p1_node['old_label'])[0][0]
             if col_index != p1_node['new_label']:
                 swap_columns(matrix1, col_index, p1_node['new_label'] + 1)
                 swap_rows(matrix1, col_index, p1_node['new_label'] + 1)
+        bar.next()
+    bar.finish()
 
+    print("processing p2_nodes: ")
+    bar2 = Bar('Processing', max=len(p2_nodes))
     for p2_node in p2_nodes:
         p2_node['new_label'] + 1 # Потому что матрица сдвинута
-        #if hxconverter2(p2_node['old_label']) in matrix2[0]:
+        # if hxconverter2(p2_node['old_label']) in matrix2[0]:
         if p2_node['old_label'] in matrix2[0]:
-            #col_index = np.where(matrix2[0] == hxconverter2(p2_node['old_label']))[0][0]
+            # col_index = np.where(matrix2[0] == hxconverter2(p2_node['old_label']))[0][0]
             col_index = np.where(matrix2[0] == p2_node['old_label'])[0][0]
             if col_index != p2_node['new_label']:
                 swap_columns(matrix2, col_index, p2_node['new_label'] + 1)
                 swap_rows(matrix2, col_index, p2_node['new_label'] + 1)
+        bar2.next()
 
-    # bar.finish()
+
+    bar.finish()
     return matrix1, matrix2
 
 # main--------------------------------------------------
 
-#folder1 = 'F:\\programming 2024\\Sci_Research\\TestSets2\\cfg'
+# folder1 = 'F:\\programming 2024\\Sci_Research\\TestSets2\\cfg'
 # #folder2 = 'F:\\programming 2024\\Sci_Research\\TestSets2\\cfg2'
 # folder1 = 'F:\\programming 2024\\Sci_Research\\cfg'
 # folder2 = 'F:\\programming 2024\\Sci_Research\\cfg2'
@@ -170,8 +178,8 @@ def links_two_program(path_cfg1, path_cfg2, label_map_path1, label_map_path2):
 def Test1():
     folder1 = 'F:\\programming 2024\\Sci_Research\\cfg'
     folder2 = 'F:\\programming 2024\\Sci_Research\\cfg2'
-    #folder1 = 'F:\\programming 2024\\Sci_Research\\TestSets2\\cfg\\'
-    #folder2 = 'F:\\programming 2024\\Sci_Research\\TestSets2\\cfg2\\'
+    # folder1 = 'F:\\programming 2024\\Sci_Research\\TestSets2\\cfg\\'
+    # folder2 = 'F:\\programming 2024\\Sci_Research\\TestSets2\\cfg2\\'
 
     cfglinks_path = "cfgcflinks.txt"
     cfglinks_path2 = "HW8_cfgcflinks.txt"
@@ -184,15 +192,15 @@ def Test1():
 
 
 def Test2():
-    #call_func_graph("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt\\")
-    #call_func_graph("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker_O1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker_O1_cfgcflinks.txt\\")
+    # call_func_graph("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt\\")
+    # call_func_graph("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker_O1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker_O1_cfgcflinks.txt\\")
     # Create clear program
-    #create_cfgs_from_exe("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\cfgs1\\")
+    # create_cfgs_from_exe("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\cfgs1\\")
     folder1 = 'F:\\programming 2024\\Sci_Research\\C++programs\\cfgs1\\'
     cfglinks_path = "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt\\"
 
     # Create optimized O1 program
-    #create_cfgs_from_exe("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker_O1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\cfgs2\\")
+    # create_cfgs_from_exe("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker_O1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\cfgs2\\")
     folder2 = 'F:\\programming 2024\\Sci_Research\\C++programs\\cfgs2\\'
     cfglinks_path2 = "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker_O1_cfgcflinks.txt\\"
     matrix1, matrix2 = links_two_program(folder1, folder2, cfglinks_path, cfglinks_path2)
@@ -202,15 +210,15 @@ def Test2():
 
 
 def Test3():
-    #call_func_graph("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt\\")
+    # call_func_graph("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt\\")
     # Create clear program
-    #create_cfgs_from_exe("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\cfgs1\\")
+    # create_cfgs_from_exe("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\cfgs1\\")
     folder1 = 'F:\\programming 2024\\Sci_Research\\C++programs\\cfgs1'
     cfglinks_path = "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt"
 
 
     matrix1, matrix2 = links_two_program(folder1, folder1, cfglinks_path, cfglinks_path)
-    #matrix1, matrix2 = pad_matrix(matrix1, matrix2)
+    # matrix1, matrix2 = pad_matrix(matrix1, matrix2)
     hh = hemming_prog(matrix1, matrix2)
     return hh
 
@@ -246,11 +254,9 @@ def Test5():
     return hh
 
 
-
-
-#print("Фактическое кол-во связей:", count_links("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt\\"))
-#hh = Test5()
-#print(hh)
+# print("Фактическое кол-во связей:", count_links("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt\\"))
+# hh = Test5()
+# print(hh)
 
 
 

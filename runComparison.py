@@ -1,10 +1,11 @@
+import json
 import os
-import  random
+import random
 from run import run
 
 
 
-def runCompare(count):
+def generateCompare(count):
     visited_similar = {}
     visited_different = {}
     PATH = os.getcwd()
@@ -83,9 +84,12 @@ def runCompare(count):
                     visited_different[cnt_different] = (path_file1, path_file2)
                     cnt_different += 1
                     break
+    with open("./pairsComparison/similar_pairs.json", "w") as f_sim:
+        print(json.dumps(visited_similar))
+        f_sim.write(json.dumps(visited_similar))
 
-
-
+    with open("./pairsComparison/different_pairs.json", "w") as f_dif:
+        f_dif.write(json.dumps(visited_different))
     print("Пары похожих:")
     for i, v in visited_similar.items():
         print(str(i) + " " + v[0] + "----и----" + v[1])
@@ -93,5 +97,42 @@ def runCompare(count):
     for k, m in visited_different.items():
         print(str(k) + " " + m[0] + "----и----" + m[1])
 
+
+
+def JsonHemmingPair(file, name_of_path):
+    paris = {}
+
+
+    with open(file, "r") as f:
+        file_parse = json.load(f)
+
+
+
+    print("________________________")
+    print(file_parse)
+
+    for index, comparis in file_parse.items():
+        hem = run(comparis[0], comparis[1])
+        paris[index] = {"hemming": hem,
+                        "p1": comparis[0],
+                        "p2": comparis[1]
+                        }
+
+
+    print("--------------")
+    print(name_of_path)
+    with open(name_of_path, "w") as compf:
+        compf.write(json.dumps(paris))
+
+
+
+
+
+
+
+
 count = input("enter count of comparisons: ")
-runCompare(count)
+generateCompare(count)
+
+JsonHemmingPair(".\pairsComparison\similar_pairs.json", ".\pairsComparison\sim_p_with_hemming.json")
+JsonHemmingPair(".\pairsComparison\different_pairs.json", ".\pairsComparison\diff_p_with_hemming.json")
