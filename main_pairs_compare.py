@@ -27,7 +27,7 @@ def main_compare(folder1, folder2, matrix1, matrix2):
         for file2 in P2_files:
             Pairs.append([file1, file2])
 
-    #ff = open('.\\Debugging\\result.txt', 'w')
+    ff = open('./Debug/twoFuncDebug/res.txt', 'w')
     PairWithSim = []
     bar = Bar('Processing', max=len(P1_files))
     for f, g in Pairs:
@@ -43,7 +43,13 @@ def main_compare(folder1, folder2, matrix1, matrix2):
                             })
 
     #ff.write(str(PairWithSim))
-    #ff.close()
+    k = 1
+    for p in PairWithSim:
+        ff.write(str(k) + ". " + str(p["pair"]) + "   --->   " + str(p["sim"]) + "\n")
+        k += 1
+
+
+    ff.close()
     # II
     counter = 0
     p1_nodes = []

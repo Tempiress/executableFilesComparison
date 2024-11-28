@@ -35,9 +35,16 @@ def run(p1, p2):
     call_func_graph(p2, cfglinks_path2)
 
     matrix1, matrix2 = links_two_program(workdir1, workdir2, cfglinks_path1, cfglinks_path2)
+    u = hemming_prog(matrix1, matrix2)
+
+    if(len(matrix1) < len(matrix2)):
+        hh0 = hemming_prog(matrix1, matrix2)
+    else:
+        hh0 = hemming_prog(matrix2, matrix1)
+
     matrix1, matrix2 = pad_matrix(matrix1, matrix2)
     hh = hemming_prog(matrix1, matrix2)
-    return hh
+    return hh0
 
 
 #p1 = input("Program 1: ")

@@ -21,7 +21,7 @@ def similarity(cfg1, cfg2):
 
     umatrix1, umatrix2 = create_matrix2(b_links1, b_links2)
 
-    h = hemming(umatrix1, umatrix2)
+    h = hemming_prog(umatrix1, umatrix2)
 
     return h, diff
 

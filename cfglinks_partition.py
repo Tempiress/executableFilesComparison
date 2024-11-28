@@ -129,6 +129,7 @@ def links_two_program(path_cfg1, path_cfg2, label_map_path1, label_map_path2):
     p1_nodes, p2_nodes = main_compare(path_cfg1, path_cfg2, matrix1, matrix2)
     bar = Bar('Processing', max=len(p1_nodes))
     print("processing p1_nodes: ")
+
     for p1_node in p1_nodes:
         p1_node['new_label'] + 1 # Потому что матрица сдвинута
         # if hxconverter2(p1_node['old_label']) in matrix1[0]:
@@ -140,6 +141,20 @@ def links_two_program(path_cfg1, path_cfg2, label_map_path1, label_map_path2):
                 swap_rows(matrix1, col_index, p1_node['new_label'] + 1)
         bar.next()
     bar.finish()
+
+
+    # НАЧАЛО Отладка
+
+    file_martix1 = open("./Debug/twoFuncDebug/fileMatrix1.txt", 'w')
+
+    for i in range(1, len(matrix1)):
+        for j in range(1, len(matrix1)):
+            file_martix1.write(str(matrix1[i][j]))
+        file_martix1.write('\n')
+
+
+    file_martix1.close()
+    # КОНЕЦ Отладка
 
     print("processing p2_nodes: ")
     bar2 = Bar('Processing', max=len(p2_nodes))
@@ -153,9 +168,21 @@ def links_two_program(path_cfg1, path_cfg2, label_map_path1, label_map_path2):
                 swap_columns(matrix2, col_index, p2_node['new_label'] + 1)
                 swap_rows(matrix2, col_index, p2_node['new_label'] + 1)
         bar2.next()
-
-
     bar.finish()
+
+    # НАЧАЛО Отладка
+
+    file_martix2 = open("./Debug/twoFuncDebug/fileMatrix2.txt", 'w')
+
+    for i in range(1, len(matrix2)):
+        for j in range(1, len(matrix2)):
+            file_martix2.write(str(matrix2[i][j]))
+        file_martix2.write('\n')
+
+    file_martix2.close()
+    # КОНЕЦ Отладка
+
+
     return matrix1, matrix2
 
 # main--------------------------------------------------

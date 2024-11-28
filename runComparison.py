@@ -23,7 +23,7 @@ def generateCompare(count):
     # Пары похожих Программ
     for i in range(int(count)):
         while True:
-            # Выбор двух разных папок 1-го уровня
+            # Выбор двух разных папок 1 - го уровня
             dir1_index, dir2_index = random.sample(range(len(dirs_level1)), 2)
             path_dir1 = os.path.join(worked_directory, dirs_level1[dir1_index])
             path_dir2 = os.path.join(worked_directory, dirs_level1[dir2_index])
@@ -131,8 +131,11 @@ def JsonHemmingPair(file, name_of_path):
 
 
 
-count = input("enter count of comparisons: ")
-generateCompare(count)
+#count = input("enter count of comparisons: ")
+#generateCompare(count)
 
-JsonHemmingPair(".\pairsComparison\similar_pairs.json", ".\pairsComparison\sim_p_with_hemming.json")
-JsonHemmingPair(".\pairsComparison\different_pairs.json", ".\pairsComparison\diff_p_with_hemming.json")
+# JsonHemmingPair(".\pairsComparison\similar_pairs.json", ".\pairsComparison\sim_p_with_hemming.json")
+# JsonHemmingPair(".\pairsComparison\different_pairs.json", ".\pairsComparison\diff_p_with_hemming.json")
+
+q = run("D:\\Programming\\F Programming\programming 2024\\Sci_Research\\coreutils-polybench-hashcat\\aoc\\O0\\expander", "D:\\Programming\\F Programming\\programming 2024\\Sci_Research\\coreutils-polybench-hashcat\\aoc\\O2\\expander")
+print(q)
