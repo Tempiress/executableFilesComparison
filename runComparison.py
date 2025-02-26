@@ -3,8 +3,6 @@ import os
 import random
 from run import run
 
-
-
 def generateCompare(count):
     visited_similar = {}
     visited_different = {}
@@ -106,8 +104,6 @@ def JsonHemmingPair(file, name_of_path):
     with open(file, "r") as f:
         file_parse = json.load(f)
 
-
-
     print("________________________")
     print(file_parse)
 
@@ -126,16 +122,12 @@ def JsonHemmingPair(file, name_of_path):
 
 
 
-
-
-
-
-
 #count = input("enter count of comparisons: ")
 #generateCompare(count)
 
 # JsonHemmingPair(".\pairsComparison\similar_pairs.json", ".\pairsComparison\sim_p_with_hemming.json")
 # JsonHemmingPair(".\pairsComparison\different_pairs.json", ".\pairsComparison\diff_p_with_hemming.json")
 
-q = run("D:\\Programming\\F Programming\programming 2024\\Sci_Research\\coreutils-polybench-hashcat\\aoc\\O0\\expander", "D:\\Programming\\F Programming\\programming 2024\\Sci_Research\\coreutils-polybench-hashcat\\aoc\\O2\\expander")
+#q = run("D:\\Programming\\F Programming\programming 2024\\Sci_Research\\coreutils-polybench-hashcat\\aoc\\O0\\expander", "D:\\Programming\\F Programming\\programming 2024\\Sci_Research\\coreutils-polybench-hashcat\\aoc\\O2\\expander")
+q = run(".\\coreutils-polybench-hashcat\\aoc\O0\\expander", ".\\coreutils-polybench-hashcat\\c08\\O2\\chmod")
 print(q)

@@ -70,8 +70,6 @@ def find_similar_blocks(json_data1, json_data2):
     klen = 0
     for block_id, block_data in data1.items():
         block_hash = block_data['hashssdeep']
-        #max_similarity = 0
-        #max_similar_to = ""
 
         hash_equal = -1
         for compare_id, compare_data in data2.items():
@@ -83,13 +81,7 @@ def find_similar_blocks(json_data1, json_data2):
 
             compare_hash = compare_data['hashssdeep']
 
-            #if compare_id in similar_blocks.values():
-               #continue
-
             similarity = fuzz.ratio(block_hash, compare_hash)
-            #if similarity > max_similarity:
-                #max_similarity = similarity
-                #max_similar_to = compare_id
 
             similar_blocks[klen] = {
                 'block': block_id,
@@ -126,6 +118,7 @@ def find_similar_blocks(json_data1, json_data2):
             for block_num, block_val in similar_blocks.items():
                 if block_val['simcount'] > max_simcount:
                     max_simcount_element[0] = similar_blocks[block_num]
+                    # !!!Проверить max_simcount = block_val['simcount']
 
             similar_blocks_output[klen] = max_simcount_element[0]
             blocks_to_remove = []

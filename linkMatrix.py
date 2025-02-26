@@ -30,7 +30,7 @@ def create_matrix2(json_data1, json_data2):
 
     data1 = json.loads(json_data1)
     data2 = json.loads(json_data2)
-    size_matrix = max(len(data1), len(data2))+2
+    size_matrix = max(len(data1), len(data2)) + 2
 
     matrix1 = np.zeros((size_matrix, size_matrix), dtype=int)
 
@@ -45,26 +45,27 @@ def create_matrix2(json_data1, json_data2):
     return matrix1, matrix2
 
 
-def hemming(matrix1, matrix2):
-    size_matrix = len(matrix1)
-
-    difference_count = 0
-    for i in range(size_matrix):
-        for j in range(size_matrix):
-            if matrix1[i][j] != matrix2[i][j]:
-                difference_count += 1
-
-    #return difference_count / (size_matrix * size_matrix)
-    return difference_count
+# def hemming(matrix1, matrix2):
+#     size_matrix = len(matrix1)
+#
+#     difference_count = 0
+#     for i in range(size_matrix):
+#         for j in range(size_matrix):
+#             if matrix1[i][j] != matrix2[i][j]:
+#                 difference_count += 1
+#
+#     #return difference_count / (size_matrix * size_matrix)
+#     return difference_count
 
 def hemming_prog(matrix1, matrix2):
     size_matrix = len(matrix1)
 
     difference_count = 0
-
+    sun = 0
     for i in range(1, size_matrix - 1):
         for j in range(1, size_matrix - 1):
-            if matrix1[i][j] != matrix2[i][j]:
+            if matrix1[i][j] == matrix2[i][j]:
+                # sum +=
                 difference_count +=1
 
     return difference_count / (size_matrix * size_matrix)

@@ -110,7 +110,6 @@ def incidence_matr_gen2(path):
         matr[0][c] = data[c-1]["name"]
         matr[c][0] = data[c-1]["name"]
 
-
     for f in range(1, l+1):
         for f2 in range(0, l):
             if matr[f][0] == data[f2]["name"]:

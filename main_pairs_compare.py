@@ -32,7 +32,9 @@ def main_compare(folder1, folder2, matrix1, matrix2):
     bar = Bar('Processing', max=len(P1_files))
     for f, g in Pairs:
         join = f + ':' + g
-        ssim, lndf = similarity(os.path.join(folder1, f + '.txt'), os.path.join(folder2, g + '.txt'))
+        o1 = os.path.join(folder1, f + '.txt')
+        o2 = os.path.join(folder2, g + '.txt')
+        ssim, lndf = similarity(o1, o2)
         lf = lndf[0]
         lg = lndf[1]
 
