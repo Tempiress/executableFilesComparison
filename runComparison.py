@@ -121,13 +121,14 @@ def JsonHemmingPair(file, name_of_path):
         compf.write(json.dumps(paris))
 
 
-
-#count = input("enter count of comparisons: ")
-#generateCompare(count)
+# count = input("enter count of comparisons: ")
+# generateCompare(count)
 
 # JsonHemmingPair(".\pairsComparison\similar_pairs.json", ".\pairsComparison\sim_p_with_hemming.json")
 # JsonHemmingPair(".\pairsComparison\different_pairs.json", ".\pairsComparison\diff_p_with_hemming.json")
 
-#q = run("D:\\Programming\\F Programming\programming 2024\\Sci_Research\\coreutils-polybench-hashcat\\aoc\\O0\\expander", "D:\\Programming\\F Programming\\programming 2024\\Sci_Research\\coreutils-polybench-hashcat\\aoc\\O2\\expander")
-q = run(".\\coreutils-polybench-hashcat\\aoc\O0\\expander", ".\\coreutils-polybench-hashcat\\c08\\O2\\chmod")
+#q = run(".\\coreutils-polybench-hashcat\\aoc\\O0\\covariance", ".\\coreutils-polybench-hashcat\\g08\\O0\\chmod") # 0.489795 after: 0.51020
+q = run(".\\coreutils-polybench-hashcat\\aoc\\O0\\cutb", ".\\coreutils-polybench-hashcat\\aoc\\O2\\cutb")
+# q = run(".\\coreutils-polybench-hashcat\\aoc\O0\\expander", ".\\coreutils-polybench-hashcat\\c08\\O2\\chmod")
+# q = run("HW3.exe", ".\\HW8.exe")
 print(q)

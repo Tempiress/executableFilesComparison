@@ -1,19 +1,14 @@
 import copy
-import json
-import os
-
 from opcodeparser import *
 import numpy as np
-from main_pairs_compare import main_compare, main_compare2
+from main_pairs_compare import main_compare
 from progress.bar import Bar
-from linkMatrix import hemming_prog
+from similarity import hemming_prog
 from cfg_from_exe_generator import call_func_graph, create_cfgs_from_exe
 
 
-"""
-Подсчёт количества импортов 
-"""
 def count_links(path):
+    """Подсчёт количества импортов """
     with open(path, 'r') as f:
         json_imports = f.read()
         data = json.loads(json_imports)
@@ -21,12 +16,13 @@ def count_links(path):
 
     for item in data:
         count_imports += len(item["imports"])
-        #print(item["name"])
-        #print(len(item["imports"]))
+        # print(item["name"])
+        # print(len(item["imports"]))
     return count_imports
 
 
 def pad_matrix(matrix1, matrix2):
+    """Расширение меньшей матрицы до большей"""
     rows1, cols1 = matrix1.shape
     rows2, cols2 = matrix2.shape
 
@@ -62,18 +58,22 @@ def hxconverter2(num):
     return result
 
 
-#Поменять местами два столбца
 def swap_columns(matrix, col1, col2):
+    """Поменять местами два столбца"""
     for row in matrix:
         row[col1], row[col2] = row[col2], row[col1]
 
+
 def swap_rows(matrix, row1, row2):
+    """Поменять местами две строчки"""
     m1 = matrix[row2]
     c = copy.copy(matrix[row1])
     matrix[row1] = m1
     matrix[row2] = c
 
-def incidence_matr_gen(path):
+
+def incidence_matr_gen(path: str):
+    """Создание и заполнение матрицы инцидентности по файлам импортов"""
     with open(path, 'r') as f:
         data = json.load(f)
 
@@ -89,36 +89,14 @@ def incidence_matr_gen(path):
             if name != item["name"] and name in imports:
                 matr[i + 1, j + 1] = 1
 
+    # Подсчёт количества связей в матрице инцидентности (для отладки)
     count_lks = 0
     for i in range(1, len(matr)):
         for j in range(1, len(matr)):
             if matr[i][j] == 1:
                 count_lks += 1
     print("Count lks in incidence matr:", count_lks)
-    return matr
 
-
-def incidence_matr_gen2(path):
-    with open(path, 'r') as f:
-        text = f.read()
-        data = json.loads(text)
-
-    l = len(data)
-    matr = np.zeros([l+1, l+1], dtype='object')
-
-    for c in range(1, l+1):
-        matr[0][c] = data[c-1]["name"]
-        matr[c][0] = data[c-1]["name"]
-
-    for f in range(1, l+1):
-        for f2 in range(0, l):
-            if matr[f][0] == data[f2]["name"]:
-                continue
-
-            p = data[f2]["name"]
-            q = data[f-1]["imports"]
-            if p in q:
-                matr[f][f2+1] = 1
     return matr
 
 
@@ -143,7 +121,6 @@ def links_two_program(path_cfg1, path_cfg2, label_map_path1, label_map_path2):
 
 
     # НАЧАЛО Отладка
-
     file_martix1 = open("./Debug/twoFuncDebug/fileMatrix1.txt", 'w')
 
     for i in range(1, len(matrix1)):
@@ -181,7 +158,6 @@ def links_two_program(path_cfg1, path_cfg2, label_map_path1, label_map_path2):
     file_martix2.close()
     # КОНЕЦ Отладка
 
-
     return matrix1, matrix2
 
 # main--------------------------------------------------
@@ -201,83 +177,6 @@ def links_two_program(path_cfg1, path_cfg2, label_map_path1, label_map_path2):
 # #cl = count_links("F:\\programming 2024\\Sci_Research\\cfgcflinks.txt")
 # print(hemming_prog(matrix1, matrix2))
 
-def Test1():
-    folder1 = 'F:\\programming 2024\\Sci_Research\\cfg'
-    folder2 = 'F:\\programming 2024\\Sci_Research\\cfg2'
-    # folder1 = 'F:\\programming 2024\\Sci_Research\\TestSets2\\cfg\\'
-    # folder2 = 'F:\\programming 2024\\Sci_Research\\TestSets2\\cfg2\\'
-
-    cfglinks_path = "cfgcflinks.txt"
-    cfglinks_path2 = "HW8_cfgcflinks.txt"
-
-    matrix1, matrix2 = links_two_program(folder1, folder2, cfglinks_path, cfglinks_path2)
-    matrix1, matrix2 = pad_matrix(matrix1, matrix2)
-    hh = hemming_prog(matrix1, matrix2)
-    print("Done!")
-    return hh
-
-
-def Test2():
-    # call_func_graph("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt\\")
-    # call_func_graph("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker_O1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker_O1_cfgcflinks.txt\\")
-    # Create clear program
-    # create_cfgs_from_exe("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\cfgs1\\")
-    folder1 = 'F:\\programming 2024\\Sci_Research\\C++programs\\cfgs1\\'
-    cfglinks_path = "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt\\"
-
-    # Create optimized O1 program
-    # create_cfgs_from_exe("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker_O1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\cfgs2\\")
-    folder2 = 'F:\\programming 2024\\Sci_Research\\C++programs\\cfgs2\\'
-    cfglinks_path2 = "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker_O1_cfgcflinks.txt\\"
-    matrix1, matrix2 = links_two_program(folder1, folder2, cfglinks_path, cfglinks_path2)
-    matrix1, matrix2 = pad_matrix(matrix1, matrix2)
-    hh = hemming_prog(matrix1, matrix2)
-    return hh
-
-
-def Test3():
-    # call_func_graph("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt\\")
-    # Create clear program
-    # create_cfgs_from_exe("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1.exe", "F:\\programming 2024\\Sci_Research\\C++programs\\cfgs1\\")
-    folder1 = 'F:\\programming 2024\\Sci_Research\\C++programs\\cfgs1'
-    cfglinks_path = "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt"
-
-
-    matrix1, matrix2 = links_two_program(folder1, folder1, cfglinks_path, cfglinks_path)
-    # matrix1, matrix2 = pad_matrix(matrix1, matrix2)
-    hh = hemming_prog(matrix1, matrix2)
-    return hh
-
-
-
-def Test4():
-    folder1 = 'F:\\programming 2024\\Sci_Research\\TestSets\\cfg'
-    folder2 = 'F:\\programming 2024\\Sci_Research\\TestSets\\cfg2'
-    cfglinks_path = "F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt"
-    matrix1, matrix2 = links_two_program(folder1, folder1, cfglinks_path, cfglinks_path)
-    # matrix1, matrix2 = pad_matrix(matrix1, matrix2)
-    hh = hemming_prog(matrix1, matrix2)
-    return hh
-
-
-
-def Test5():
-    folder1 = 'F:\\programming 2024\\Sci_Research\\cfg'
-    folder2 = 'F:\\programming 2024\\Sci_Research\\cfg2'
-    # Create clear program
-    create_cfgs_from_exe(".\\HW8.exe", ".\\cfg\\")
-    create_cfgs_from_exe(".\\HW3.exe", ".\\cfg2\\")
-
-    call_func_graph(".\\HW8.exe", ".\\a.txt")
-    call_func_graph(".\\HW3.exe", ".\\b.txt")
-
-    cfglinks_path1 = ".\\a.txt"
-    cfglinks_path2 = ".\\b.txt"
-
-    matrix1, matrix2 = links_two_program(folder1, folder2, cfglinks_path1, cfglinks_path2)
-    matrix1, matrix2 = pad_matrix(matrix1, matrix2)
-    hh = hemming_prog(matrix1, matrix2)
-    return hh
 
 
 # print("Фактическое кол-во связей:", count_links("F:\\programming 2024\\Sci_Research\\C++programs\\OddChecker1_cfgcflinks.txt\\"))
@@ -293,5 +192,34 @@ def Test5():
 
 
 
-#zo = 'fcn.1400117f3'
-#print(hxconverter(zo))
+# zo = 'fcn.1400117f3'
+# print(hxconverter(zo))
+
+
+
+
+
+
+
+# def incidence_matr_gen2(path):
+#     with open(path, 'r') as f:
+#         text = f.read()
+#         data = json.loads(text)
+#
+#     l = len(data)
+#     matr = np.zeros([l+1, l+1], dtype='object')
+#
+#     for c in range(1, l+1):
+#         matr[0][c] = data[c-1]["name"]
+#         matr[c][0] = data[c-1]["name"]
+#
+#     for f in range(1, l+1):
+#         for f2 in range(0, l):
+#             if matr[f][0] == data[f2]["name"]:
+#                 continue
+#
+#             p = data[f2]["name"]
+#             q = data[f-1]["imports"]
+#             if p in q:
+#                 matr[f][f2+1] = 1
+#     return matr
