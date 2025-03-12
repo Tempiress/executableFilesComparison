@@ -1,10 +1,10 @@
 import copy
-from opcodeparser import *
+
 import numpy as np
-from main_pairs_compare import main_compare
 from progress.bar import Bar
-from similarity import hemming_prog
-from cfg_from_exe_generator import call_func_graph, create_cfgs_from_exe
+
+from main_pairs_compare import main_compare
+from opcodeparser import *
 
 
 def count_links(path):

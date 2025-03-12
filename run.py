@@ -1,7 +1,8 @@
-from cfg_from_exe_generator import call_func_graph, create_cfgs_from_exe
-from cfglinks_partition import links_two_program, pad_matrix, hemming_prog
-import os
 import glob
+import os
+from cfg_from_exe_generator import call_func_graph, create_cfgs_from_exe
+from cfglinks_partition import links_two_program
+from similarity import hemming_prog
 
 
 def deletefiles(dir):
@@ -17,7 +18,7 @@ def deletefiles(dir):
 
 
 def run(p1, p2):
-    print("Compare two programs:" + p1 + p2)
+    print("Compare two programs:" + p1 + " " + p2)
     # 1. Создание папок с CFG файлами с помощью Radare2
     workdir1 = ".\\cfg1\\"
     workdir2 = ".\\cfg2\\"
@@ -36,13 +37,13 @@ def run(p1, p2):
     # u = hemming_prog(matrix1, matrix2)
 
     if len(matrix1) < len(matrix2):
-        hh0 = hemming_prog(matrix1, matrix2)
+        hh = hemming_prog(matrix1, matrix2, max(len(matrix1), len(matrix2)), workdir1, workdir2)
     else:
-        hh0 = hemming_prog(matrix2, matrix1)
+        hh = hemming_prog(matrix2, matrix1, max(len(matrix1), len(matrix2)), workdir2, workdir1)
 
-    # matrix1, matrix2 = pad_matrix(matrix1, matrix2)
-    # hh = hemming_prog(matrix1, matrix2)
-    return hh0
+     #matrix1, matrix2 = pad_matrix(matrix1, matrix2)
+     #hh = hemming_prog(matrix1, matrix2)
+    return hh
 
 
 # p1 = input("Program 1: ")

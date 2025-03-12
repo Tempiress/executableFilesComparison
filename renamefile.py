@@ -1,4 +1,3 @@
-from opcodeparser import *
 import json
 
 

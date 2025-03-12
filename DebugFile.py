@@ -1,9 +1,3 @@
-from opcodeparser import *
-from blocklinks4 import *
-from renamefile import *
-from  linkMatrix import *
-
-
 # r = rename_block('D:\\MyNauchWork\\cfg\\cfg_5368778762.txt', 'D:\\MyNauchWork\\cfg\\cfg_5368778977.txt')
 #print(block_links_pro(r))
 

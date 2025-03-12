@@ -1,7 +1,7 @@
 import json
-import os
+
 import ppdeep
-from thefuzz import fuzz, process
+from thefuzz import fuzz
 
 
 def opparcer(path):

@@ -1,8 +1,8 @@
-import json
-import ppdeep
-from thefuzz import fuzz, process
-import numpy as np
 import hashlib
+import json
+
+import ppdeep
+from thefuzz import fuzz
 
 
 # Функция генерации JSON объекта, c добавлением хеша ssdeep

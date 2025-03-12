@@ -1,10 +1,4 @@
 import json
-import os
-import ppdeep
-from renamefile import rename_block
-from opcodeparser import op_parser
-from thefuzz import fuzz, process
-import numpy as np
 
 
 def block_links(json_data1):
@@ -52,9 +46,4 @@ def block_links(json_data1):
 
     return json.dumps(links)
 
-
-
-
-
-
-#print(block_links('D:\\MyNauchWork\\cfg\\cfg_5368778762.txt'))
+# print(block_links('D:\\MyNauchWork\\cfg\\cfg_5368778762.txt'))

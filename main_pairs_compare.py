@@ -1,8 +1,9 @@
 import copy
-from linkMatrix import *
 import os
-from similarity import similarity
+
 from progress.bar import Bar
+
+from similarity import similarity
 
 
 def main_compare8(folder1, folder2, matrix1, matrix2):
@@ -20,7 +21,6 @@ def main_compare8(folder1, folder2, matrix1, matrix2):
     P2_files = {}
     for file2 in range(1, len(matrix2[0])):
         P2_files[matrix2[0][file2]] = os.path.join(folder2, matrix2[0][file2] + ".txt")
-
 
     for file1 in P1_files:
         for file2 in P2_files:
@@ -49,7 +49,6 @@ def main_compare8(folder1, folder2, matrix1, matrix2):
         ff.write(str(k) + ". " + str(p["pair"]) + "   --->   " + str(p["sim"]) + "\n")
         k += 1
 
-
     ff.close()
     # II
     counter = 0
@@ -65,7 +64,6 @@ def main_compare8(folder1, folder2, matrix1, matrix2):
     else:
         arr_with_min_len_p = P2_files
         index_of_short = 1
-
 
     for short_p in arr_with_min_len_p:
         max_sim = float('inf')
@@ -101,6 +99,7 @@ def main_compare8(folder1, folder2, matrix1, matrix2):
 
         counter += 1
     return p1_nodes, p2_nodes
+
 
 def main_compare(folder1, folder2, matrix1, matrix2):
     # Создание списка файлов для каждой папки

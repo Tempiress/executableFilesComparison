@@ -1,10 +1,11 @@
-from opcodeparser import *
-from blocklinks4 import *
-from renamefile import *
-import os
-from renamefile import *
 import json
+import os
+
 import numpy as np
+
+from blocklinks4 import *
+from opcodeparser import *
+from renamefile import *
 
 
 def create_matrix2(json_data1, json_data2):
@@ -50,6 +51,7 @@ def similarity(cfg1, cfg2):
     b_links2 = block_links(rename_op2)
 
     size_matrix0 = min(len(data1), len(data2)) + 1
+    max_size_matrix = max(len(data1), len(data2)) + 1
     umatrix1, umatrix2 = create_matrix2(b_links1, b_links2)
     size_matrix = len(umatrix1)
 
@@ -64,7 +66,7 @@ def similarity(cfg1, cfg2):
     # q = sim_dict[m[0]]
     try:
         sim = lambda i: 1 if len(keys(i)) > 0 and sim_dict[keys(i)[0]]["simequal"] == 1 else (sim_dict[keys(i)[0]]["simcount"]) / 100 if len(keys(i)) > 0 else 0
-    except IndexError  as ex:
+    except IndexError as ex:
         print(" Список keys(i) пуст. Проверьте данные в sim_dict.", ex)
 
     for i in range(1, size_matrix0):
@@ -73,23 +75,19 @@ def similarity(cfg1, cfg2):
             A0 = (sim(str(i)) + sim(str(j)))
             A += (1 ^ (umatrix1[i][j] ^ umatrix2[i][j])) * A0
 
-    C = (float(A) / ((size_matrix0 - 1) * (size_matrix0 - 1) * 2))
+    C = (float(A) / ((max_size_matrix - 1) * (max_size_matrix - 1) * 2))
     return C, diff
-
 
 
     # weighted hemming prog
     # return h, diff
 
-
-
 # print("hemming:")
-# sim = similarity('D:\\MyNauchWork\\cfg\\cfg_5368778762.txt', 'D:\\MyNauchWork\\cfg\\cfg_5368778977.txt')
+# sim = similarity('..\\cfg\\cfg_5368778762.txt', '..\\cfg\\cfg_5368778977.txt')
 # print(sim)
-# similarity('D:\\MyNauchWork\\cfg\\cfg_5368778762.txt', 'D:\\MyNauchWork\\cfg\\cfg_5368778762.txt')
+# similarity('..\\cfg\\cfg_5368778762.txt', '..\\cfg\\cfg_5368778762.txt')
 
-# simus = similarity('D:\\MyNauchWork\\cfg\\cfg_5368778817.txt', 'D:\\MyNauchWork\\cfg\\cfg_5368778922.txt')
-# print('  simus: ', simus)
+# simus = similarity('..\\cfg\\cfg_5368778817.txt', '..\\cfg\\cfg_5368778922.txt')
 
 
 def create_matrix(json_data1):
@@ -123,26 +121,30 @@ def create_matrix(json_data1):
 #     #return difference_count / (size_matrix * size_matrix)
 #     return difference_count
 
-def hemming_prog(matrix1, matrix2):
+def hemming_prog(matrix1, matrix2, maxlen, folder1, folder2):
     size_matrix = len(matrix1)
-    folder1 = ".\\cfg1\\"
-    folder2 = ".\\cfg2\\"
+    # folder1 = ".\\cfg1\\"
+    # folder2 = ".\\cfg2\\"
     difference_count = 0
     A = 0
     B = 0
+    q = []
     for i in range(1, size_matrix):
         for j in range(1, size_matrix):
             # A0 = (similarity(matrix1[0][i], matrix2[0][j]) + similarity(matrix1[0][j], matrix2[0][i]))
+
+
             A0 = (similarity(os.path.join(folder1, matrix1[0][i] + ".txt"),
-                             os.path.join(folder2, matrix2[0][j] + ".txt"))[0] + similarity(
-                os.path.join(folder1, matrix1[0][j] + ".txt"), os.path.join(folder2, matrix2[0][i] + ".txt"))[0])
+                             os.path.join(folder2, matrix2[0][i] + ".txt"))[0] + similarity(
+                os.path.join(folder1, matrix1[0][j] + ".txt"), os.path.join(folder2, matrix2[0][j] + ".txt"))[0])
 
             A += (1 ^ (matrix1[i][j] ^ matrix2[i][j])) * A0
 
     # A0 = (similarity(os.path.join(folder1, matrix1[0][i] + ".txt"),os.path.join(folder1, matrix2[0][j] + ".txt")) + similarity(os.path.join(folder1, matrix1[0][j] + ".txt"),os.path.join(folder1, matrix2[0][i] + ".txt")))
     # os.path.join(folder1, matrix1[0][i] + ".txt")
 
-    C = (float(A) / ((size_matrix) * (size_matrix) * 2))  # size_matrix -1 нужно вычитать единицу?
+    C = (float(A) / ((maxlen - 1) * (maxlen - 1) * 2))  #
+
     return C
 
 
