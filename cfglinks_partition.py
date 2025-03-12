@@ -21,28 +21,28 @@ def count_links(path):
     return count_imports
 
 
-def pad_matrix(matrix1, matrix2):
-    """Расширение меньшей матрицы до большей"""
-    rows1, cols1 = matrix1.shape
-    rows2, cols2 = matrix2.shape
+# def pad_matrix(matrix1, matrix2):
+#     """Расширение меньшей матрицы до большей"""
+#     rows1, cols1 = matrix1.shape
+#     rows2, cols2 = matrix2.shape
+#
+#     # Если размерности матриц уже совпадают, возвращаем их без изменений
+#     if rows1 == rows2 and cols1 == cols2:
+#         return matrix1, matrix2
+#
+#     # Определяем, какая матрица больше и насколько
+#     max_rows = max(rows1, rows2)
+#     max_cols = max(cols1, cols2)
+#
+#     # Создаем новые матрицы с размерами большей матрицы
+#     new_matrix1 = np.zeros((max_rows, max_cols), dtype='object')
+#     new_matrix2 = np.zeros((max_rows, max_cols), dtype='object')
+#
+#     # Заполняем новые матрицы данными из исходных матриц
+#     new_matrix1[:rows1, :cols1] = matrix1
+#     new_matrix2[:rows2, :cols2] = matrix2
 
-    # Если размерности матриц уже совпадают, возвращаем их без изменений
-    if rows1 == rows2 and cols1 == cols2:
-        return matrix1, matrix2
-
-    # Определяем, какая матрица больше и насколько
-    max_rows = max(rows1, rows2)
-    max_cols = max(cols1, cols2)
-
-    # Создаем новые матрицы с размерами большей матрицы
-    new_matrix1 = np.zeros((max_rows, max_cols), dtype='object')
-    new_matrix2 = np.zeros((max_rows, max_cols), dtype='object')
-
-    # Заполняем новые матрицы данными из исходных матриц
-    new_matrix1[:rows1, :cols1] = matrix1
-    new_matrix2[:rows2, :cols2] = matrix2
-
-    return new_matrix1, new_matrix2
+    # return new_matrix1, new_matrix2
 
 
 def hxconverter(num):

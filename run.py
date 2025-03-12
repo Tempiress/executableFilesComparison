@@ -41,13 +41,19 @@ def run(p1, p2):
     else:
         hh = hemming_prog(matrix2, matrix1, max(len(matrix1), len(matrix2)), workdir2, workdir1)
 
-     #matrix1, matrix2 = pad_matrix(matrix1, matrix2)
-     #hh = hemming_prog(matrix1, matrix2)
+     # matrix1, matrix2 = pad_matrix(matrix1, matrix2)
+     # hh = hemming_prog(matrix1, matrix2)
     return hh
 
 
-# p1 = input("Program 1: ")
-# p2 = input("Program 2: ")
-# print("\n similarity of this programs is:", run(p1, p2))
-# run(".\\HW8.exe", ".\\HW3.exe")
+# JsonHemmingPair(".\pairsComparison\similar_pairs.json", ".\pairsComparison\sim_p_with_hemming.json")
+# JsonHemmingPair(".\pairsComparison\different_pairs.json", ".\pairsComparison\diff_p_with_hemming.json")
+# q = run(".\\coreutils-polybench-hashcat\\aoc\\O0\\covariance", ".\\coreutils-polybench-hashcat\\aoc\\O0\\combinator")
+# q = run(".\\coreutils-polybench-hashcat\\c07\\O0\\bicg", ".\\coreutils-polybench-hashcat\\c07\\O0\\dirname")
+# q = run(".\\coreutils-polybench-hashcat\\aoc\\O0\\cutb", ".\\coreutils-polybench-hashcat\\aoc\\O2\\cutb")
+#q = run(".\\coreutils-polybench-hashcat\\c09\\O0\\cap2hccapx", ".\\coreutils-polybench-hashcat\\c09\\O0\\ct3_to_ntlm")
+# q = run(".\\coreutils-polybench-hashcat\\aoc\O0\\expander", ".\\coreutils-polybench-hashcat\\c08\\O2\\chmod")
+# q = run("HW3.exe", ".\\HW8.exe")
+
+# print("Result:", round(q, 4))
 

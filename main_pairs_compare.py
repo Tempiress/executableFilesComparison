@@ -130,6 +130,10 @@ def main_compare(folder1, folder2, matrix1, matrix2):
             "num_block_in_second": lndf[1]
         })
 
+
+    if not os.path.exists("./Debug/twoFuncDebug/res.txt"):
+        os.makedirs("./Debug/twoFuncDebug/")
+
     ff = open('./Debug/twoFuncDebug/res.txt', 'w')
     k = 1
     for p in PairWithSim:
