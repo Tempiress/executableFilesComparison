@@ -5,7 +5,7 @@ from cfglinks_partition import links_two_program
 from similarity import hemming_prog
 
 
-def deletefiles(dir):
+async def deletefiles(dir):
     files = glob.glob((os.path.join(dir, '*')))
 
     # Удаление каждого файла
@@ -17,23 +17,21 @@ def deletefiles(dir):
             print(f"skip dir: {file}")
 
 
-def run(p1, p2):
-    a = '4203440;'
-    b = a.rstrip(";")
-    print("Compare two programs:" + p1 + " " + p2)
+async def run(p1, p2):
+    # print("Compare two programs:" + p1 + " " + p2)
     # 1. Создание папок с CFG файлами с помощью Radare2
     workdir1 = ".\\cfg1\\"
     workdir2 = ".\\cfg2\\"
-    deletefiles(workdir1)
-    deletefiles(workdir2)
-    create_cfgs_from_exe(p1, workdir1)
-    create_cfgs_from_exe(p2, workdir2)
+    await deletefiles(workdir1)
+    await deletefiles(workdir2)
+    await create_cfgs_from_exe(p1, workdir1)
+    await create_cfgs_from_exe(p2, workdir2)
 
     # Создание файла связей блоков (Imports)
     cfglinks_path1 = ".\\lks1.txt"
     cfglinks_path2 = ".\\lks2.txt"
-    call_func_graph(p1, cfglinks_path1)
-    call_func_graph(p2, cfglinks_path2)
+    await call_func_graph(p1, cfglinks_path1)
+    await call_func_graph(p2, cfglinks_path2)
 
     matrix1, matrix2 = links_two_program(workdir1, workdir2, cfglinks_path1, cfglinks_path2)
     # u = hemming_prog(matrix1, matrix2)

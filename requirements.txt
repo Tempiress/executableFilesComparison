@@ -1,0 +1,5 @@
+thefuzz == 0.20.0
+r2pipe
+progress
+numpy
+

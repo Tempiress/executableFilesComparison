@@ -3,7 +3,7 @@ import os
 import logging
 
 
-def create_cfgs_from_exe(exe_dist, save_path):
+async def create_cfgs_from_exe(exe_dist, save_path):
     """
     Извлекает CFG из исполняемого файла с помощью Radare2.
     :param exe_dist: Путь к исполняемому файлу.
@@ -45,7 +45,7 @@ def create_cfgs_from_exe(exe_dist, save_path):
     r2.quit()
 
 
-def call_func_graph(exe_dist, save_name):
+async def call_func_graph(exe_dist, save_name):
     """
     Создание файла связей блоков (Imports)
     :param exe_dist:
