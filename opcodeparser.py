@@ -5,13 +5,32 @@ import ppdeep
 from thefuzz import fuzz
 
 
+def create_hasher(hash_type="ssdeep"):
+    """
+    Создает функцию хеширования в зависимости от типа.
+    :param hash_type: Тип хеширования ("ssdeep", "md5", "sha256" и т.д.)
+    :return: Функция хеширования
+    """
+    if hash_type == "ssdeep":
+        return ppdeep.hash
+    elif hash_type == "md5":
+        return lambda x: hashlib.md5(x.encode()).hexdigest()
+    elif hash_type == "sha256":
+        return lambda x: hashlib.sha256(x.encode()).hexdigest()
+    else:
+        raise ValueError(f"Unsupported hash type: {hash_type}")
+
+
 # Функция генерации JSON объекта, c добавлением хеша ssdeep
-def op_parser(path):
+def op_parser(path, hash_type='ssdeep'):
     """
     Начальный разделитель блоков CFG
-    :param path:
+    :param path: Путь к файлу
+    :param hash_type: Тип хеширования
     :return: JSON
     """
+
+    hasher = create_hasher(hash_type)
     with open(path, 'r') as f:
         json_text = f.read()
         data = json.loads(json_text)
@@ -28,6 +47,7 @@ def op_parser(path):
                     hash_opcodes = []
                     hash_opcodes2 = ""
                     jumps = ""
+                    fails = ""
 
                     if "ops" in block:
 
@@ -35,21 +55,25 @@ def op_parser(path):
 
                             if "opcode" in op:
                                 opcodes.append(op["opcode"])
-                                opcodes2 = opcodes2 + op["opcode"] + "; "
+                                opcodes2 = opcodes2 +  op["opcode"] + "; "
                                 hash_opcodes.append(ppdeep.hash(op["opcode"]))
-                                hash_opcodes2 = hash_opcodes2 + (op["opcode"]) + "; "
+                                hash_opcodes2 = hash_opcodes2 +  (op["opcode"]) + "; "
 
                         if "jump" in op:
                             jumps = jumps + str(op["jump"]) + "; "
+
+                        if "fail" in op:
+                            fails = fails + str(op["fail"]) + "; "
 
                         mi = mi + 1
                         item = {}
                         item['id'] = mi
                         item['block'] = block["offset"]
                         item['opcodes'] = opcodes2
-                        item['hashssdeep'] = ppdeep.hash(opcodes2)
+                        item['hashssdeep'] = hasher(opcodes2) # ppdeep.hash(opcodes2)
                         item['hash'] = (hashlib.md5(opcodes2.encode())).hexdigest()
                         item['jumps'] = jumps
+                        item['fails'] = fails
                         blocks[mi] = item
     myjsondata = json.dumps(blocks)
     return myjsondata

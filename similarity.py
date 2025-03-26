@@ -23,11 +23,13 @@ def create_matrix2(json_data1, json_data2):
 
     for block_id, block_data in data1.items():
         matrix1[int(block_data["NumBlock"])][int(block_data["NumBlockLinks"])] = 1
+        matrix1[int(block_data["NumBlock"])][int(block_data["NumBlockFail"])] = 1
 
     matrix2 = np.zeros((size_matrix, size_matrix), dtype=int)
 
     for block_id, block_data in data2.items():
         matrix2[int(block_data["NumBlock"])][int(block_data["NumBlockLinks"])] = 1
+        matrix2[int(block_data["NumBlock"])][int(block_data["NumBlockFail"])] = 1
 
     return matrix1, matrix2
 

@@ -1,5 +1,6 @@
 import r2pipe
 import os
+import logging
 
 
 def create_cfgs_from_exe(exe_dist, save_path):
@@ -10,13 +11,17 @@ def create_cfgs_from_exe(exe_dist, save_path):
     """
 
     # Open the binary
-    r2 = r2pipe.open(exe_dist)
+    try:
+        r2 = r2pipe.open(exe_dist, flags=["-2"])
 
-    # Perform initial analysis
-    r2.cmd("aaa")
-
-    # List functions
-    functions = r2.cmdj("aflj")
+        # Perform initial analysis
+        r2.cmd("aaa")
+        # List functions
+        functions = r2.cmdj("aflj")
+        if not functions:
+            raise ValueError("No functions found in the binary.")
+    except Exception as e:
+        logging.error(f"Error processing file {exe_dist}: {e}")
 
     # function_address = functions[0]
     # r2.cmd(f"agf @ {function_address}")
@@ -47,7 +52,7 @@ def call_func_graph(exe_dist, save_name):
     :param save_name:
     :return: file
     """
-    r2 = r2pipe.open(exe_dist)
+    r2 = r2pipe.open(exe_dist, flags=["-2"])
     r2.cmd("aaa")
     cflinks = r2.cmd("agCj")
     with open(save_name, "w") as fl:

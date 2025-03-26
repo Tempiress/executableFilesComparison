@@ -122,6 +122,8 @@ def main_compare(folder1, folder2, matrix1, matrix2):
     for f, g in Pairs:
         o1 = os.path.join(folder1, f + '.txt')
         o2 = os.path.join(folder2, g + '.txt')
+
+        # Сравнение функций
         ssim, lndf = similarity(o1, o2)
         PairWithSim.append({
             "pair": (f, g),

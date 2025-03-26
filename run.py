@@ -18,6 +18,8 @@ def deletefiles(dir):
 
 
 def run(p1, p2):
+    a = '4203440;'
+    b = a.rstrip(";")
     print("Compare two programs:" + p1 + " " + p2)
     # 1. Создание папок с CFG файлами с помощью Radare2
     workdir1 = ".\\cfg1\\"
@@ -51,7 +53,7 @@ def run(p1, p2):
 # q = run(".\\coreutils-polybench-hashcat\\aoc\\O0\\covariance", ".\\coreutils-polybench-hashcat\\aoc\\O0\\combinator")
 # q = run(".\\coreutils-polybench-hashcat\\c07\\O0\\bicg", ".\\coreutils-polybench-hashcat\\c07\\O0\\dirname")
 # q = run(".\\coreutils-polybench-hashcat\\aoc\\O0\\cutb", ".\\coreutils-polybench-hashcat\\aoc\\O2\\cutb")
-#q = run(".\\coreutils-polybench-hashcat\\c09\\O0\\cap2hccapx", ".\\coreutils-polybench-hashcat\\c09\\O0\\ct3_to_ntlm")
+# q = run(".\\coreutils-polybench-hashcat\\c09\\O0\\cap2hccapx", ".\\coreutils-polybench-hashcat\\c09\\O0\\ct3_to_ntlm")
 # q = run(".\\coreutils-polybench-hashcat\\aoc\O0\\expander", ".\\coreutils-polybench-hashcat\\c08\\O2\\chmod")
 # q = run("HW3.exe", ".\\HW8.exe")
 

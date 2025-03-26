@@ -122,7 +122,7 @@ def links_two_program(path_cfg1, path_cfg2, label_map_path1, label_map_path2):
 
     # НАЧАЛО Отладка
     file_martix1 = open("./Debug/twoFuncDebug/fileMatrix1.txt", 'w')
-
+    file_martix1.write(f"{path_cfg1}  {label_map_path1} \n")
     for i in range(1, len(matrix1)):
         for j in range(1, len(matrix1)):
             file_martix1.write(str(matrix1[i][j]))
@@ -149,7 +149,7 @@ def links_two_program(path_cfg1, path_cfg2, label_map_path1, label_map_path2):
     # НАЧАЛО Отладка
 
     file_martix2 = open("./Debug/twoFuncDebug/fileMatrix2.txt", 'w')
-
+    file_martix2.write(f"{path_cfg2}  {label_map_path2} \n")
     for i in range(1, len(matrix2)):
         for j in range(1, len(matrix2)):
             file_martix2.write(str(matrix2[i][j]))
