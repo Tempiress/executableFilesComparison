@@ -105,8 +105,8 @@ def find_similar_blocks(json_data1, json_data2):
 
             compare_hash = compare_data['hashssdeep']
 
-            similarity = fuzz.ratio(block_hash, compare_hash)
-
+            similarity = ppdeep.compare(block_hash,compare_hash)
+            similarity2 = fuzz.ratio(block_hash, compare_hash)
             similar_blocks[klen] = {
                 'block': block_id,
                 'similar_to': compare_id,
@@ -118,7 +118,7 @@ def find_similar_blocks(json_data1, json_data2):
     similar_blocks_output = {}
 
     while len(similar_blocks) != 0:
-            max_simcount = 0
+            max_simcount = -1
             max_simcount_element = {}
 
             # Если нашли совершенно идентичные по крипто-хешу
