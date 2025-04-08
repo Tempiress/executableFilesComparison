@@ -5,6 +5,9 @@ from run import run
 import time
 from progress.spinner import Spinner
 import asyncio
+from memory_cfg_from_exe_generator import CFGAnalyzer
+print("PRI")
+# from tqdm import tqdm
 # q = run(".\\coreutils-polybench-hashcat\\c09\\O0\\cap2hccapx", ".\\coreutils-polybench-hashcat\\c09\\O0\\ct3_to_ntlm")
 # print("Result:", round(q, 4))
 #
@@ -17,6 +20,16 @@ import asyncio
 fileName = "3mm"
 filenames = os.listdir('./coreutils-polybench-hashcat/aoc/Os/')
 filenames.remove('2mm')
+filenames.remove('cp')
+filenames.remove('b2sum')
+filenames.remove('csplit')
+filenames.remove('dir')
+filenames.remove('expr')
+filenames.remove('factor')
+filenames.remove('ginstall')
+filenames.remove('ls')
+filenames.remove('mv')
+filenames.remove('nl')
 l1 = os.listdir('./coreutils-polybench-hashcat/')  # aoc, c07, c06
 
 # bar2 = Bar('Processing', max=len(filenames))
@@ -63,8 +76,11 @@ f.write("файл1;файл2;результат\n")
 # execution_time = end_time - start_time
 # print(f"Time to working: {execution_time} seconds")
 # print(l1)
+async def r():
+   cfga = CFGAnalyzer()
+   await cfga.analyze_executable("./coreutils-polybench-hashcat/aoc/O0/atax")
 
-
+# asyncio.run(r())
 try:
     spinner = Spinner('Loading ')
     bar3 = Bar('Processing', max=len(filenames))
@@ -90,9 +106,12 @@ try:
     f.close()
     end_time = time.time()
     execution_time = end_time - start_time
-    print(f"Time to working: {round(execution_time)} seconds")
+    print(f"Time to working: {round(execution_time, 1)} seconds")
 except KeyboardInterrupt:
     print("UserInterrupt")
+    bar3.finish()
+    spinner.finish()
+    f.close()
 
 
 # filenames = os.listdir('./coreutils-polybench-hashcat/aoc/Os/')

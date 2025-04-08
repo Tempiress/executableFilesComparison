@@ -22,59 +22,59 @@ def create_hasher(hash_type="ssdeep"):
 
 
 # Функция генерации JSON объекта, c добавлением хеша ssdeep
-def op_parser(path, hash_type='ssdeep'):
+def op_parser(path, func,  hash_type='ssdeep'):
     """
     Начальный разделитель блоков CFG
+    :param func: funks
     :param path: Путь к файлу
     :param hash_type: Тип хеширования
     :return: JSON
     """
-
+    # with open(path, 'r') as f:
+    # json_text = f.read()
+    # data = json.loads(json_text)
     hasher = create_hasher(hash_type)
-    with open(path, 'r') as f:
-        json_text = f.read()
-        data = json.loads(json_text)
-        mi = 0
-        blocks = {}
-        # Проходим через элементы списка верхнего уровня
-        for item in data:
-            # Проверяем, существует ли поле "blocks"
-            if "blocks" in item:
-                # Если существует, проходим через элементы в "blocks"
-                for block in item["blocks"]:
-                    opcodes = []
-                    opcodes2 = ""
-                    hash_opcodes = []
-                    hash_opcodes2 = ""
-                    jumps = ""
-                    fails = ""
+    mi = 0
+    blocks = {}
+    # Проходим через элементы списка верхнего уровня
+    for item in func["cfg"]:
+        # Проверяем, существует ли поле "blocks"
+        if "blocks" in item:
+            # Если существует, проходим через элементы в "blocks"
+            for block in item["blocks"]:
+                opcodes = []
+                opcodes2 = ""
+                hash_opcodes = []
+                hash_opcodes2 = ""
+                jumps = ""
+                fails = ""
 
-                    if "ops" in block:
+                if "ops" in block:
 
-                        for op in block["ops"]:
+                    for op in block["ops"]:
 
-                            if "opcode" in op:
-                                opcodes.append(op["opcode"])
-                                opcodes2 = opcodes2 +  op["opcode"] + "; "
-                                hash_opcodes.append(ppdeep.hash(op["opcode"]))
-                                hash_opcodes2 = hash_opcodes2 +  (op["opcode"]) + "; "
+                        if "opcode" in op:
+                            opcodes.append(op["opcode"])
+                            opcodes2 = opcodes2 + op["opcode"] + "; "
+                            hash_opcodes.append(ppdeep.hash(op["opcode"]))
+                            hash_opcodes2 = hash_opcodes2 + (op["opcode"]) + "; "
 
-                        if "jump" in op:
-                            jumps = jumps + str(op["jump"]) + "; "
+                    if "jump" in op:
+                        jumps = jumps + str(op["jump"]) + "; "
 
-                        if "fail" in op:
-                            fails = fails + str(op["fail"]) + "; "
+                    if "fail" in op:
+                        fails = fails + str(op["fail"]) + "; "
 
-                        mi = mi + 1
-                        item = {}
-                        item['id'] = mi
-                        item['block'] = block["offset"]
-                        item['opcodes'] = opcodes2
-                        item['hashssdeep'] = hasher(opcodes2) # ppdeep.hash(opcodes2)
-                        item['hash'] = (hashlib.md5(opcodes2.encode())).hexdigest()
-                        item['jumps'] = jumps
-                        item['fails'] = fails
-                        blocks[mi] = item
+                    mi = mi + 1
+                    item = {}
+                    item['id'] = mi
+                    item['block'] = block["offset"]
+                    item['opcodes'] = opcodes2
+                    item['hashssdeep'] = hasher(opcodes2)  # ppdeep.hash(opcodes2)
+                    item['hash'] = (hashlib.md5(opcodes2.encode())).hexdigest()
+                    item['jumps'] = jumps
+                    item['fails'] = fails
+                    blocks[mi] = item
     myjsondata = json.dumps(blocks)
     return myjsondata
 

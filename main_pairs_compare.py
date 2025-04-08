@@ -99,30 +99,22 @@ def main_compare8(folder1, folder2, matrix1, matrix2):
     return p1_nodes, p2_nodes
 
 
-def main_compare(folder1, folder2, matrix1, matrix2):
-    # Создание списка файлов для каждой папки
-    P1_files = {}
-    for file in range(1, len(matrix1[0])):
-        P1_files[matrix1[0][file]] = os.path.join(folder1, matrix1[0][file] + ".txt")
-
-    P2_files = {}
-    for file2 in range(1, len(matrix2[0])):
-        P2_files[matrix2[0][file2]] = os.path.join(folder2, matrix2[0][file2] + ".txt")
+def main_compare( matrix1, matrix2, p1_funks, p2_funks):
 
     # Генерация всех возможных пар
     Pairs = []
-    for file1 in P1_files:
-        for file2 in P2_files:
-            Pairs.append((file1, file2))
+    for file1 in range(1, len(matrix1)):
+        for file2 in range(1, len(matrix2)):
+            Pairs.append((matrix1[0][file1], matrix2[0][file2]))
 
     # Сравнение всех пар
     PairWithSim = []
     for f, g in Pairs:
-        o1 = os.path.join(folder1, f + '.txt')
-        o2 = os.path.join(folder2, g + '.txt')
+        # o1 = os.path.join(folder1, f + '.txt')
+        # o2 = os.path.join(folder2, g + '.txt')
 
         # Сравнение функций
-        ssim, lndf = similarity(o1, o2)
+        ssim, lndf = similarity(f, g, p1_funks, p2_funks)
         PairWithSim.append({
             "pair": (f, g),
             "sim": ssim,

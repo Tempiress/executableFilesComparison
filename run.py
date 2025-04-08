@@ -1,8 +1,12 @@
 import glob
 import os
+import time
+
 from cfg_from_exe_generator import call_func_graph, create_cfgs_from_exe
 from cfglinks_partition import links_two_program
+from memory_cfg_from_exe_generator import CFGAnalyzer
 from similarity import hemming_prog
+import asyncio
 
 
 async def deletefiles(dir):
@@ -20,26 +24,29 @@ async def deletefiles(dir):
 async def run(p1, p2):
     # print("Compare two programs:" + p1 + " " + p2)
     # 1. Создание папок с CFG файлами с помощью Radare2
-    workdir1 = ".\\cfg1\\"
-    workdir2 = ".\\cfg2\\"
-    await deletefiles(workdir1)
-    await deletefiles(workdir2)
-    await create_cfgs_from_exe(p1, workdir1)
-    await create_cfgs_from_exe(p2, workdir2)
+    # workdir1 = ".\\cfg1\\"
+    # workdir2 = ".\\cfg2\\"
+    # await deletefiles(workdir1)
+    # await deletefiles(workdir2)
+    # await create_cfgs_from_exe(p1, workdir1)
+    # await create_cfgs_from_exe(p2, workdir2)
+
+    cfga = CFGAnalyzer()
+    p1_funcs = await cfga.analyze_executable(p1)
+    p2_funcs = await cfga.analyze_executable(p2)
 
     # Создание файла связей блоков (Imports)
-    cfglinks_path1 = ".\\lks1.txt"
-    cfglinks_path2 = ".\\lks2.txt"
-    await call_func_graph(p1, cfglinks_path1)
-    await call_func_graph(p2, cfglinks_path2)
 
-    matrix1, matrix2 = links_two_program(workdir1, workdir2, cfglinks_path1, cfglinks_path2)
+    lks1 = await cfga.get_call_graph(p1)
+    lks2 = await cfga.get_call_graph(p1)
+
+    matrix1, matrix2 = links_two_program(p1_funcs, p2_funcs, lks1, lks2)
     # u = hemming_prog(matrix1, matrix2)
 
     if len(matrix1) < len(matrix2):
-        hh = hemming_prog(matrix1, matrix2, max(len(matrix1), len(matrix2)), workdir1, workdir2)
+        hh = hemming_prog(matrix1, matrix2, max(len(matrix1), len(matrix2)), p1_funcs, p2_funcs)
     else:
-        hh = hemming_prog(matrix2, matrix1, max(len(matrix1), len(matrix2)), workdir2, workdir1)
+        hh = hemming_prog(matrix2, matrix1, max(len(matrix1), len(matrix2)), p1_funcs, p2_funcs)
 
      # matrix1, matrix2 = pad_matrix(matrix1, matrix2)
      # hh = hemming_prog(matrix1, matrix2)
@@ -55,5 +62,10 @@ async def run(p1, p2):
 # q = run(".\\coreutils-polybench-hashcat\\aoc\O0\\expander", ".\\coreutils-polybench-hashcat\\c08\\O2\\chmod")
 # q = run("HW3.exe", ".\\HW8.exe")
 
-# print("Result:", round(q, 4))
+start_time = time.time()
 
+q = asyncio.run(run("./coreutils-polybench-hashcat/c08/O0/expander", "./coreutils-polybench-hashcat/c08/O2/expander"))
+print("Resultss:", round(q, 4))
+
+end_time = time.time()
+print(end_time - start_time)

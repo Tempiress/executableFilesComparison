@@ -48,18 +48,15 @@ def swap_rows(matrix, row1, row2):
     matrix[row2] = c
 
 
-def incidence_matr_gen(path: str):
+def incidence_matr_gen(lks):
     """Создание и заполнение матрицы инцидентности по файлам импортов"""
-    with open(path, 'r') as f:
-        data = json.load(f)
-
-    names = [item["name"] for item in data]
+    names = [item["name"] for item in lks]
     matr = np.zeros((len(names) + 1, len(names) + 1), dtype='object')
 
     matr[1:, 0] = names
     matr[0, 1:] = names
 
-    for i, item in enumerate(data):
+    for i, item in enumerate(lks):
         imports = set(item["imports"])
         for j, name in enumerate(names):
             if name != item["name"] and name in imports:
@@ -76,10 +73,10 @@ def incidence_matr_gen(path: str):
     return matr
 
 
-def links_two_program(path_cfg1, path_cfg2, label_map_path1, label_map_path2):
-    matrix1 = incidence_matr_gen(label_map_path1)
-    matrix2 = incidence_matr_gen(label_map_path2)
-    p1_nodes, p2_nodes = main_compare(path_cfg1, path_cfg2, matrix1, matrix2)
+def links_two_program(p1_funcs, p2_funcs, lks1, lks2):
+    matrix1 = incidence_matr_gen(lks1)
+    matrix2 = incidence_matr_gen(lks2)
+    p1_nodes, p2_nodes = main_compare( matrix1, matrix2, p1_funcs, p2_funcs)
     # bar = Bar('Processing', max=len(p1_nodes))
     # print("processing p1_nodes: ")
 

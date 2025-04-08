@@ -34,14 +34,14 @@ def create_matrix2(json_data1, json_data2):
     return matrix1, matrix2
 
 
-def similarity(cfg1, cfg2):
+def similarity(cfg1, cfg2, p1_funks, p2_funks):
     """
      Число Хемминга (0-идентич., 1- не иднетич.)
     :param: cfg1 cfg2
     :return: double, difference
     """
-    op1 = op_parser(cfg1)
-    op2 = op_parser(cfg2)
+    op1 = op_parser(cfg1, p1_funks[cfg1])
+    op2 = op_parser(cfg2, p2_funks[cfg2])
 
     data1 = json.loads(op1)
     data2 = json.loads(op2)
@@ -123,7 +123,7 @@ def create_matrix(json_data1):
 #     #return difference_count / (size_matrix * size_matrix)
 #     return difference_count
 
-def hemming_prog(matrix1, matrix2, maxlen, folder1, folder2):
+def hemming_prog(matrix1, matrix2, maxlen, p1_funk, p2_funk):
     size_matrix = len(matrix1)
     # folder1 = ".\\cfg1\\"
     # folder2 = ".\\cfg2\\"
@@ -135,10 +135,8 @@ def hemming_prog(matrix1, matrix2, maxlen, folder1, folder2):
         for j in range(1, size_matrix):
             # A0 = (similarity(matrix1[0][i], matrix2[0][j]) + similarity(matrix1[0][j], matrix2[0][i]))
 
-
-            A0 = (similarity(os.path.join(folder1, matrix1[0][i] + ".txt"),
-                             os.path.join(folder2, matrix2[0][i] + ".txt"))[0] + similarity(
-                os.path.join(folder1, matrix1[0][j] + ".txt"), os.path.join(folder2, matrix2[0][j] + ".txt"))[0])
+            A0 = (similarity(matrix1[0][i], matrix2[0][i], p1_funk, p2_funk)[0] +
+                  similarity(matrix1[0][j], matrix2[0][j], p1_funk, p2_funk)[0])
 
             A += (1 ^ (matrix1[i][j] ^ matrix2[i][j])) * A0
 
