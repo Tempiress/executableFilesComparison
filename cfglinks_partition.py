@@ -68,7 +68,7 @@ def incidence_matr_gen(lks):
         for j in range(1, len(matr)):
             if matr[i][j] == 1:
                 count_lks += 1
-    # print("Lks in incidence matr:", count_lks)
+    print("Lks in incidence matr:", count_lks)
 
     return matr
 
@@ -76,7 +76,7 @@ def incidence_matr_gen(lks):
 def links_two_program(p1_funcs, p2_funcs, lks1, lks2):
     matrix1 = incidence_matr_gen(lks1)
     matrix2 = incidence_matr_gen(lks2)
-    p1_nodes, p2_nodes = main_compare( matrix1, matrix2, p1_funcs, p2_funcs)
+    p1_nodes, p2_nodes = main_compare(matrix1, matrix2, p1_funcs, p2_funcs)
     # bar = Bar('Processing', max=len(p1_nodes))
     # print("processing p1_nodes: ")
 

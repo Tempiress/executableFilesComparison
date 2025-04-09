@@ -45,7 +45,7 @@ async def create_cfgs_from_exe(exe_dist, save_path):
     r2.quit()
 
 
-async def call_func_graph(exe_dist, save_name):
+def call_func_graph(exe_dist, save_name):
     """
     Создание файла связей блоков (Imports)
     :param exe_dist:

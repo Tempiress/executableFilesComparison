@@ -22,10 +22,10 @@ def create_hasher(hash_type="ssdeep"):
 
 
 # Функция генерации JSON объекта, c добавлением хеша ssdeep
-def op_parser(path, func,  hash_type='ssdeep'):
+def op_parser(func, hash_type='ssdeep'):
     """
     Начальный разделитель блоков CFG
-    :param func: funks
+    :param func: funk
     :param path: Путь к файлу
     :param hash_type: Тип хеширования
     :return: JSON
@@ -105,7 +105,7 @@ def find_similar_blocks(json_data1, json_data2):
 
             compare_hash = compare_data['hashssdeep']
 
-            similarity = fuzz.ratio(block_hash, compare_hash)
+            similarity = ppdeep.compare(block_hash, compare_hash) # fuzz.ratio(block_hash, compare_hash)
 
             similar_blocks[klen] = {
                 'block': block_id,
@@ -118,7 +118,7 @@ def find_similar_blocks(json_data1, json_data2):
     similar_blocks_output = {}
 
     while len(similar_blocks) != 0:
-            max_simcount = 0
+            max_simcount = -1
             max_simcount_element = {}
 
             # Если нашли совершенно идентичные по крипто-хешу

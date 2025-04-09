@@ -40,8 +40,8 @@ def similarity(cfg1, cfg2, p1_funks, p2_funks):
     :param: cfg1 cfg2
     :return: double, difference
     """
-    op1 = op_parser(cfg1, p1_funks[cfg1])
-    op2 = op_parser(cfg2, p2_funks[cfg2])
+    op1 = op_parser(p1_funks[cfg1])
+    op2 = op_parser(p2_funks[cfg2])
 
     data1 = json.loads(op1)
     data2 = json.loads(op2)
