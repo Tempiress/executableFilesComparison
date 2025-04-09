@@ -62,13 +62,17 @@ def run(p1, p2):
 # q = run(".\\coreutils-polybench-hashcat\\aoc\O0\\expander", ".\\coreutils-polybench-hashcat\\c08\\O2\\chmod")
 # q = run("HW3.exe", ".\\HW8.exe")
 
-start_time = time.time()
 
-# q = asyncio.run(run("./coreutils-polybench-hashcat/c08/O0/expander", "./coreutils-polybench-hashcat/c08/O2/expander"))
-# q = run("./coreutils-polybench-hashcat/aoc/O0/3mm", "./coreutils-polybench-hashcat/aoc/O2/3mm")
-q = run("./coreutils-polybench-hashcat/aoc/O2/b2sum", "./coreutils-polybench-hashcat/aoc/O2/b2sum")
-# q = asyncio.run(run("./coreutils-polybench-hashcat/aoc/O0/3mm", "./coreutils-polybench-hashcat/aoc/O0/cp"))
-print("Results:", round(q, 4))
-
-end_time = time.time()
-print(end_time - start_time)
+# if __name__ == '__main__':
+#
+#
+#     start_time = time.time()
+#
+# # q = asyncio.run(run("./coreutils-polybench-hashcat/c08/O0/expander", "./coreutils-polybench-hashcat/c08/O2/expander"))
+#     q = run("./coreutils-polybench-hashcat/aoc/O0/3mm", "./coreutils-polybench-hashcat/aoc/O2/3mm")
+#     #q = run("./coreutils-polybench-hashcat/aoc/O2/b2sum", "./coreutils-polybench-hashcat/aoc/O2/b2sum")
+# # q = asyncio.run(run("./coreutils-polybench-hashcat/aoc/O0/3mm", "./coreutils-polybench-hashcat/aoc/O0/cp"))
+#     print("Results:", round(q, 4))
+#
+#     end_time = time.time()
+#     print(end_time - start_time)

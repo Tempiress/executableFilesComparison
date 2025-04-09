@@ -21,7 +21,7 @@ class CFGAnalyzer:
 
         try:
             # Открываем бинарник
-            r2 = r2pipe.open(exe_dist, flags=["-2"])
+            r2 = r2pipe.open(exe_dist, flags=["-2", "-e io.cache=true"])
 
             # Выполняем анализ (асинхронно)
             r2.cmd("aaa")

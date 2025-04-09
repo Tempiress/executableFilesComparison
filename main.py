@@ -2,65 +2,109 @@ import datetime
 import os
 
 import ppdeep
-from progress.bar import Bar
+import r2pipe
+
 from run import run
 import time
+import concurrent.futures
+from functools import partial
+
+from progress.bar import Bar
 from progress.spinner import Spinner
 import asyncio
 from memory_cfg_from_exe_generator import CFGAnalyzer
 # from tqdm import tqdm
-# q = run(".\\coreutils-polybench-hashcat\\c09\\O0\\cap2hccapx", ".\\coreutils-polybench-hashcat\\c09\\O0\\ct3_to_ntlm")
-# print("Result:", round(q, 4))
-#
-# f = open("./Debugging./avedick.txt", mode='a')
-# f.write("Abc\n")
-# f.write("Porasd\n")
-# f.close()
 
 
 def ppdeep_comparison(file1, file2):
     return ppdeep.compare(ppdeep.hash_from_file(file1), ppdeep.hash_from_file(file2)) / 100
 
 
-# Берём один файл и сравниваем его все виды
-fileName = "3mm"
-filenames = os.listdir('./coreutils-polybench-hashcat/aoc/Os/')
-filenames.remove('2mm')
-l1 = os.listdir('./coreutils-polybench-hashcat/')  # aoc, c07, c06
+def process_file_pair(aq, bq, file, l1_dir, l2_dir0, l2_dir, f):
+    try:
 
-# bar2 = Bar('Processing', max=len(filenames))
-# spinner = Spinner('Loading ')
+        s_prog_time = time.time()
+        q = run(aq, bq)
+        # print(f"RES: {q}")
+        e_prog_time = time.time()
+        delta_prog_time = round(e_prog_time - s_prog_time, 1)
 
-f = open(f"./Debugging./dbg{str(datetime.datetime.now().hour)}{datetime.datetime.now().minute}.txt", mode='a')
-f.write("файл1;файл2;результат\n")
+        s_p_prog_time = time.time()
+        ppdeep_compare = ppdeep_comparison(aq, bq)
+        e_p_prog_time = time.time()
+        delta_ppdeep_time = round(e_p_prog_time - s_p_prog_time, 1)
 
-filenames = filenames[:3]
-# l1 = l1[:3]
-# bar3 = Bar('Processing', max=len(filenames))
-try:
-    start_time = time.time()
-    for file in filenames:
-        for dirindex1 in range(0, len(l1)):
-            l2 = os.listdir(f'./coreutils-polybench-hashcat/{l1[dirindex1]}')  # O0 O1 O2
-            for dirindex2 in range(1, len(l2)):
-                aq = f'./coreutils-polybench-hashcat/{l1[dirindex1]}/{l2[0]}/{file}'
-                bq = f'./coreutils-polybench-hashcat/{l1[dirindex1]}/{l2[dirindex2]}/{file}'
-                q = run(aq, bq)
+        file_size_aq = round(os.path.getsize(aq) / 1024, 1)
+        file_size_bq = round(os.path.getsize(bq) / 1024, 1)
 
-                f.write(f'/{l1[dirindex1]}/{l2[0]}/{file}' + f';/{l1[dirindex1]}/{l2[dirindex2]}/{file}'
-                        + ';' + str(round(q, 4)) + ";" + str(ppdeep_comparison(f"./coreutils-polybench-hashcat/{l1[dirindex1]}/{l2[0]}/{file}", f"./coreutils-polybench-hashcat/{l1[dirindex1]}/{l2[dirindex2]}/{file}")) + '\n')
-                # print(f'/{l1[dirindex1]}/{l2[0]}/{file}' + f' ; /{l1[dirindex1]}/{l2[dirindex2]}/{file}')
-    end_time = time.time()
-    f.close()
-except KeyboardInterrupt:
-    print("UserInterrupt")
+        result_line = f"{l1_dir}/{l2_dir0}/{file};{l1_dir}/{l2_dir}/{file};{file_size_aq};{file_size_bq};{round(q, 4)};{ppdeep_compare};{delta_prog_time};{delta_ppdeep_time}\n"
 
-finally:
-    end_time = time.time()
-    execution_time = end_time - start_time
-    print(f"Time to working: {round(execution_time, 1)} seconds")
-    f.close()
-    print("File is closed")
+        # Блокировка для безопасной записи в файл
+        with lock:
+            f.write(result_line)
+            f.flush()
+
+    except Exception as e:
+        print(f"Error processing {aq} and {bq}: {e}")
+
+
+
+def start_program():
+    # Берём один файл и сравниваем его все виды
+    fileName = "3mm"
+    filenames = os.listdir('./coreutils-polybench-hashcat/aoc/Os/')
+    filenames.remove('2mm')
+    l1 = os.listdir('./coreutils-polybench-hashcat/')  # aoc, c07, c06
+
+    output_file = f"./Debugging./dbg{str(datetime.datetime.now().hour)}{datetime.datetime.now().minute}.txt"
+    # f.write("файл1;файл2;вес1;вес2;рез_программы;рез_ppdeep;время_сравн_прогр;время_сравн_ppdeep\n")
+
+    global lock
+    lock = threading.Lock()
+
+    with open(output_file, mode="a") as f:
+        f.write("файл1;файл2;вес1;вес2;рез_программы;рез_ppdeep;время_сравн_прогр;время_сравн_ppdeep\n")
+        f.flush()
+        start_time = time.time()
+        try:
+            # ProcessPoolExecutor
+            with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+                futures = []
+                for file in filenames:
+                    for dirindex1 in range(0, len(l1)):
+                        l2 = os.listdir(f'./coreutils-polybench-hashcat/{l1[dirindex1]}')  # O0 O1 O2
+
+                        for dirindex2 in range(1, len(l2)):
+                            aq = f'./coreutils-polybench-hashcat/{l1[dirindex1]}/{l2[0]}/{file}'
+                            bq = f'./coreutils-polybench-hashcat/{l1[dirindex1]}/{l2[dirindex2]}/{file}'
+
+                            futures.append(
+                                executor.submit(
+                                    process_file_pair, aq, bq, file, l1[dirindex1], l2[0], l2[dirindex2], f
+                                )
+                            )
+
+                for future in concurrent.futures.as_completed(futures):
+                    future.result()
+                #concurrent.futures.wait(futures)
+        except KeyboardInterrupt:
+            print("UserInterrupt")
+
+        finally:
+            end_time = time.time()
+            execution_time = end_time - start_time
+            print(f"Time to working: {round(execution_time, 1)} seconds")
+            f.close()
+            print("File is closed")
+        # except KeyboardInterrupt:
+        #     print("UserInterrupt")
+        #
+        # finally:
+        #     end_time = time.time()
+        #     execution_time = end_time - start_time
+        #     print(f"Time to working: {round(execution_time, 1)} seconds")
+        #     f.close()
+        #     print("File is closed")
 
 
 
@@ -84,4 +128,10 @@ finally:
 #
 # f.close()
 
+if __name__ == '__main__':
+    import threading
+    try:
+        start_program()
+    except KeyboardInterrupt:
+        print("Keybrd")
 
