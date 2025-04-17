@@ -1,6 +1,8 @@
 import json
 import logging
 
+import orjson
+
 
 def block_links(json_data1):
     """
@@ -8,7 +10,7 @@ def block_links(json_data1):
     :param json_data1:
     :return:
     """
-    data = json.loads(json_data1)
+    data = orjson.loads(json_data1)
     links = {}
 
     for target_block, target_block_data in data.items():
@@ -67,7 +69,7 @@ def block_links(json_data1):
                     nbf = check_block
             links[target_block]["fail"] = target_fail
             links[target_block]["NumBlockFail"] = nbf
-
-    return json.dumps(links)
+    # print("block_links")
+    return orjson.dumps(links)
 
 # print(block_links('.\\cfg\\cfg_5368778762.txt'))

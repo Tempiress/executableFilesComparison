@@ -1,12 +1,12 @@
-import json
 import os
-
+from multiprocessing import Value, Lock
 import numpy as np
-
 from blocklinks4 import *
 from opcodeparser import *
 from renamefile import *
-
+import pickle
+from functools import lru_cache
+import orjson # В 2-3x быстрее стандартного json
 
 def create_matrix2(json_data1, json_data2):
     """
@@ -15,8 +15,8 @@ def create_matrix2(json_data1, json_data2):
     :return:
     """
 
-    data1 = json.loads(json_data1)
-    data2 = json.loads(json_data2)
+    data1 = orjson.loads(json_data1)
+    data2 = orjson.loads(json_data2)
     size_matrix = max(len(data1), len(data2)) + 2
 
     matrix1 = np.zeros((size_matrix, size_matrix), dtype=int)
@@ -34,6 +34,12 @@ def create_matrix2(json_data1, json_data2):
     return matrix1, matrix2
 
 
+@lru_cache(maxsize=1000)
+def cached_op_parser(func_dict_tuple, cfg):
+    # Преобразуем кортеж обратно в dict
+    func_dict = dict(func_dict_tuple)
+    return op_parser(func_dict[cfg])
+
 def similarity(cfg1, cfg2, p1_funks, p2_funks):
     """
      Число Хемминга (0-идентич., 1- не иднетич.)
@@ -43,53 +49,56 @@ def similarity(cfg1, cfg2, p1_funks, p2_funks):
     op1 = op_parser(p1_funks[cfg1])
     op2 = op_parser(p2_funks[cfg2])
 
-    data1 = json.loads(op1)
-    data2 = json.loads(op2)
+    #p1_tuple = tuple(sorted(p1_funks.items()))
+    #p2_tuple = tuple(sorted(p2_funks.items()))
+
+    #print(op1.__class__)
+    #op11 = cached_op_parser(p1_tuple, cfg1)
+    #op22 = cached_op_parser(p2_tuple, cfg2)
+    # print(op11.__class__)
+
+    data1 = orjson.loads(op1)
+    data2 = orjson.loads(op2)
     sim_array = find_similar_blocks(op1, op2)
     rename_op2, diff = rename_block(data1, data2, sim_array)
 
-    sim_dict = json.loads(sim_array)
+    sim_dict = orjson.loads(sim_array)
     b_links1 = block_links(op1)
     b_links2 = block_links(rename_op2)
 
     size_matrix0 = min(len(data1), len(data2)) + 1
     max_size_matrix = max(len(data1), len(data2)) + 1
     umatrix1, umatrix2 = create_matrix2(b_links1, b_links2)
-    size_matrix = len(umatrix1)
+
+    # Оптимизация 1: Предварительно вычисляем keys для всех блоков
+    keys_cache = {}
+    for key, value in sim_dict.items():
+        block = value.get("block")
+        if block not in keys_cache:
+            keys_cache[block] = []
+        keys_cache[block].append(key)
+
+    # Оптимизация 2: Предварительно вычисляем sim значения
+    sim_cache = {}
+    for i in range(1, size_matrix0):
+        block = str(i)
+        if block in keys_cache and keys_cache[block]:
+            first_key = keys_cache[block][0]
+            sim_value = 1 if sim_dict[first_key]["simequal"] == 1 else sim_dict[first_key]["simcount"] / 100
+            sim_cache[block] = sim_value
+        else:
+            sim_cache[block] = 0
 
     A = 0
-    B = 0
-
-    try:
-        keys = lambda _key: [key for key, value in sim_dict.items() if value.get("block") == _key]
-    except Exception as ex:
-        print("Error in keys:", ex)
-    m = keys(str(1))
-    # q = sim_dict[m[0]]
-    try:
-        sim = lambda i: 1 if len(keys(i)) > 0 and sim_dict[keys(i)[0]]["simequal"] == 1 else (sim_dict[keys(i)[0]]["simcount"]) / 100 if len(keys(i)) > 0 else 0
-    except IndexError as ex:
-        print(" Список keys(i) пуст. Проверьте данные в sim_dict.", ex)
-
     for i in range(1, size_matrix0):
         for j in range(1, size_matrix0):
-
-            A0 = (sim(str(i)) + sim(str(j)))
+            A0 = sim_cache[str(i)] + sim_cache[str(j)]
             A += (1 ^ (umatrix1[i][j] ^ umatrix2[i][j])) * A0
 
-    C = (float(A) / ((max_size_matrix - 1) * (max_size_matrix - 1) * 2))
+
+    C = float(A) / ((max_size_matrix - 1) * (max_size_matrix - 1) * 2)
+    # print("end similarity.")
     return C, diff
-
-
-    # weighted hemming prog
-    # return h, diff
-
-# print("hemming:")
-# sim = similarity('..\\cfg\\cfg_5368778762.txt', '..\\cfg\\cfg_5368778977.txt')
-# print(sim)
-# similarity('..\\cfg\\cfg_5368778762.txt', '..\\cfg\\cfg_5368778762.txt')
-
-# simus = similarity('..\\cfg\\cfg_5368778817.txt', '..\\cfg\\cfg_5368778922.txt')
 
 
 def create_matrix(json_data1):
@@ -99,7 +108,7 @@ def create_matrix(json_data1):
     :return:
     """
     # dt = block_links(json_data1)
-    data = json.loads(json_data1)
+    data = orjson.loads(json_data1)
     size_matrix = len(data) + 2
 
     matrix = np.zeros((size_matrix, size_matrix), dtype=int)
@@ -110,55 +119,48 @@ def create_matrix(json_data1):
     return matrix
 
 
-
-# def hemming(matrix1, matrix2):
-#     size_matrix = len(matrix1)
-#
-#     difference_count = 0
-#     for i in range(size_matrix):
-#         for j in range(size_matrix):
-#             if matrix1[i][j] != matrix2[i][j]:
-#                 difference_count += 1
-#
-#     #return difference_count / (size_matrix * size_matrix)
-#     return difference_count
+    # Выносим функцию в глобальную область
+def compute_element(i, j, mat1, mat2, funk1, funk2):
+    sim_i = similarity(mat1[0][i], mat2[0][i], funk1, funk2)[0]
+    sim_j = similarity(mat1[0][j], mat2[0][j], funk1, funk2)[0]
+    return (1 ^ (mat1[i][j] ^ mat2[i][j])) * (sim_i + sim_j)
 
 def hemming_prog(matrix1, matrix2, maxlen, p1_funk, p2_funk):
+    import concurrent.futures
+    import sys
+    from functools import partial
+
     size_matrix = len(matrix1)
-    # folder1 = ".\\cfg1\\"
-    # folder2 = ".\\cfg2\\"
-    difference_count = 0
-    A = 0
-    B = 0
-    q = []
-    for i in range(1, size_matrix):
-        for j in range(1, size_matrix):
-            # A0 = (similarity(matrix1[0][i], matrix2[0][j]) + similarity(matrix1[0][j], matrix2[0][i]))
+    indices = [(i, j) for i in range(1, size_matrix)
+               for j in range(1, size_matrix)]
 
-            A0 = (similarity(matrix1[0][i], matrix2[0][i], p1_funk, p2_funk)[0] +
-                  similarity(matrix1[0][j], matrix2[0][j], p1_funk, p2_funk)[0])
 
-            A += (1 ^ (matrix1[i][j] ^ matrix2[i][j])) * A0
+    print(f"Count of indexes in hemming prog: {len(indices)}")
+    # Создаем partial функцию с передачей данных
+    worker = partial(compute_element,
+                     mat1=matrix1,
+                     mat2=matrix2,
+                     funk1=p1_funk,
+                     funk2=p2_funk)
 
-    # A0 = (similarity(os.path.join(folder1, matrix1[0][i] + ".txt"),os.path.join(folder1, matrix2[0][j] + ".txt")) + similarity(os.path.join(folder1, matrix1[0][j] + ".txt"),os.path.join(folder1, matrix2[0][i] + ".txt")))
-    # os.path.join(folder1, matrix1[0][i] + ".txt")
+    # Добавляем таймаут
+    try:
 
-    C = (float(A) / ((maxlen - 1) * (maxlen - 1) * 2))  #
+        with concurrent.futures.ProcessPoolExecutor(max_workers=33) as executor:
+            futures = [executor.submit(worker, i, j) for i, j in indices]
 
+            results = []
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    results.append(future.result())
+                except Exception as e:
+                    print(f"Ошибка в процессе: {e}", file=sys.stderr)
+                    raise
+
+    except Exception as e:
+        print(f"Глобальная ошибка: {e}", file=sys.stderr)
+        raise
+
+    A = sum(results)
+    C = float(A) / ((maxlen - 1) * (maxlen - 1) * 2)
     return C
-
-
-# def hemming_prog(matrix1, matrix2):
-#     size_matrix = len(matrix1)
-#
-#     difference_count = 0
-#
-#     for i in range(1, size_matrix):
-#         for j in range(1, size_matrix):
-#             if matrix1[i][j] == matrix2[i][j]:
-#                 difference_count +=1
-#
-# return difference_count / ((size_matrix - 1) * (size_matrix - 1))
-
-
-# print(create_matrix('D:\\MyNauchWork\\cfg\\cfg_5368778762.txt'))

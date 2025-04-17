@@ -3,6 +3,7 @@ import os
 
 import ppdeep
 import r2pipe
+import tlsh
 
 from run import run
 import time
@@ -25,10 +26,10 @@ def process_file_pair(aq, bq, file, l1_dir, l2_dir0, l2_dir, f):
 
         s_prog_time = time.time()
         q = run(aq, bq)
-        # print(f"RES: {q}")
+
         e_prog_time = time.time()
         delta_prog_time = round(e_prog_time - s_prog_time, 1)
-
+        print(f"RES: {round(q,5)} Time: {delta_prog_time}")
         s_p_prog_time = time.time()
         ppdeep_compare = ppdeep_comparison(aq, bq)
         e_p_prog_time = time.time()
@@ -37,7 +38,11 @@ def process_file_pair(aq, bq, file, l1_dir, l2_dir0, l2_dir, f):
         file_size_aq = round(os.path.getsize(aq) / 1024, 1)
         file_size_bq = round(os.path.getsize(bq) / 1024, 1)
 
-        result_line = f"{l1_dir}/{l2_dir0}/{file};{l1_dir}/{l2_dir}/{file};{file_size_aq};{file_size_bq};{round(q, 4)};{ppdeep_compare};{delta_prog_time};{delta_ppdeep_time}\n"
+        tlsh_s_time = time.time()
+        tlsh_diff = tlsh.diff(tlsh.hash(open(aq, 'rb').read()), tlsh.hash(open(bq, 'rb').read()))
+        tlsh_e_time = time.time()
+        delta_tlsh_time = round(tlsh_e_time - tlsh_s_time, 1)
+        result_line = f"{l1_dir}/{l2_dir0}/{file};{l1_dir}/{l2_dir}/{file};{file_size_aq};{file_size_bq};{round(q, 4)};{ppdeep_compare};{tlsh_diff};{delta_prog_time};{delta_ppdeep_time};{delta_tlsh_time}\n"
 
         # Блокировка для безопасной записи в файл
         with lock:
@@ -54,8 +59,9 @@ def start_program():
     fileName = "3mm"
     filenames = os.listdir('./coreutils-polybench-hashcat/aoc/Os/')
     filenames.remove('2mm')
+    # filenames = ["base32"]
     l1 = os.listdir('./coreutils-polybench-hashcat/')  # aoc, c07, c06
-
+    # l1 = ["aoc"]
     output_file = f"./Debugging./dbg{str(datetime.datetime.now().hour)}{datetime.datetime.now().minute}.txt"
     # f.write("файл1;файл2;вес1;вес2;рез_программы;рез_ppdeep;время_сравн_прогр;время_сравн_ppdeep\n")
 
@@ -63,16 +69,17 @@ def start_program():
     lock = threading.Lock()
 
     with open(output_file, mode="a") as f:
-        f.write("файл1;файл2;вес1;вес2;рез_программы;рез_ppdeep;время_сравн_прогр;время_сравн_ppdeep\n")
+        f.write("файл1;файл2;вес1;вес2;рез_программы;рез_ppdeep;рез_tlsh;время_сравн_прогр;время_сравн_ppdeep;время_сравн_tlsh\n")
         f.flush()
         start_time = time.time()
         try:
             # ProcessPoolExecutor
-            with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                 futures = []
                 for file in filenames:
                     for dirindex1 in range(0, len(l1)):
                         l2 = os.listdir(f'./coreutils-polybench-hashcat/{l1[dirindex1]}')  # O0 O1 O2
+                        # l2 = ["O0", "O1", "O2"]
 
                         for dirindex2 in range(1, len(l2)):
                             aq = f'./coreutils-polybench-hashcat/{l1[dirindex1]}/{l2[0]}/{file}'
@@ -133,5 +140,5 @@ if __name__ == '__main__':
     try:
         start_program()
     except KeyboardInterrupt:
-        print("Keybrd")
+        print("Keyboard interrupt")
 

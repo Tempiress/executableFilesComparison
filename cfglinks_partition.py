@@ -1,6 +1,7 @@
 import copy
 import asyncio
 import numpy as np
+from line_profiler import profile
 from progress.bar import Bar
 
 from main_pairs_compare import main_compare
@@ -74,16 +75,16 @@ def incidence_matr_gen(lks):
 
 
 def links_two_program(p1_funcs, p2_funcs, lks1, lks2):
+    print("Generate matrices...")
     matrix1 = incidence_matr_gen(lks1)
     matrix2 = incidence_matr_gen(lks2)
     p1_nodes, p2_nodes = main_compare(matrix1, matrix2, p1_funcs, p2_funcs)
     # bar = Bar('Processing', max=len(p1_nodes))
-    # print("processing p1_nodes: ")
+    print("processing p1_nodes...")
 
     for p1_node in p1_nodes:
         p1_node['new_label'] + 1 # Потому что матрица сдвинута
         if p1_node['old_label'] in matrix1[0]:
-            # col_index = np.where(matrix1[0] == hxconverter2(p1_node['old_label']))[0][0]
             col_index = np.where(matrix1[0] == p1_node['old_label'])[0][0]
             if col_index != p1_node['new_label']:
                 swap_columns(matrix1, col_index, p1_node['new_label'] + 1)
@@ -104,7 +105,7 @@ def links_two_program(p1_funcs, p2_funcs, lks1, lks2):
     # file_martix1.close()
     # КОНЕЦ Отладка
 
-    # print("processing p2_nodes: ")
+    print("processing p2_nodes... ")
     # bar2 = Bar('Processing', max=len(p2_nodes))
     for p2_node in p2_nodes:
         p2_node['new_label'] + 1 # Потому что матрица сдвинута
@@ -131,31 +132,3 @@ def links_two_program(p1_funcs, p2_funcs, lks1, lks2):
     # КОНЕЦ Отладка
 
     return matrix1, matrix2
-
-# main--------------------------------------------------
-# zo = 'fcn.1400117f3'
-# print(hxconverter(zo))
-
-
-# def incidence_matr_gen2(path):
-#     with open(path, 'r') as f:
-#         text = f.read()
-#         data = json.loads(text)
-#
-#     l = len(data)
-#     matr = np.zeros([l+1, l+1], dtype='object')
-#
-#     for c in range(1, l+1):
-#         matr[0][c] = data[c-1]["name"]
-#         matr[c][0] = data[c-1]["name"]
-#
-#     for f in range(1, l+1):
-#         for f2 in range(0, l):
-#             if matr[f][0] == data[f2]["name"]:
-#                 continue
-#
-#             p = data[f2]["name"]
-#             q = data[f-1]["imports"]
-#             if p in q:
-#                 matr[f][f2+1] = 1
-#     return matr

@@ -1,5 +1,8 @@
+import concurrent.futures
 import copy
 import os
+from functools import partial
+
 from progress.bar import Bar
 from similarity import similarity
 
@@ -99,8 +102,19 @@ def main_compare8(folder1, folder2, matrix1, matrix2):
     return p1_nodes, p2_nodes
 
 
-def main_compare( matrix1, matrix2, p1_funks, p2_funks):
+def main_compare_assist(args, p1_funks, p2_funks):
+    f, g = args
+    # Сравнение функции
+    ssim, lndf = similarity(f, g, p1_funks, p2_funks)
+    return {
+        "pair": (f, g),
+        "sim": ssim,
+        "num_block_in_first": lndf[0],
+        "num_block_in_second": lndf[1]}
 
+
+def main_compare(matrix1, matrix2, p1_funks, p2_funks):
+    print("Start main_compare \n")
     # Генерация всех возможных пар
     Pairs = []
     for file1 in range(1, len(matrix1)):
@@ -108,34 +122,27 @@ def main_compare( matrix1, matrix2, p1_funks, p2_funks):
             Pairs.append((matrix1[0][file1], matrix2[0][file2]))
 
     # Сравнение всех пар
-    PairWithSim = []
-    for f, g in Pairs:
-        # o1 = os.path.join(folder1, f + '.txt')
-        # o2 = os.path.join(folder2, g + '.txt')
+    print(f"count numbers of comparisons: {len(Pairs)}")
 
-        # Сравнение функций
-        ssim, lndf = similarity(f, g, p1_funks, p2_funks)
-        PairWithSim.append({
-            "pair": (f, g),
-            "sim": ssim,
-            "num_block_in_first": lndf[0],
-            "num_block_in_second": lndf[1]
-        })
+    worker = partial(main_compare_assist, p1_funks = p1_funks, p2_funks = p2_funks)
 
-
-    # if not os.path.exists("./Debug/twoFuncDebug/res.txt"):
-        # os.makedirs("./Debug/twoFuncDebug/")
-
-    # ff = open('./Debug/twoFuncDebug/res.txt', 'w')
-    # k = 1
-    # for p in PairWithSim:
-        # ff.write(str(k) + ". " + str(p["pair"]) + "   --->   " + str(p["sim"]) + "\n")
-       #  k += 1
-    # ff.close()
+    with concurrent.futures.ProcessPoolExecutor(max_workers=min(50, os.cpu_count() * 2 + 2)) as executor:
+        # Отправляем задачи более мелкими порциями
+        future_to_pair = {
+            executor.submit(worker, pair): pair
+            for pair in Pairs
+        }
+        PairWithSim = []
+        for future in concurrent.futures.as_completed(future_to_pair):
+            try:
+                PairWithSim.append(future.result())
+            except Exception as e:
+                print(f"Error processing pair: {e}")
 
     # Сортировка пар по убыванию схожести
     PairWithSim.sort(key=lambda x: x["sim"], reverse=True)
 
+    print("find optimal pairs...")
     # Выбор оптимальных пар
     used_p1 = set()
     used_p2 = set()
@@ -145,6 +152,7 @@ def main_compare( matrix1, matrix2, p1_funks, p2_funks):
 
     for pair in PairWithSim:
         f, g = pair["pair"]
+
         if f not in used_p1 and g not in used_p2:
             p1_nodes.append({
                 "new_label": counter,
@@ -158,69 +166,62 @@ def main_compare( matrix1, matrix2, p1_funks, p2_funks):
             used_p2.add(g)
             counter += 1
 
+    print("End of main_compare \n")
     return p1_nodes, p2_nodes
 
 
-def hxconverter(num):
-    nm = int(num[4:], 16)
-    result = "cfg_" + str(nm) + ".txt"
-    return result
+# def hxconverter(num):
+#     nm = int(num[4:], 16)
+#     result = "cfg_" + str(nm) + ".txt"
+#     return result
 
 
-def important_main_compare(folder1, folder2, matrix1, matrix2 ):
-    # print("Процесс создания словарей файлов для каждой папки")
-    P1_files = {file: os.path.join(folder1, file) for file in os.listdir(folder1)}
-    P2_files = {file: os.path.join(folder2, file) for file in os.listdir(folder2)}
-
-    # P1_files = {}
-    # for file in range(1, len(matrix1[0])):
-     # P1_files[matrix1[0][file]] = os.path.join(folder1, matrix1[0][file] + ".txt")
-
-    # P2_files = {}
-    # for file2 in range(1, len(matrix2[0])):
-     # P2_files[matrix2[0][file2]] = os.path.join(folder2, matrix2[0][file2] + ".txt")
-
-    # Сортируем файлы по ключам
-    sorted_P1_files = dict(sorted(P1_files.items(), key=lambda x: x[0]))
-    sorted_P2_files = dict(sorted(P2_files.items(), key=lambda x: x[0]))
-
-    P1_files_temp = copy.copy(P1_files)
-    P2_files_temp = copy.copy(P2_files)
-    print("Длина словаря P1 =>", len(P1_files))
-    print("Длина словаря P2 =>", len(P2_files))
-
-    p1_nodes = []
-    p2_nodes = []
-    print("Создание массивов меток....")
-    bar = Bar('Processing', max=len(P1_files))
-    # ff = open('result.txt', 'w')
-
-    for file1, path1 in sorted_P1_files.items():
-        max_sim = float('inf')
-        max_sim_element = None
-
-        for file2, path2 in sorted_P2_files.items():
-            ssim, lndf = similarity(path1, path2)
-            # print("file1 = ", file1, "file2 = ", file2, "Result = ", ssim)
-            # ff.write(" file1 = " + file1 + " file2 = " + file2 + " Result = " + str(ssim) + "\n")
-            if ssim < max_sim:
-                max_sim = ssim
-                max_sim_element = {"pair": f"{file1}:{file2}", "sim": ssim, "num_block_in_third": lndf[0], "num_block_in_second": lndf[1]}
-        if max_sim_element:
-            p1_nodes.append({"new_label": len(p1_nodes), "old_label": max_sim_element["pair"].split(":")[0]})
-            p2_nodes.append({"new_label": len(p2_nodes), "old_label": max_sim_element["pair"].split(":")[1]})
-            del P1_files_temp[max_sim_element["pair"].split(":")[0]]
-            del P2_files_temp[max_sim_element["pair"].split(":")[1]]
-        bar.next()
-    bar.finish()
-    # ff.close()
-
-    return p1_nodes, p2_nodes
-
-
-
-
-
-#fold1 = 'F:\\programming 2024\\Sci_Research\\TestSets\\cfg'
-#fold2 = 'F:\\programming 2024\\Sci_Research\\TestSets\\cfg2'
-#pn1, pn2 = important_main_compare(fold1, fold2, fold1, fold1)
+# def important_main_compare(folder1, folder2, matrix1, matrix2 ):
+#     # print("Процесс создания словарей файлов для каждой папки")
+#     P1_files = {file: os.path.join(folder1, file) for file in os.listdir(folder1)}
+#     P2_files = {file: os.path.join(folder2, file) for file in os.listdir(folder2)}
+#
+#     # P1_files = {}
+#     # for file in range(1, len(matrix1[0])):
+#      # P1_files[matrix1[0][file]] = os.path.join(folder1, matrix1[0][file] + ".txt")
+#
+#     # P2_files = {}
+#     # for file2 in range(1, len(matrix2[0])):
+#      # P2_files[matrix2[0][file2]] = os.path.join(folder2, matrix2[0][file2] + ".txt")
+#
+#     # Сортируем файлы по ключам
+#     sorted_P1_files = dict(sorted(P1_files.items(), key=lambda x: x[0]))
+#     sorted_P2_files = dict(sorted(P2_files.items(), key=lambda x: x[0]))
+#
+#     P1_files_temp = copy.copy(P1_files)
+#     P2_files_temp = copy.copy(P2_files)
+#     print("Длина словаря P1 =>", len(P1_files))
+#     print("Длина словаря P2 =>", len(P2_files))
+#
+#     p1_nodes = []
+#     p2_nodes = []
+#     print("Создание массивов меток....")
+#     bar = Bar('Processing', max=len(P1_files))
+#     # ff = open('result.txt', 'w')
+#
+#     for file1, path1 in sorted_P1_files.items():
+#         max_sim = float('inf')
+#         max_sim_element = None
+#
+#         for file2, path2 in sorted_P2_files.items():
+#             ssim, lndf = similarity(path1, path2)
+#             # print("file1 = ", file1, "file2 = ", file2, "Result = ", ssim)
+#             # ff.write(" file1 = " + file1 + " file2 = " + file2 + " Result = " + str(ssim) + "\n")
+#             if ssim < max_sim:
+#                 max_sim = ssim
+#                 max_sim_element = {"pair": f"{file1}:{file2}", "sim": ssim, "num_block_in_third": lndf[0], "num_block_in_second": lndf[1]}
+#         if max_sim_element:
+#             p1_nodes.append({"new_label": len(p1_nodes), "old_label": max_sim_element["pair"].split(":")[0]})
+#             p2_nodes.append({"new_label": len(p2_nodes), "old_label": max_sim_element["pair"].split(":")[1]})
+#             del P1_files_temp[max_sim_element["pair"].split(":")[0]]
+#             del P2_files_temp[max_sim_element["pair"].split(":")[1]]
+#         bar.next()
+#     bar.finish()
+#     # ff.close()
+#
+#     return p1_nodes, p2_nodes

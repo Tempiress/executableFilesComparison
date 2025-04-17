@@ -76,6 +76,7 @@ def op_parser(func, hash_type='ssdeep'):
                     item['fails'] = fails
                     blocks[mi] = item
     myjsondata = json.dumps(blocks)
+    # print("op_parser")
     return myjsondata
 
 
@@ -156,7 +157,7 @@ def find_similar_blocks(json_data1, json_data2):
             for block in blocks_to_remove:
                 del similar_blocks[block]
             klen += 1
-
+    # print("find_similar_blocks")
     return json.dumps(similar_blocks_output)
 
 

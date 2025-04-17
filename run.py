@@ -1,6 +1,9 @@
 import glob
 import os
 import time
+import tlsh
+import ppdeep
+import concurrent.futures
 
 from cfg_from_exe_generator import call_func_graph, create_cfgs_from_exe
 from cfglinks_partition import links_two_program
@@ -24,19 +27,13 @@ def deletefiles(dir):
 def run(p1, p2):
     print("Compare two programs:" + p1 + " " + p2)
     # 1. Создание папок с CFG файлами с помощью Radare2
-    # workdir1 = ".\\cfg1\\"
-    # workdir2 = ".\\cfg2\\"
-    # await deletefiles(workdir1)
-    # await deletefiles(workdir2)
-    # await create_cfgs_from_exe(p1, workdir1)
-    # await create_cfgs_from_exe(p2, workdir2)
-
     cfga = CFGAnalyzer()
+    print("Analyze Executable...")
     p1_funcs = cfga.analyze_executable(p1)
     p2_funcs = cfga.analyze_executable(p2)
 
+    print("get call graphs...")
     # Создание файла связей блоков (Imports)
-
     lks1 = cfga.get_call_graph(p1)
     lks2 = cfga.get_call_graph(p2)
 
@@ -63,16 +60,36 @@ def run(p1, p2):
 # q = run("HW3.exe", ".\\HW8.exe")
 
 
-# if __name__ == '__main__':
-#
-#
-#     start_time = time.time()
-#
-# # q = asyncio.run(run("./coreutils-polybench-hashcat/c08/O0/expander", "./coreutils-polybench-hashcat/c08/O2/expander"))
-#     q = run("./coreutils-polybench-hashcat/aoc/O0/3mm", "./coreutils-polybench-hashcat/aoc/O2/3mm")
-#     #q = run("./coreutils-polybench-hashcat/aoc/O2/b2sum", "./coreutils-polybench-hashcat/aoc/O2/b2sum")
+# f1 = ppdeep.hash_from_file(".\\requirements.txt")
+# f2 = ppdeep.hash_from_file(".\\requirementscopy.txt")
+# print(f1)
+# print(f2)
+# print(ppdeep.compare(f1, f2)/100)
+
+#f1 = tlsh.hash("weyaquiryawo;yiaseghsehgdkrg;jdfhnbh;rthweyaquiryawo;yiaseghsehgdkrg;jdfhnbh;rthweyaquiryawo;yiaseghsehgdkrg;jdfhnbh;rthweyaquiryawo;yiaseghsehgdkrg;jdfhnbh;rthweyaquiryawo;yiaseghsehgdkrg;jdfhnbh;rthweyaquiryawo;yiaseghsehgdkrg;jdfhnbh;rthweyaquiryawo;yiaseghsehgdkrg;jdfhnbh;rth".encode())
+#f2 = tlsh.hash("mrbrlkjb;rjiboeierutjbdf;ljktgsk;rtnbst'[bjmrbrlkjb;rjiboeierutjbdf;ljktgsk;rtnbst'[bj[nesrjgjsg'lgejsgmrbrlkjb;rjiboeierutjbdf;ljktgsk;rtnbst'[bj[nesrjgjsg'lgejsgmrbrlkjb;rjiboeierutjbdf;ljktgsk;rtnbst'[bj[nesrjgjsg'lgejsgmrbrlkjb;rjiboeierutjbdf;ljktgsk;rtnbst'[bj[nesrjgjsg'lgejsgmrbrlkjb;rjiboeierutjbdf;ljktgsk;rtnbst'[bj[nesrjgjsg'lgejsg[nesrjgjsg'lgejsg".encode())
+#file1 = ".\\coreutils-polybench-hashcat\\aoc\O0\\dir"
+#file2 = ".\\coreutils-polybench-hashcat\\aoc\\O2\\dir"
+#f1 = tlsh.hash(open(file1, 'rb').read())
+#f2 = tlsh.hash(open(file2, 'rb').read())
+
+
+#print(abs((300 - tlsh.diff(f1, f2) )/300) )
+# print( max(0, (300 - tlsh.diff(f1, f2))/3))
+# f1 = fuzzyhashlib.sdhash("agkjsekgjd'rpgier")
+# print(f1)
+
+
+
+if __name__ == '__main__':
+    start_time = time.time()
+
+    q = run("./coreutils-polybench-hashcat/c08/O0/expander", "./coreutils-polybench-hashcat/c08/O0/expander")
+    #q = run("./coreutils-polybench-hashcat/aoc/O0/3mm", "./coreutils-polybench-hashcat/aoc/O2/3mm")
+    # q = run("./coreutils-polybench-hashcat/aoc/O0/keyspace", "./coreutils-polybench-hashcat/aoc/O2/keyspace")
+    #q = run("./coreutils-polybench-hashcat/aoc/O2/b2sum", "./coreutils-polybench-hashcat/aoc/O2/b2sum")
+    #q = run("./coreutils-polybench-hashcat/aoc/O2/b2sum", "./coreutils-polybench-hashcat/aoc/O2/b2sum")
 # # q = asyncio.run(run("./coreutils-polybench-hashcat/aoc/O0/3mm", "./coreutils-polybench-hashcat/aoc/O0/cp"))
-#     print("Results:", round(q, 4))
-#
-#     end_time = time.time()
-#     print(end_time - start_time)
+    print("Results:", round(q, 4))
+    end_time = time.time()
+    print(end_time - start_time)

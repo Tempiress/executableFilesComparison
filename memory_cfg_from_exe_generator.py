@@ -43,7 +43,6 @@ class CFGAnalyzer:
                 r2.cmd(f"agf @ {func_addr}")
                 cfg_json = r2.cmdj(f"agj {func_addr}")
 
-
                 cfg_data[func_name] = {
                     "offset": func_addr,
                     "cfg": cfg_json,
@@ -77,8 +76,8 @@ class CFGAnalyzer:
             # Получаем граф вызовов
             call_graph =r2.cmdj("agCj")
 
-            with open("debug_json.json", "w") as f:
-                json.dump(call_graph, f)
+            #with open("debug_json.json", "w") as f:
+             #   json.dump(call_graph, f)
 
             self.call_graphs[exe_dist] = call_graph
             return call_graph
