@@ -72,4 +72,4 @@ def block_links(json_data1):
     # print("block_links")
     return orjson.dumps(links)
 
-# print(block_links('.\\cfg\\cfg_5368778762.txt'))
+

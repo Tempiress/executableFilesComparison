@@ -2,7 +2,7 @@ import hashlib
 import json
 
 import ppdeep
-from thefuzz import fuzz
+# from thefuzz import fuzz
 
 
 def create_hasher(hash_type="ssdeep"):
@@ -44,7 +44,7 @@ def op_parser(func, hash_type='ssdeep'):
             for block in item["blocks"]:
                 opcodes = []
                 opcodes2 = ""
-                hash_opcodes = []
+                # hash_opcodes = []
                 hash_opcodes2 = ""
                 jumps = ""
                 fails = ""
@@ -56,7 +56,7 @@ def op_parser(func, hash_type='ssdeep'):
                         if "opcode" in op:
                             opcodes.append(op["opcode"])
                             opcodes2 = opcodes2 + op["opcode"] + "; "
-                            hash_opcodes.append(ppdeep.hash(op["opcode"]))
+                            # hash_opcodes.append(hasher(op["opcode"]))
                             hash_opcodes2 = hash_opcodes2 + (op["opcode"]) + "; "
 
                     if "jump" in op:
@@ -122,9 +122,9 @@ def find_similar_blocks(json_data1, json_data2):
             max_simcount = -1
             max_simcount_element = {}
 
-            # Если нашли совершенно идентичные по крипто-хешу
             first_key, first_value = similar_blocks.popitem()
             similar_blocks[first_key] = first_value
+            # Если нашли совершенно идентичные по крипто-хешу
             if similar_blocks[first_key]['simequal'] == 1:
                 similar_blocks_output[klen] = similar_blocks[first_key]
                 blocks_to_remove = []
@@ -143,7 +143,8 @@ def find_similar_blocks(json_data1, json_data2):
             for block_num, block_val in similar_blocks.items():
                 if block_val['simcount'] > max_simcount:
                     max_simcount_element[0] = similar_blocks[block_num]
-                    # !!!Проверить max_simcount = block_val['simcount']
+                    max_simcount = block_val['simcount']
+                    # !!!Проверить max_simcount = block_val['simcount'] (добавлено)
 
             similar_blocks_output[klen] = max_simcount_element[0]
             blocks_to_remove = []
@@ -161,8 +162,3 @@ def find_similar_blocks(json_data1, json_data2):
     return json.dumps(similar_blocks_output)
 
 
-
-#op = op_parser('F:\\programming 2024\\Sci_Research\\cfg\\cfg_5368778757.txt')
-#jl = json.loads(op)
-#print(len(jl))
-#result = find_similar_blocks('D:\\MyNauchWork\\cfg\\cfg_5368778762.txt', 'D:\\MyNauchWork\\cfg\\cfg_5368778977.txt')

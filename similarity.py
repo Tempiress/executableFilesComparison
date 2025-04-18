@@ -100,26 +100,26 @@ def similarity(cfg1, cfg2, p1_funks, p2_funks):
     # print("end similarity.")
     return C, diff
 
+#
+# def create_matrix(json_data1):
+#     """
+#     Генерация матрицы
+#     :param json_data1:
+#     :return:
+#     """
+#     # dt = block_links(json_data1)
+#     data = orjson.loads(json_data1)
+#     size_matrix = len(data) + 2
+#
+#     matrix = np.zeros((size_matrix, size_matrix), dtype=int)
+#
+#     for block_id, block_data in data.items():
+#         matrix[int(block_data["NumBlock"])][int(block_data["NumBlockLinks"])] = 1
+#
+#     return matrix
 
-def create_matrix(json_data1):
-    """
-    Генерация матрицы
-    :param json_data1:
-    :return:
-    """
-    # dt = block_links(json_data1)
-    data = orjson.loads(json_data1)
-    size_matrix = len(data) + 2
 
-    matrix = np.zeros((size_matrix, size_matrix), dtype=int)
-
-    for block_id, block_data in data.items():
-        matrix[int(block_data["NumBlock"])][int(block_data["NumBlockLinks"])] = 1
-
-    return matrix
-
-
-    # Выносим функцию в глобальную область
+# Выносим функцию в глобальную область
 def compute_element(i, j, mat1, mat2, funk1, funk2):
     sim_i = similarity(mat1[0][i], mat2[0][i], funk1, funk2)[0]
     sim_j = similarity(mat1[0][j], mat2[0][j], funk1, funk2)[0]
@@ -143,7 +143,6 @@ def hemming_prog(matrix1, matrix2, maxlen, p1_funk, p2_funk):
                      funk1=p1_funk,
                      funk2=p2_funk)
 
-    # Добавляем таймаут
     try:
 
         with concurrent.futures.ProcessPoolExecutor(max_workers=33) as executor:

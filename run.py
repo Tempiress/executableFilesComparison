@@ -75,7 +75,7 @@ def run(p1, p2):
 
 
 #print(abs((300 - tlsh.diff(f1, f2) )/300) )
-# print( max(0, (300 - tlsh.diff(f1, f2))/3))
+# print( max(0, (300 - tlsh.diff(f1, f2))/300))
 # f1 = fuzzyhashlib.sdhash("agkjsekgjd'rpgier")
 # print(f1)
 
@@ -83,13 +83,12 @@ def run(p1, p2):
 
 if __name__ == '__main__':
     start_time = time.time()
-
-    q = run("./coreutils-polybench-hashcat/c08/O0/expander", "./coreutils-polybench-hashcat/c08/O0/expander")
-    #q = run("./coreutils-polybench-hashcat/aoc/O0/3mm", "./coreutils-polybench-hashcat/aoc/O2/3mm")
+    # q = run("./coreutils-polybench-hashcat/c08/O0/expander", "./coreutils-polybench-hashcat/c08/O0/expander")
+    q = run("./coreutils-polybench-hashcat/aoc/O0/3mm", "./coreutils-polybench-hashcat/aoc/O2/3mm")
     # q = run("./coreutils-polybench-hashcat/aoc/O0/keyspace", "./coreutils-polybench-hashcat/aoc/O2/keyspace")
     #q = run("./coreutils-polybench-hashcat/aoc/O2/b2sum", "./coreutils-polybench-hashcat/aoc/O2/b2sum")
-    #q = run("./coreutils-polybench-hashcat/aoc/O2/b2sum", "./coreutils-polybench-hashcat/aoc/O2/b2sum")
-# # q = asyncio.run(run("./coreutils-polybench-hashcat/aoc/O0/3mm", "./coreutils-polybench-hashcat/aoc/O0/cp"))
+    # q = run("./coreutils-polybench-hashcat/aoc/O2/b2sum", "./coreutils-polybench-hashcat/aoc/O2/b2sum")
+    # q = run("./coreutils-polybench-hashcat/aoc/O0/date", "./coreutils-polybench-hashcat/g07/O1/df")
     print("Results:", round(q, 4))
     end_time = time.time()
-    print(end_time - start_time)
+    print(round(end_time - start_time, 4))

@@ -1,5 +1,12 @@
 thefuzz == 0.20.0
-r2pipe
-progress
-numpy
+r2pipe~=1.8.0
+progress~=1.6
+numpy~=1.21.6
 
+
+ppdeep~=20200505
+asyncio~=3.4.3
+orjson~=3.9.7
+python-tlsh
+line_profiler
+orjson

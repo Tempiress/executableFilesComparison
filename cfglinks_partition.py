@@ -8,31 +8,16 @@ from main_pairs_compare import main_compare
 from opcodeparser import *
 
 
-def count_links(path):
-    """Подсчёт количества импортов """
-    with open(path, 'r') as f:
-        json_imports = f.read()
-        data = json.loads(json_imports)
-    count_imports = 0
-
-    for item in data:
-        count_imports += len(item["imports"])
-        # print(item["name"])
-        # print(len(item["imports"]))
-    return count_imports
-
-
-def hxconverter(num):
-    nm = int(num[4:], 16)
-    result = "cfg_" + str(nm) + ".txt"
-    return result
-
-
-def hxconverter2(num):
-    nm = int(num[4:-4])
-    nm = hex(nm)
-    result = "fcn." + str(nm[2:])
-    return result
+# def count_links(path):
+#     """Подсчёт количества импортов """
+#     with open(path, 'r') as f:
+#         json_imports = f.read()
+#         data = json.loads(json_imports)
+#     count_imports = 0
+#
+#     for item in data:
+#         count_imports += len(item["imports"])
+#     return count_imports
 
 
 def swap_columns(matrix, col1, col2):
@@ -79,7 +64,6 @@ def links_two_program(p1_funcs, p2_funcs, lks1, lks2):
     matrix1 = incidence_matr_gen(lks1)
     matrix2 = incidence_matr_gen(lks2)
     p1_nodes, p2_nodes = main_compare(matrix1, matrix2, p1_funcs, p2_funcs)
-    # bar = Bar('Processing', max=len(p1_nodes))
     print("processing p1_nodes...")
 
     for p1_node in p1_nodes:
@@ -89,8 +73,6 @@ def links_two_program(p1_funcs, p2_funcs, lks1, lks2):
             if col_index != p1_node['new_label']:
                 swap_columns(matrix1, col_index, p1_node['new_label'] + 1)
                 swap_rows(matrix1, col_index, p1_node['new_label'] + 1)
-        # bar.next()
-    # bar.finish()
 
 
     # НАЧАЛО Отладка
