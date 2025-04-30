@@ -60,11 +60,11 @@ def incidence_matr_gen(lks):
 
 
 def links_two_program(p1_funcs, p2_funcs, lks1, lks2):
-    print("Generate matrices...")
+    #print("Generate matrices...")
     matrix1 = incidence_matr_gen(lks1)
     matrix2 = incidence_matr_gen(lks2)
     p1_nodes, p2_nodes = main_compare(matrix1, matrix2, p1_funcs, p2_funcs)
-    print("processing p1_nodes...")
+    #print("processing p1_nodes...")
 
     for p1_node in p1_nodes:
         p1_node['new_label'] + 1 # Потому что матрица сдвинута
@@ -87,7 +87,7 @@ def links_two_program(p1_funcs, p2_funcs, lks1, lks2):
     # file_martix1.close()
     # КОНЕЦ Отладка
 
-    print("processing p2_nodes... ")
+    #print("processing p2_nodes... ")
     # bar2 = Bar('Processing', max=len(p2_nodes))
     for p2_node in p2_nodes:
         p2_node['new_label'] + 1 # Потому что матрица сдвинута
