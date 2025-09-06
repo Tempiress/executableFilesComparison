@@ -137,8 +137,8 @@ def hemming_prog(matrix1, matrix2, maxlen, folder1, folder2):
 
 
             A0 = (similarity(os.path.join(folder1, matrix1[0][i] + ".txt"),
-                             os.path.join(folder2, matrix2[0][i] + ".txt"))[0] + similarity(
-                os.path.join(folder1, matrix1[0][j] + ".txt"), os.path.join(folder2, matrix2[0][j] + ".txt"))[0])
+                             os.path.join(folder2, matrix2[0][i] + ".txt"))[0] +
+                  similarity(os.path.join(folder1, matrix1[0][j] + ".txt"), os.path.join(folder2, matrix2[0][j] + ".txt"))[0])
 
             A += (1 ^ (matrix1[i][j] ^ matrix2[i][j])) * A0
 

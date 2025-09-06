@@ -1,0 +1,14 @@
+файл1;файл2;результат
+./coreutils-polybench-hashcat/aoc/O0/3mm;./coreutils-polybench-hashcat/aoc/O1/3mm;0.3566
+./coreutils-polybench-hashcat/aoc/O0/3mm;./coreutils-polybench-hashcat/aoc/O2/3mm;0.1402
+./coreutils-polybench-hashcat/aoc/O0/3mm;./coreutils-polybench-hashcat/aoc/O3/3mm;0.1402
+./coreutils-polybench-hashcat/aoc/O0/3mm;./coreutils-polybench-hashcat/aoc/Os/3mm;0.1555
+./coreutils-polybench-hashcat/c07/O0/3mm;./coreutils-polybench-hashcat/c07/O1/3mm;0.1934
+./coreutils-polybench-hashcat/c07/O0/3mm;./coreutils-polybench-hashcat/c07/O2/3mm;0.1637
+./coreutils-polybench-hashcat/c07/O0/3mm;./coreutils-polybench-hashcat/c07/O3/3mm;0.1637
+./coreutils-polybench-hashcat/c07/O0/3mm;./coreutils-polybench-hashcat/c07/Os/3mm;0.1551
+./coreutils-polybench-hashcat/c08/O0/3mm;./coreutils-polybench-hashcat/c08/O1/3mm;0.1957
+./coreutils-polybench-hashcat/c08/O0/3mm;./coreutils-polybench-hashcat/c08/O2/3mm;0.1644
+./coreutils-polybench-hashcat/c08/O0/3mm;./coreutils-polybench-hashcat/c08/O3/3mm;0.1644
+./coreutils-polybench-hashcat/c08/O0/3mm;./coreutils-polybench-hashcat/c08/Os/3mm;0.1566
+./coreutils-polybench-hashcat/c09/O0/3mm;./coreutils-polybench-hashcat/c09/O1/3mm;0.1961

@@ -1,3 +1,11 @@
 /coreutils-polybench-hashcat
 /Debug
 /Debugging
+/cfg1/*
+/cfg2/*
+/testSets2/*
+/testSets3/*
+/__pycache__
+/__pycache__/*
+/.idea
+/.idea/*

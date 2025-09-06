@@ -26,7 +26,7 @@ def main_compare8(folder1, folder2, matrix1, matrix2):
         for file2 in P2_files:
             Pairs.append([file1, file2])
 
-    ff = open('./Debug/twoFuncDebug/res.txt', 'w')
+    # ff = open('./Debug/twoFuncDebug/res.txt', 'w')
     PairWithSim = []
     bar = Bar('Processing', max=len(P1_files))
     for f, g in Pairs:
@@ -44,12 +44,12 @@ def main_compare8(folder1, folder2, matrix1, matrix2):
                             })
 
     # ff.write(str(PairWithSim))
-    k = 1
-    for p in PairWithSim:
-        ff.write(str(k) + ". " + str(p["pair"]) + "   --->   " + str(p["sim"]) + "\n")
-        k += 1
-
-    ff.close()
+    # k = 1
+    # for p in PairWithSim:
+    #     ff.write(str(k) + ". " + str(p["pair"]) + "   --->   " + str(p["sim"]) + "\n")
+    #     k += 1
+    #
+    # ff.close()
     # II
     counter = 0
     p1_nodes = []
@@ -117,6 +117,7 @@ def main_compare(folder1, folder2, matrix1, matrix2):
         for file2 in P2_files:
             Pairs.append((file1, file2))
 
+    print(f"count numbers of comparisons: {len(Pairs)}")
     # Сравнение всех пар
     PairWithSim = []
     for f, g in Pairs:
@@ -133,15 +134,15 @@ def main_compare(folder1, folder2, matrix1, matrix2):
         })
 
 
-    if not os.path.exists("./Debug/twoFuncDebug/res.txt"):
-        os.makedirs("./Debug/twoFuncDebug/")
-
-    ff = open('./Debug/twoFuncDebug/res.txt', 'w')
-    k = 1
-    for p in PairWithSim:
-        ff.write(str(k) + ". " + str(p["pair"]) + "   --->   " + str(p["sim"]) + "\n")
-        k += 1
-    ff.close()
+    # if not os.path.exists("./Debug/twoFuncDebug/res.txt"):
+    #     os.makedirs("./Debug/twoFuncDebug/")
+    #
+    # ff = open('./Debug/twoFuncDebug/res.txt', 'w')
+    # k = 1
+    # for p in PairWithSim:
+    #     ff.write(str(k) + ". " + str(p["pair"]) + "   --->   " + str(p["sim"]) + "\n")
+    #     k += 1
+    # ff.close()
 
     # Сортировка пар по убыванию схожести
     PairWithSim.sort(key=lambda x: x["sim"], reverse=True)
@@ -171,27 +172,13 @@ def main_compare(folder1, folder2, matrix1, matrix2):
     return p1_nodes, p2_nodes
 
 
-
-
-
-# OriginalSet
-# folder1 = 'F:\\programming 2024\\Sci_Research\\cfg'
-# folder2 = 'F:\\programming 2024\\Sci_Research\\cfg2'
-
-# TestSet
-# folder1 = 'F:\\programming 2024\\Sci_Research\\TestSets\\cfg'
-# folder2 = 'F:\\programming 2024\\Sci_Research\\TestSets\\cfg2'
-# mc = main_compare(folder1, folder2)
-
-# print(mc)
-
 def hxconverter(num):
     nm = int(num[4:], 16)
     result = "cfg_" + str(nm) + ".txt"
     return result
 
 
-def important_main_compare(folder1, folder2, matrix1, matrix2 ):
+def impotant_main_compare(folder1, folder2, matrix1, matrix2 ):
     print("Процесс создания словарей файлов для каждой папки")
     P1_files = {file: os.path.join(folder1, file) for file in os.listdir(folder1)}
     P2_files = {file: os.path.join(folder2, file) for file in os.listdir(folder2)}

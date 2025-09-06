@@ -95,7 +95,7 @@ def incidence_matr_gen(path: str):
         for j in range(1, len(matr)):
             if matr[i][j] == 1:
                 count_lks += 1
-    print("Count lks in incidence matr:", count_lks)
+    print("Lks in incidence matr:", count_lks)
 
     return matr
 
@@ -104,8 +104,8 @@ def links_two_program(path_cfg1, path_cfg2, label_map_path1, label_map_path2):
     matrix1 = incidence_matr_gen(label_map_path1)
     matrix2 = incidence_matr_gen(label_map_path2)
     p1_nodes, p2_nodes = main_compare(path_cfg1, path_cfg2, matrix1, matrix2)
-    bar = Bar('Processing', max=len(p1_nodes))
-    print("processing p1_nodes: ")
+    # bar = Bar('Processing', max=len(p1_nodes))
+    # print("processing p1_nodes: ")
 
     for p1_node in p1_nodes:
         p1_node['new_label'] + 1 # Потому что матрица сдвинута
@@ -116,8 +116,8 @@ def links_two_program(path_cfg1, path_cfg2, label_map_path1, label_map_path2):
             if col_index != p1_node['new_label']:
                 swap_columns(matrix1, col_index, p1_node['new_label'] + 1)
                 swap_rows(matrix1, col_index, p1_node['new_label'] + 1)
-        bar.next()
-    bar.finish()
+        # bar.next()
+    # bar.finish()
 
 
     # НАЧАЛО Отладка
@@ -132,8 +132,8 @@ def links_two_program(path_cfg1, path_cfg2, label_map_path1, label_map_path2):
     file_martix1.close()
     # КОНЕЦ Отладка
 
-    print("processing p2_nodes: ")
-    bar2 = Bar('Processing', max=len(p2_nodes))
+    # print("processing p2_nodes: ")
+    # bar2 = Bar('Processing', max=len(p2_nodes))
     for p2_node in p2_nodes:
         p2_node['new_label'] + 1 # Потому что матрица сдвинута
         # if hxconverter2(p2_node['old_label']) in matrix2[0]:
@@ -143,8 +143,8 @@ def links_two_program(path_cfg1, path_cfg2, label_map_path1, label_map_path2):
             if col_index != p2_node['new_label']:
                 swap_columns(matrix2, col_index, p2_node['new_label'] + 1)
                 swap_rows(matrix2, col_index, p2_node['new_label'] + 1)
-        bar2.next()
-    bar.finish()
+        # bar2.next()
+    # bar.finish()
 
     # НАЧАЛО Отладка
 

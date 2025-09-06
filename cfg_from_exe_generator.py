@@ -32,7 +32,7 @@ def create_cfgs_from_exe(exe_dist, save_path):
 
     # Iterate through functions and generate CFGs
     for func in functions:
-        function_address = func["offset"]
+        function_address = func["addr"]
         name = func["name"]
         r2.cmd(f"agf @ {function_address}")
 

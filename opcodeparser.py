@@ -2,7 +2,7 @@ import hashlib
 import json
 
 import ppdeep
-from thefuzz import fuzz
+# from thefuzz import fuzz
 
 
 def create_hasher(hash_type="ssdeep"):
@@ -55,9 +55,9 @@ def op_parser(path, hash_type='ssdeep'):
 
                             if "opcode" in op:
                                 opcodes.append(op["opcode"])
-                                opcodes2 = opcodes2 +  op["opcode"] + "; "
+                                opcodes2 = opcodes2 + op["opcode"] + "; "
                                 hash_opcodes.append(ppdeep.hash(op["opcode"]))
-                                hash_opcodes2 = hash_opcodes2 +  (op["opcode"]) + "; "
+                                hash_opcodes2 = hash_opcodes2 + (op["opcode"]) + "; "
 
                         if "jump" in op:
                             jumps = jumps + str(op["jump"]) + "; "
@@ -68,9 +68,9 @@ def op_parser(path, hash_type='ssdeep'):
                         mi = mi + 1
                         item = {}
                         item['id'] = mi
-                        item['block'] = block["offset"]
+                        item['block'] = block["addr"]
                         item['opcodes'] = opcodes2
-                        item['hashssdeep'] = hasher(opcodes2) # ppdeep.hash(opcodes2)
+                        item['hashssdeep'] = hasher(opcodes2)# ppdeep.hash(opcodes2)
                         item['hash'] = (hashlib.md5(opcodes2.encode())).hexdigest()
                         item['jumps'] = jumps
                         item['fails'] = fails
@@ -106,7 +106,7 @@ def find_similar_blocks(json_data1, json_data2):
             compare_hash = compare_data['hashssdeep']
 
             similarity = ppdeep.compare(block_hash,compare_hash)
-            similarity2 = fuzz.ratio(block_hash, compare_hash)
+            # similarity2 = fuzz.ratio(block_hash, compare_hash)
             similar_blocks[klen] = {
                 'block': block_id,
                 'similar_to': compare_id,
