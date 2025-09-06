@@ -56,9 +56,6 @@ finally:
     print("File is closed")
 
 
-
-
-
 # filenames = os.listdir('./coreutils-polybench-hashcat/aoc/Os/')
 # filenames.remove('2mm')
 # l1 = os.listdir('./coreutils-polybench-hashcat/')  # aoc, c07, c06
@@ -78,5 +75,4 @@ finally:
 #                     + '-> ' + str(round(q, 4)) + '\n' + '--------' + ' \n')
 #
 # f.close()
-
 

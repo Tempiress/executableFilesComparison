@@ -21,6 +21,8 @@ def create_hasher(hash_type="ssdeep"):
         raise ValueError(f"Unsupported hash type: {hash_type}")
 
 
+
+
 # Функция генерации JSON объекта, c добавлением хеша ssdeep
 def op_parser(path, hash_type='ssdeep'):
     """

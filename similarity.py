@@ -110,19 +110,6 @@ def create_matrix(json_data1):
     return matrix
 
 
-
-# def hemming(matrix1, matrix2):
-#     size_matrix = len(matrix1)
-#
-#     difference_count = 0
-#     for i in range(size_matrix):
-#         for j in range(size_matrix):
-#             if matrix1[i][j] != matrix2[i][j]:
-#                 difference_count += 1
-#
-#     #return difference_count / (size_matrix * size_matrix)
-#     return difference_count
-
 def hemming_prog(matrix1, matrix2, maxlen, folder1, folder2):
     size_matrix = len(matrix1)
     # folder1 = ".\\cfg1\\"
@@ -161,6 +148,3 @@ def hemming_prog(matrix1, matrix2, maxlen, folder1, folder2):
 #                 difference_count +=1
 #
 # return difference_count / ((size_matrix - 1) * (size_matrix - 1))
-
-
-# print(create_matrix('D:\\MyNauchWork\\cfg\\cfg_5368778762.txt'))
