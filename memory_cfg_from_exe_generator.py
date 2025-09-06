@@ -36,15 +36,15 @@ class CFGAnalyzer:
 
             # Анализируем каждую функцию
             for func in functions:
-                func_name = func.get("name", f"unnamed_{func['offset']}")
-                func_addr = func["offset"]
+                func_name = func.get("name", f"unnamed_{func['addr']}")
+                func_addr = func["addr"]
 
                 # Получаем CFG для функции
                 r2.cmd(f"agf @ {func_addr}")
                 cfg_json = r2.cmdj(f"agj {func_addr}")
 
                 cfg_data[func_name] = {
-                    "offset": func_addr,
+                    "addr": func_addr,
                     "cfg": cfg_json,
                     "name": func_name
                 }
