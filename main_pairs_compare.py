@@ -29,7 +29,7 @@ def main_compare(matrix1, matrix2, p1_funks, p2_funks):
 
     worker = partial(main_compare_assist, p1_funks = p1_funks, p2_funks = p2_funks)
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=min(50, os.cpu_count() * 2 + 2)) as executor:
+    with concurrent.futures.ProcessPoolExecutor(1) as executor:#max_workers=min(50, os.cpu_count() * 2 + 2)) as executor:
         # Отправляем задачи более мелкими порциями
         future_to_pair = {
             executor.submit(worker, pair): pair

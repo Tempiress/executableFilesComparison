@@ -21,6 +21,30 @@ def create_hasher(hash_type="ssdeep"):
         raise ValueError(f"Unsupported hash type: {hash_type}")
 
 
+def find_group(instruction):
+
+    groups = {
+    'DTI' : ["BSWAP","CBW","CDQ","CDQE","CMOVA","CMOVAE","CMOVB","CMOVBE","CMOVC","CMOVE","CMOVG","CMOVGE","CMOVL","COMVLE","CMOVNA","CMOVNAE","CMOVNB","CMOVNBE","CMOVNC","CMOVNE","CMOVNG","CMOVNGE","CMOVNL","CMOVNLE","CMOVNO","CMOVNP","CMOVNS","CMOVNZ","CMOVO","CMOVP","CMOVPE","CMOVPO","CMOVS","CMOVZ","CMPXCHG","CMPXCHG8B","CQO","CQO","CWD","CWDE","MOV","MOVABS","MOVABS","AL","AX","GAX","RAX","MOVSX","MOVZX","POP","POPA","POPAD","PUSH","PUSHA","PUSHAD","XADD","XCHG", "RPUSH"],
+    'BAI' : ["ADC","ADD","CMP","DEC","DIV","IDIV","IMUL","INC","MUL","NEG","SBB","SUB", "ACMP"],
+    'DAI' : ["AAA","AAD","AAM","AAS","DAA","DAS"],
+    'LI'  : ["AND","NOT","OR","XOR"],
+    'SHRI' : ["RCL","RCR","ROL","ROR","SAL","SAR","SHL","SHLD","SHR","SHRD"],
+    'BBI' : ["BSF","BSR","BT","BTC","BTR","BTS","SETA","SETAE","SETB","SETBE","SETC","SETE","SETG","SETGE","SETL","SETLE","SETNA","SETNAE","SETNB","SETNBE","SETNC","SETNE","SETNG","SETNGE","SETNL","SETNLE","SETNO","SETNP","SETNS","SETNZ","SETO","SETP","SETPE","SETPO","SETS","SETZ","TEST"],
+    'CTI' : ["BOUND","CALL","ENTER","INT","INTO","IRET","JA","JAE","JB","JBE","JC","JCXZ","JE","JECXZ","JG","JGE","JL","JLE","JMP","JNAE","JNB","JNBE","JNC","JNE","JNG","JNGE","JNL","JNLE","JNO","JNP","JNS","JNZ","JO","JP","JPE","JPO","JS","JZ","CALL","LEAVE","LOOP","LOOPE","LOOPNE","LOOPNZ","LOOPZ","RET", "CJMP", "UCALL", "IRCALL"],
+    'SI' : ["CMPS","CMPSB","CMPSD","CMPSW","LODS","LODSB","LODSD","LODSW","MOVS","MOVSB","MOVSD","MOVSW","REP","REPNE","REPNZ","REPE","REPZ","SCAS","SCASB","SCASD","SCASW","STOS","STOSB","STOSD","STOSW"],
+    'IOI' : ["IN","INS","INSB","INSD","INSW","OUT","OUTS","OUTSB","OUTSD","OUTSW"],
+    'FCI' : ["CLC","CLD","CLI","CMC","LAHF","POPF","POPFL","PUSHF","PUSHFL","SAHF","STC","STD","STI"],
+    'SRI' : ["LDS","LES","LFS","LGS","LSS"],
+    'MLI' : ["CPUID","LEA","NOP","UD2","XLAT","XLATB"]
+
+    }
+
+    for group_name, instructions in groups.items():
+        if instruction in instructions:
+            return group_name
+    return False
+
+
 # Функция генерации JSON объекта, c добавлением хеша ssdeep
 def op_parser(func, hash_type='ssdeep'):
     """
@@ -44,6 +68,7 @@ def op_parser(func, hash_type='ssdeep'):
             for block in item["blocks"]:
                 opcodes = []
                 opcodes2 = ""
+                types = ""
                 # hash_opcodes = []
                 hash_opcodes2 = ""
                 jumps = ""
@@ -58,6 +83,17 @@ def op_parser(func, hash_type='ssdeep'):
                             opcodes2 = opcodes2 + op["opcode"] + "; "
                             # hash_opcodes.append(hasher(op["opcode"]))
                             hash_opcodes2 = hash_opcodes2 + (op["opcode"]) + "; "
+                            aaa = op["type"].upper()
+
+                            if aaa == 'NULL':
+                                types += "NULL"
+
+                            elif find_group(aaa) == False:
+                                raise NotImplementedError("'type' is not in dictionary: " + str(aaa))
+
+                            else:
+                                types += str(find_group(aaa))
+                                print("From group:", find_group(aaa))
 
                     if "jump" in op:
                         jumps = jumps + str(op["jump"]) + "; "
@@ -69,9 +105,10 @@ def op_parser(func, hash_type='ssdeep'):
                     item = {}
                     item['id'] = mi
                     item['block'] = block["addr"]
+                    item['types'] = types
                     item['opcodes'] = opcodes2
-                    item['hashssdeep'] = hasher(opcodes2)  # ppdeep.hash(opcodes2)
-                    item['hash'] = (hashlib.md5(opcodes2.encode())).hexdigest()
+                    item['hashssdeep'] = hasher(types)  # ppdeep.hash(opcodes2)
+                    item['hash'] = (hashlib.md5(types.encode())).hexdigest()
                     item['jumps'] = jumps
                     item['fails'] = fails
                     blocks[mi] = item
