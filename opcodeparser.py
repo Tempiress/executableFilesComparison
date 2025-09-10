@@ -1,6 +1,6 @@
 import hashlib
 import json
-
+import re
 import ppdeep
 # from thefuzz import fuzz
 
@@ -19,6 +19,42 @@ def create_hasher(hash_type="ssdeep"):
         return lambda x: hashlib.sha256(x.encode()).hexdigest()
     else:
         raise ValueError(f"Unsupported hash type: {hash_type}")
+
+
+def generalize_opcode(opcode):
+    # Словари для замены
+    reg_patterns = [
+        r'\b(rax|rbx|rcx|rdx|rsi|rdi|rbp|rsp|r8|r9|r10|r11|r12|r13|r14|r15|'
+        r'eax|ebx|ecx|edx|esi|edi|ebp|esp|'
+        r'ax|bx|cx|dx|si|di|bp|sp|'
+        r'al|bl|cl|dl|ah|bh|ch|dh|'
+        r'rip|eflags|flags)\b'
+    ]
+
+    mem_patterns = [
+        r'\[.*\]',  # любая память в квадратных скобках
+        r'ptr \[.*\]',  # с указанием размера (byte ptr, word ptr и т.д.)
+    ]
+
+    const_patterns = [
+        r'0x[0-9a-fA-F]+',  # hex константы
+        r'\b\d+\b',  # decimal константы
+    ]
+
+    # Заменяем регистры на REG
+    for pattern in reg_patterns:
+        opcode = re.sub(pattern, 'REG', opcode, flags=re.IGNORECASE)
+
+    # Заменяем память на MEM
+    for pattern in mem_patterns:
+        opcode = re.sub(pattern, 'MEM', opcode, flags=re.IGNORECASE)
+
+    # Заменяем константы на CONST
+    for pattern in const_patterns:
+        opcode = re.sub(pattern, 'CONST', opcode, flags=re.IGNORECASE)
+
+    return opcode
+
 
 
 def find_group(instruction):
@@ -79,6 +115,7 @@ def op_parser(func, hash_type='ssdeep'):
                     for op in block["ops"]:
 
                         if "opcode" in op:
+                            op['opcode'] = generalize_opcode(op['opcode'])
                             opcodes.append(op["opcode"])
                             opcodes2 = opcodes2 + op["opcode"] + "; "
                             # hash_opcodes.append(hasher(op["opcode"]))
@@ -93,7 +130,7 @@ def op_parser(func, hash_type='ssdeep'):
 
                             else:
                                 types += str(find_group(aaa))
-                                print("From group:", find_group(aaa))
+                                #print("From group:", find_group(aaa))
 
                     if "jump" in op:
                         jumps = jumps + str(op["jump"]) + "; "
@@ -107,8 +144,8 @@ def op_parser(func, hash_type='ssdeep'):
                     item['block'] = block["addr"]
                     item['types'] = types
                     item['opcodes'] = opcodes2
-                    item['hashssdeep'] = hasher(types)  # ppdeep.hash(opcodes2)
-                    item['hash'] = (hashlib.md5(types.encode())).hexdigest()
+                    item['hashssdeep'] = hasher(opcodes2)  # ppdeep.hash(opcodes2)
+                    item['hash'] = (hashlib.md5(opcodes2.encode())).hexdigest()
                     item['jumps'] = jumps
                     item['fails'] = fails
                     blocks[mi] = item
