@@ -59,6 +59,11 @@ def incidence_matr_gen(lks):
     return matr
 
 
+def debug_links(p1_nodes, p2_nodes):
+    for x in range(0, min(len(p1_nodes), len(p2_nodes))):
+        print(f"{x} :: {p1_nodes[x]['old_label']} -> {p2_nodes[x]['old_label']}")
+
+
 def links_two_program(p1_funcs, p2_funcs, lks1, lks2):
     #print("Generate matrices...")
     matrix1 = incidence_matr_gen(lks1)
@@ -76,6 +81,7 @@ def links_two_program(p1_funcs, p2_funcs, lks1, lks2):
 
 
     # НАЧАЛО Отладка
+    debug_links(p1_nodes, p2_nodes)
     # file_martix1 = open("./Debug/twoFuncDebug/fileMatrix1.txt", 'w')
     # file_martix1.write(f"{path_cfg1}  {label_map_path1} \n")
     # for i in range(1, len(matrix1)):

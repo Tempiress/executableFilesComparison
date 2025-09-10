@@ -29,8 +29,8 @@ def run(p1, p2):
     # 1. Создание папок с CFG файлами с помощью Radare2
     cfga = CFGAnalyzer()
     print("Analyze Executable...")
-    p1_funcs = cfga.analyze_executable(p1)
-    p2_funcs = cfga.analyze_executable(p2)
+    p1_funcs = cfga.analyze_executable(p1, "D:\\programming2025\\MyResearch\\cfg1\\")
+    p2_funcs = cfga.analyze_executable(p2, "D:\\programming2025\\MyResearch\\cfg2\\")
 
     print("get call graphs...")
     # Создание файла связей блоков (Imports)

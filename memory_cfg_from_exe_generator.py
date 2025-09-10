@@ -10,7 +10,7 @@ class CFGAnalyzer:
         self.cfg_cache = {}  # Кэш для хранения CFG в памяти
         self.call_graphs = {}  # Кэш для графов вызовов
 
-    def analyze_executable(self, exe_dist: str) -> Dict[str, dict]:
+    def analyze_executable(self, exe_dist: str, save_path) -> Dict[str, dict]:
         """
         Анализирует исполняемый файл и возвращает CFG в памяти
         :param exe_dist: Путь к исполняемому файлу
@@ -48,6 +48,9 @@ class CFGAnalyzer:
                     "cfg": cfg_json,
                     "name": func_name
                 }
+
+                with open(save_path + f"{func_name}.txt", "w") as file:
+                    file.write(str(cfg_json))
 
             # Сохраняем в кэш
             self.cfg_cache[exe_dist] = cfg_data
