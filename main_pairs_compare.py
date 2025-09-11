@@ -45,7 +45,7 @@ def main_compare(matrix1, matrix2, p1_funks, p2_funks):
     # Сортировка пар по убыванию схожести
     PairWithSim.sort(key=lambda x: x["sim"], reverse=True)
 
-    print("find optimal pairs...")
+    # print("find optimal pairs...")
     # Выбор оптимальных пар
     used_p1 = set()
     used_p2 = set()
@@ -69,5 +69,5 @@ def main_compare(matrix1, matrix2, p1_funks, p2_funks):
             used_p2.add(g)
             counter += 1
 
-    print("End of main_compare \n")
+    # print("End of main_compare \n")
     return p1_nodes, p2_nodes

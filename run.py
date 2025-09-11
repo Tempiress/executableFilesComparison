@@ -47,6 +47,7 @@ def run(p1, p2):
 
      # matrix1, matrix2 = pad_matrix(matrix1, matrix2)
      # hh = hemming_prog(matrix1, matrix2)
+    print("\n")
     return hh
 
 

@@ -247,7 +247,7 @@ def hemming_prog(matrix1, matrix2, maxlen, p1_funk, p2_funk):
     chunk_size = 1000
     indices = [(i, j) for i in range(1, size_matrix) for j in range(1, size_matrix)]
     chunks = [indices[i:i + chunk_size] for i in range(0, len(indices), chunk_size)]
-    print(len(chunks))
+    #print(len(chunks))
     try:
         with concurrent.futures.ProcessPoolExecutor(1) as executor: #(max_workers=min(33, len(chunks))) as executor:
             # Создаем partial функцию с фиксированными аргументами
