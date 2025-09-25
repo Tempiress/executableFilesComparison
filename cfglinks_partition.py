@@ -82,11 +82,11 @@ def links_two_program(p1_funcs, p2_funcs, lks1, lks2):
 
     # НАЧАЛО Отладка
     debug_links(p1_nodes, p2_nodes)
-    # file_martix1 = open("./Debug/twoFuncDebug/fileMatrix1.txt", 'w')
-    # file_martix1.write(f"{path_cfg1}  {label_map_path1} \n")
-    # for i in range(1, len(matrix1)):
-    #     for j in range(1, len(matrix1)):
-    #         file_martix1.write(str(matrix1[i][j]))
+    # file_martix1 = open("./Debug/twoFuncDebuglabel_map_path1} \n")
+    #     # for i in range(1, len(matrix1)):
+    #     #     for j in range(1, len(matrix1)):
+    #     #         file_martix1.write(str(mat/fileMatrix1.txt", 'w')
+    # file_martix1.write(f"{path_cfg1}  {rix1[i][j]))
     #     file_martix1.write('\n')
     #
     #

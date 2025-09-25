@@ -40,7 +40,7 @@ class GroupInstructions:
         'CTI': ["BOUND", "CALL", "ENTER", "INT", "INTO", "IRET", "JA", "JAE", "JB", "JBE", "JC", "JCXZ", "JE", "JECXZ",
                 "JG", "JGE", "JL", "JLE", "JMP", "JNAE", "JNB", "JNBE", "JNC", "JNE", "JNG", "JNGE", "JNL", "JNLE",
                 "JNO", "JNP", "JNS", "JNZ", "JO", "JP", "JPE", "JPO", "JS", "JZ", "CALL", "LEAVE", "LOOP", "LOOPE",
-                "LOOPNE", "LOOPNZ", "LOOPZ", "RET", "CJMP", "UCALL", "IRCALL"],
+                "LOOPNE", "LOOPNZ", "LOOPZ", "RET", "CJMP", "UCALL", "IRCALL", "IRJMP", "RJMP", "RCALL"],
         'SI': ["CMPS", "CMPSB", "CMPSD", "CMPSW", "LODS", "LODSB", "LODSD", "LODSW", "MOVS", "MOVSB", "MOVSD", "MOVSW",
                "REP", "REPNE", "REPNZ", "REPE", "REPZ", "SCAS", "SCASB", "SCASD", "SCASW", "STOS", "STOSB", "STOSD",
                "STOSW"],
@@ -127,8 +127,8 @@ def op_parser(func, hash_type='ssdeep'):
                     item['block'] = block["addr"]
                     item['types'] = types
                     item['opcodes'] = opcodes2
-                    item['hashssdeep'] = hasher(opcodes2)  # ppdeep.hash(opcodes2)
-                    item['hash'] = (hashlib.md5(opcodes2.encode())).hexdigest()
+                    item['hashssdeep'] = hasher(types)  # ppdeep.hash(opcodes2)
+                    item['hash'] = (hashlib.md5(types.encode())).hexdigest()
                     item['jumps'] = jumps
                     item['fails'] = fails
                     item['number_group'] = group_numbers

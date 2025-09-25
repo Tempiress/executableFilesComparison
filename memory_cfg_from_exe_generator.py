@@ -49,8 +49,8 @@ class CFGAnalyzer:
                     "name": func_name
                 }
 
-                with open(save_path + f"{func_name}.txt", "w") as file:
-                    file.write(str(cfg_json))
+                #with open(save_path + f"{func_name}.txt", "w") as file:
+                #    file.write(str(cfg_json))
 
             # Сохраняем в кэш
             self.cfg_cache[exe_dist] = cfg_data
@@ -79,8 +79,8 @@ class CFGAnalyzer:
             # Получаем граф вызовов
             call_graph =r2.cmdj("agCj")
 
-            #with open("debug_json.json", "w") as f:
-             #   json.dump(call_graph, f)
+            with open("debug_json.json", "w") as f:
+                json.dump(call_graph, f)
 
             self.call_graphs[exe_dist] = call_graph
             return call_graph
