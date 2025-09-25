@@ -24,6 +24,24 @@ def deletefiles(dir):
             print(f"skip dir: {file}")
 
 
+
+def cfgAdder(call_graph, p_funcs):
+    exiting_names = {func["name"] for func in call_graph}
+
+    for p_func in p_funcs.values():
+        pfunc_name = p_func['cfg'][0]['name']
+        if pfunc_name not in exiting_names:
+            new_item = {
+                "name": p_func["name"],
+                "size": p_func["cfg"][0]["size"],
+                "imports": {}
+            }
+            call_graph.append(new_item)
+            exiting_names.add(pfunc_name)
+
+    return call_graph
+
+
 def run(p1, p2):
     print("Compare two programs:" + p1 + " " + p2)
     # 1. Создание папок с CFG файлами с помощью Radare2
@@ -32,10 +50,16 @@ def run(p1, p2):
     p1_funcs = cfga.analyze_executable(p1)
     p2_funcs = cfga.analyze_executable(p2)
 
+
     print("get call graphs...")
     # Создание файла связей блоков (Imports)
     lks1 = cfga.get_call_graph(p1)
     lks2 = cfga.get_call_graph(p2)
+
+    # Создание файла связей блоков (Imports)
+    lks1 = cfgAdder(cfga.get_call_graph(p1), p1_funcs)
+    lks2 = cfgAdder(cfga.get_call_graph(p2), p2_funcs)
+
 
     matrix1, matrix2 = links_two_program(p1_funcs, p2_funcs, lks1, lks2)
     # u = hemming_prog(matrix1, matrix2)
