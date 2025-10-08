@@ -61,6 +61,20 @@ class GroupInstructions:
         return list(self.groups).index(group)
 
 
+    def group_number_parser(self, group: str):
+        g = int(group)
+        if g < 10:
+            return group
+        elif g == 10:
+            return "A"
+        elif g == 11:
+            return "B"
+        elif g == 12:
+            return "C"
+        elif g == 13:
+            return "D"
+
+
 # Функция генерации JSON объекта, c добавлением хеша ssdeep
 def op_parser(func, hash_type='ssdeep'):
     """
@@ -112,7 +126,7 @@ def op_parser(func, hash_type='ssdeep'):
 
                             else:
                                 types += str(gi.find_group(aaa))
-                                group_numbers += str(gi.find_group_index(gi.find_group(aaa)))
+                                group_numbers += gi.group_number_parser(str(gi.find_group_index(gi.find_group(aaa))))
                                 # print("From group:", gi.find_group(aaa))
 
                     if "jump" in op:
