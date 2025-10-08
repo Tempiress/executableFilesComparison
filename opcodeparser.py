@@ -2,6 +2,7 @@ import hashlib
 import json
 import re
 import ppdeep
+import Levenshtein
 # from thefuzz import fuzz
 
 
@@ -60,19 +61,31 @@ def generalize_opcode(opcode):
 def find_group(instruction):
 
     groups = {
-    'DTI' : ["BSWAP","CBW","CDQ","CDQE","CMOVA","CMOVAE","CMOVB","CMOVBE","CMOVC","CMOVE","CMOVG","CMOVGE","CMOVL","COMVLE","CMOVNA","CMOVNAE","CMOVNB","CMOVNBE","CMOVNC","CMOVNE","CMOVNG","CMOVNGE","CMOVNL","CMOVNLE","CMOVNO","CMOVNP","CMOVNS","CMOVNZ","CMOVO","CMOVP","CMOVPE","CMOVPO","CMOVS","CMOVZ","CMPXCHG","CMPXCHG8B","CQO","CQO","CWD","CWDE","MOV","MOVABS","MOVABS","AL","AX","GAX","RAX","MOVSX","MOVZX","POP","POPA","POPAD","PUSH","PUSHA","PUSHAD","XADD","XCHG", "RPUSH"],
-    'BAI' : ["ADC","ADD","CMP","DEC","DIV","IDIV","IMUL","INC","MUL","NEG","SBB","SUB", "ACMP"],
-    'DAI' : ["AAA","AAD","AAM","AAS","DAA","DAS"],
-    'LI'  : ["AND","NOT","OR","XOR"],
-    'SHRI' : ["RCL","RCR","ROL","ROR","SAL","SAR","SHL","SHLD","SHR","SHRD"],
-    'BBI' : ["BSF","BSR","BT","BTC","BTR","BTS","SETA","SETAE","SETB","SETBE","SETC","SETE","SETG","SETGE","SETL","SETLE","SETNA","SETNAE","SETNB","SETNBE","SETNC","SETNE","SETNG","SETNGE","SETNL","SETNLE","SETNO","SETNP","SETNS","SETNZ","SETO","SETP","SETPE","SETPO","SETS","SETZ","TEST"],
-    'CTI' : ["BOUND","CALL","ENTER","INT","INTO","IRET","JA","JAE","JB","JBE","JC","JCXZ","JE","JECXZ","JG","JGE","JL","JLE","JMP","JNAE","JNB","JNBE","JNC","JNE","JNG","JNGE","JNL","JNLE","JNO","JNP","JNS","JNZ","JO","JP","JPE","JPO","JS","JZ","CALL","LEAVE","LOOP","LOOPE","LOOPNE","LOOPNZ","LOOPZ","RET", "CJMP", "UCALL", "IRCALL"],
-    'SI' : ["CMPS","CMPSB","CMPSD","CMPSW","LODS","LODSB","LODSD","LODSW","MOVS","MOVSB","MOVSD","MOVSW","REP","REPNE","REPNZ","REPE","REPZ","SCAS","SCASB","SCASD","SCASW","STOS","STOSB","STOSD","STOSW"],
-    'IOI' : ["IN","INS","INSB","INSD","INSW","OUT","OUTS","OUTSB","OUTSD","OUTSW"],
-    'FCI' : ["CLC","CLD","CLI","CMC","LAHF","POPF","POPFL","PUSHF","PUSHFL","SAHF","STC","STD","STI"],
-    'SRI' : ["LDS","LES","LFS","LGS","LSS"],
-    'MLI' : ["CPUID","LEA","NOP","UD2","XLAT","XLATB"]
-
+        'DTI': ["BSWAP", "CBW", "CDQ", "CDQE", "CMOVA", "CMOVAE", "CMOVB", "CMOVBE", "CMOVC", "CMOVE", "CMOVG",
+                "CMOVGE", "CMOVL", "COMVLE", "CMOVNA", "CMOVNAE", "CMOVNB", "CMOVNBE", "CMOVNC", "CMOVNE", "CMOVNG",
+                "CMOVNGE", "CMOVNL", "CMOVNLE", "CMOVNO", "CMOVNP", "CMOVNS", "CMOVNZ", "CMOVO", "CMOVP", "CMOVPE",
+                "CMOVPO", "CMOVS", "CMOVZ", "CMPXCHG", "CMPXCHG8B", "CQO", "CQO", "CWD", "CWDE", "MOV", "MOVABS",
+                "MOVABS", "AL", "AX", "GAX", "RAX", "MOVSX", "MOVZX", "POP", "POPA", "POPAD", "PUSH", "PUSHA", "PUSHAD",
+                "XADD", "XCHG", "RPUSH"],
+        'BAI': ["ADC", "ADD", "CMP", "DEC", "DIV", "IDIV", "IMUL", "INC", "MUL", "NEG", "SBB", "SUB", "ACMP"],
+        'DAI': ["AAA", "AAD", "AAM", "AAS", "DAA", "DAS"],
+        'LI': ["AND", "NOT", "OR", "XOR"],
+        'SHRI': ["RCL", "RCR", "ROL", "ROR", "SAL", "SAR", "SHL", "SHLD", "SHR", "SHRD"],
+        'BBI': ["BSF", "BSR", "BT", "BTC", "BTR", "BTS", "SETA", "SETAE", "SETB", "SETBE", "SETC", "SETE", "SETG",
+                "SETGE", "SETL", "SETLE", "SETNA", "SETNAE", "SETNB", "SETNBE", "SETNC", "SETNE", "SETNG", "SETNGE",
+                "SETNL", "SETNLE", "SETNO", "SETNP", "SETNS", "SETNZ", "SETO", "SETP", "SETPE", "SETPO", "SETS", "SETZ",
+                "TEST"],
+        'CTI': ["BOUND", "CALL", "ENTER", "INT", "INTO", "IRET", "JA", "JAE", "JB", "JBE", "JC", "JCXZ", "JE", "JECXZ",
+                "JG", "JGE", "JL", "JLE", "JMP", "JNAE", "JNB", "JNBE", "JNC", "JNE", "JNG", "JNGE", "JNL", "JNLE",
+                "JNO", "JNP", "JNS", "JNZ", "JO", "JP", "JPE", "JPO", "JS", "JZ", "CALL", "LEAVE", "LOOP", "LOOPE",
+                "LOOPNE", "LOOPNZ", "LOOPZ", "RET", "CJMP", "UCALL", "IRCALL", "IRJMP", "RJMP", "RCALL"],
+        'SI': ["CMPS", "CMPSB", "CMPSD", "CMPSW", "LODS", "LODSB", "LODSD", "LODSW", "MOVS", "MOVSB", "MOVSD", "MOVSW",
+               "REP", "REPNE", "REPNZ", "REPE", "REPZ", "SCAS", "SCASB", "SCASD", "SCASW", "STOS", "STOSB", "STOSD",
+               "STOSW"],
+        'IOI': ["IN", "INS", "INSB", "INSD", "INSW", "OUT", "OUTS", "OUTSB", "OUTSD", "OUTSW"],
+        'FCI': ["CLC", "CLD", "CLI", "CMC", "LAHF", "POPF", "POPFL", "PUSHF", "PUSHFL", "SAHF", "STC", "STD", "STI"],
+        'SRI': ["LDS", "LES", "LFS", "LGS", "LSS"],
+        'MLI': ["CPUID", "LEA", "NOP", "UD2", "XLAT", "XLATB"]
     }
 
     for group_name, instructions in groups.items():
@@ -179,7 +192,7 @@ def find_similar_blocks(json_data1, json_data2):
                 hash_equal = 0
 
             compare_hash = compare_data['hashssdeep']
-
+            editdistance = Levenshtein.distance()
             similarity = ppdeep.compare(block_hash, compare_hash) # fuzz.ratio(block_hash, compare_hash)
 
             similar_blocks[klen] = {
@@ -187,6 +200,7 @@ def find_similar_blocks(json_data1, json_data2):
                 'similar_to': compare_id,
                 'simcount': similarity,
                 'simequal': hash_equal
+                #'editdistance': #TODO расстояние на строках, графах/ p235
             }
             klen += 1
     klen = 0
