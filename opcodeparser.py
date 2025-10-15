@@ -57,9 +57,7 @@ def generalize_opcode(opcode):
     return opcode
 
 
-
-def find_group(instruction):
-
+class GroupInstructions:
     groups = {
         'DTI': ["BSWAP", "CBW", "CDQ", "CDQE", "CMOVA", "CMOVAE", "CMOVB", "CMOVBE", "CMOVC", "CMOVE", "CMOVG",
                 "CMOVGE", "CMOVL", "COMVLE", "CMOVNA", "CMOVNAE", "CMOVNB", "CMOVNBE", "CMOVNC", "CMOVNE", "CMOVNG",
@@ -88,10 +86,35 @@ def find_group(instruction):
         'MLI': ["CPUID", "LEA", "NOP", "UD2", "XLAT", "XLATB"]
     }
 
-    for group_name, instructions in groups.items():
-        if instruction in instructions:
-            return group_name
-    return False
+    # for group_name, instructions in groups.items():
+    #     if instruction in instructions:
+    #         return group_name
+    # return False
+
+
+    def find_group(self, instruction):
+
+        for group_name, instructions in self.groups.items():
+            if instruction in instructions:
+                return group_name
+        return False
+
+    def find_group_index(self, group: str):
+        return list(self.groups).index(group)
+
+
+    def group_number_parser(self, group: str):
+        g = int(group)
+        if g < 10:
+            return group
+        elif g == 10:
+            return "A"
+        elif g == 11:
+            return "B"
+        elif g == 12:
+            return "C"
+        elif g == 13:
+            return "D"
 
 
 # Функция генерации JSON объекта, c добавлением хеша ssdeep
@@ -106,6 +129,7 @@ def op_parser(func, hash_type='ssdeep'):
     # with open(path, 'r') as f:
     # json_text = f.read()
     # data = json.loads(json_text)
+    gi = GroupInstructions()
     hasher = create_hasher(hash_type)
     mi = 0
     blocks = {}
@@ -122,6 +146,7 @@ def op_parser(func, hash_type='ssdeep'):
                 hash_opcodes2 = ""
                 jumps = ""
                 fails = ""
+                group_numbers = ""
 
                 if "ops" in block:
 
@@ -137,12 +162,14 @@ def op_parser(func, hash_type='ssdeep'):
 
                             if aaa == 'NULL':
                                 types += "NULL"
+                                group_numbers += "13"
 
-                            elif find_group(aaa) == False:
+                            elif gi.find_group(aaa) == False:
                                 raise NotImplementedError("'type' is not in dictionary: " + str(aaa))
 
                             else:
-                                types += str(find_group(aaa))
+                                types += str(gi.find_group(aaa))
+                                group_numbers += gi.group_number_parser(str(gi.find_group_index(gi.find_group(aaa))))
                                 #print("From group:", find_group(aaa))
 
                     if "jump" in op:
@@ -161,6 +188,7 @@ def op_parser(func, hash_type='ssdeep'):
                     item['hash'] = (hashlib.md5(opcodes2.encode())).hexdigest()
                     item['jumps'] = jumps
                     item['fails'] = fails
+                    item['number_group'] = group_numbers
                     blocks[mi] = item
     myjsondata = json.dumps(blocks)
     # print("op_parser")
@@ -192,15 +220,15 @@ def find_similar_blocks(json_data1, json_data2):
                 hash_equal = 0
 
             compare_hash = compare_data['hashssdeep']
-            editdistance = Levenshtein.distance()
+            #editdistance = Levenshtein.distance()
             similarity = ppdeep.compare(block_hash, compare_hash) # fuzz.ratio(block_hash, compare_hash)
 
             similar_blocks[klen] = {
                 'block': block_id,
                 'similar_to': compare_id,
                 'simcount': similarity,
-                'simequal': hash_equal
-                #'editdistance': #TODO расстояние на строках, графах/ p235
+                'simequal': hash_equal,
+                'editdistance': Levenshtein.distance(block_data["number_group"], compare_data["number_group"])  #TODO расстояние на строках, графах/ p235
             }
             klen += 1
     klen = 0
