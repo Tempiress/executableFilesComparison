@@ -10,7 +10,7 @@ from cfglinks_partition import links_two_program
 from memory_cfg_from_exe_generator import CFGAnalyzer
 from similarity import hemming_prog
 import asyncio
-
+from config import AnalysisConfig
 
 def deletefiles(dir):
     files = glob.glob((os.path.join(dir, '*')))
@@ -42,7 +42,10 @@ def cfgAdder(call_graph, p_funcs):
     return call_graph
 
 
-def run(p1, p2):
+
+
+
+def run(p1, p2, config):
     print("Compare two programs:" + p1 + " " + p2)
     # 1. Создание папок с CFG файлами с помощью Radare2
     cfga = CFGAnalyzer()
@@ -61,13 +64,13 @@ def run(p1, p2):
     lks2 = cfgAdder(cfga.get_call_graph(p2), p2_funcs)
 
 
-    matrix1, matrix2 = links_two_program(p1_funcs, p2_funcs, lks1, lks2)
+    matrix1, matrix2 = links_two_program(p1_funcs, p2_funcs, lks1, lks2, config=config)
     # u = hemming_prog(matrix1, matrix2)
 
     if len(matrix1) < len(matrix2):
-        hh = hemming_prog(matrix1, matrix2, max(len(matrix1), len(matrix2)), p1_funcs, p2_funcs)
+        hh = hemming_prog(matrix1, matrix2, max(len(matrix1), len(matrix2)), p1_funcs, p2_funcs, config=config)
     else:
-        hh = hemming_prog(matrix2, matrix1, max(len(matrix1), len(matrix2)), p2_funcs, p1_funcs)
+        hh = hemming_prog(matrix2, matrix1, max(len(matrix1), len(matrix2)), p2_funcs, p1_funcs, config=config)
 
      # matrix1, matrix2 = pad_matrix(matrix1, matrix2)
      # hh = hemming_prog(matrix1, matrix2)
@@ -106,13 +109,50 @@ def run(p1, p2):
 
 
 if __name__ == '__main__':
-    start_time = time.time()
-    # q = run("./coreutils-polybench-hashcat/c08/O0/expander", "./coreutils-polybench-hashcat/c08/O0/expander")
-    q = run("./coreutils-polybench-hashcat/aoc/O0/3mm", "./coreutils-polybench-hashcat/aoc/O2/3mm")
-    # q = run("./coreutils-polybench-hashcat/aoc/O0/keyspace", "./coreutils-polybench-hashcat/aoc/O2/keyspace")
-    #q = run("./coreutils-polybench-hashcat/aoc/O2/b2sum", "./coreutils-polybench-hashcat/aoc/O2/b2sum")
-    # q = run("./coreutils-polybench-hashcat/aoc/O2/b2sum", "./coreutils-polybench-hashcat/aoc/O2/b2sum")
-    # q = run("./coreutils-polybench-hashcat/aoc/O0/date", "./coreutils-polybench-hashcat/g07/O1/df")
-    print("Results:", round(q, 4))
-    end_time = time.time()
-    print(round(end_time - start_time, 4))
+     #block_hash = 'fc646b194d96a62b53ea6b5ee098dd56d39c7bd5dd9e5d72378dcf5fc4adb844'
+     #compare_hash = '4fb62730a0ebdcb2dc9c87cfbbc632b13d92a6b00f27c77531c3eea9cfd8cda7'
+     #similarity = ppdeep.compare(block_hash, compare_hash)  # fuzz.ratio(block_hash, compare_hash)
+     #start_time = time.time()
+     # q = run("./coreutils-polybench-hashcat/c08/O0/expander", "./coreutils-polybench-hashcat/c08/O0/expander")
+     p1 = "./coreutils-polybench-hashcat/aoc/O0/3mm"
+     p2 = "./coreutils-polybench-hashcat/aoc/O2/3mm"
+     cfg1 = AnalysisConfig(hash_type='ssdeep', instructions_mode='group')
+
+     # cfg1 = AnalysisConfig(hash_type='md5', instructions_mode='generalize')
+     q = run(p1, p2, cfg1)
+     print("Results:", round(q, 4))
+
+     #cfg2 = AnalysisConfig(hash_type='sha256', instructions_mode='group')
+     #q = run(p1, p2, config=AnalysisConfig(hash_type='sha256', instructions_mode='group'))
+
+     #cfg3 = AnalysisConfig(hash_type='ssdeep', instructions_mode='both')
+     #q = run(p1, p2, config=AnalysisConfig(hash_type='ssdeep', instructions_mode='both'))
+     # result_ssdeep_both = run(p1, p2, config=cfg3)
+     #cfg = AnalysisConfig(hash_type="ssdeep", instructions_mode="both")
+     #q = run("./coreutils-polybench-hashcat/aoc/O0/3mm", "./coreutils-polybench-hashcat/aoc/O2/3mm", config=cfg)
+     # q = run("./coreutils-polybench-hashcat/aoc/O0/keyspace", "./coreutils-polybench-hashcat/aoc/O2/keyspace")
+     #q = run("./coreutils-polybench-hashcat/aoc/O2/b2sum", "./coreutils-polybench-hashcat/aoc/O2/b2sum")
+     # q = run("./coreutils-polybench-hashcat/aoc/O2/b2sum", "./coreutils-polybench-hashcat/aoc/O2/b2sum")
+     # q = run("./coreutils-polybench-hashcat/aoc/O0/date", "./coreutils-polybench-hashcat/g07/O1/df")
+     #print("Results:", round(q, 4))
+     #end_time = time.time()
+     #print(round(end_time - start_time, 4))
+    # h_types = ["ssdeep", "md5", "sha256" ]
+    # i_modes = ["none", "generalize", "group", "both"]
+    #
+    # run_set = {}
+    # i = 0
+    # for h_type in h_types:
+    #     for i_m in i_modes:
+    #         cfg = AnalysisConfig(hash_type=h_type, instructions_mode=i_m)
+    #         q = run("./coreutils-polybench-hashcat/aoc/O0/3mm", "./coreutils-polybench-hashcat/aoc/O2/3mm", config=cfg)
+    #         print(f"set: |hash_type: {h_type}| instruction_mode: {i_m}")
+    #         print("Result:", round(q, 4))
+    #         run_set[i] = {
+    #             "h_type": h_type,
+    #             "i_m": i_m,
+    #             "result:": round(q, 4)
+    #         }
+    #         i+=1
+    #
+    # print(1)

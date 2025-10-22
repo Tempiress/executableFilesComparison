@@ -5,10 +5,10 @@ from progress.bar import Bar
 from similarity import similarity
 
 
-def main_compare_assist(args, p1_funks, p2_funks):
+def main_compare_assist(args, p1_funks, p2_funks, config):
     f, g = args
     # Сравнение функции
-    ssim, lndf = similarity(f, g, p1_funks, p2_funks)
+    ssim, lndf = similarity(f, g, p1_funks, p2_funks, config=config)
     return {
         "pair": (f, g),
         "sim": ssim,
@@ -16,7 +16,7 @@ def main_compare_assist(args, p1_funks, p2_funks):
         "num_block_in_second": lndf[1]}
 
 
-def main_compare(matrix1, matrix2, p1_funks, p2_funks):
+def main_compare(matrix1, matrix2, p1_funks, p2_funks, config):
     print("Start main_compare \n")
     # Генерация всех возможных пар
     Pairs = []
@@ -27,7 +27,7 @@ def main_compare(matrix1, matrix2, p1_funks, p2_funks):
     # Сравнение всех пар
     print(f"count numbers of comparisons: {len(Pairs)}")
 
-    worker = partial(main_compare_assist, p1_funks = p1_funks, p2_funks = p2_funks)
+    worker = partial(main_compare_assist, p1_funks = p1_funks, p2_funks = p2_funks, config=config)
 
     with concurrent.futures.ProcessPoolExecutor(1) as executor:#max_workers=min(50, os.cpu_count() * 2 + 2)) as executor:
         # Отправляем задачи более мелкими порциями

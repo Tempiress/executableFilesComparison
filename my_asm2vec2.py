@@ -6,6 +6,8 @@ from typing import Dict, List, Tuple, Any
 import json
 import numpy as np
 from collections import defaultdict
+import pickle
+
 
 # Добавляем путь к asm2vec
 ASM2VEC_PATH = r"D:\programming2025\MyResearch\asm2vec"
@@ -17,7 +19,7 @@ try:
     from asm2vec.asm import Function
     from asm2vec.asm import parse_instruction
     from asm2vec.model import Asm2Vec
-    from asm2vec.asm import parse_instruction
+    #from asm2vec.asm import parse_instruction
 
     print("✓ asm2vec успешно импортирован!")
 except :
@@ -54,7 +56,7 @@ class CFGAnalyzer:
                     "name": func_name
                 }
 
-            self.cfg_cache[exe_dist] = cfg_data
+            #self.cfg_cache[exe_dist] = cfg_data
             return cfg_data
 
         except Exception as e:
@@ -66,9 +68,9 @@ class CFGAnalyzer:
 
 
 class Asm2VecComparator:
-    def __init__(self, dimensions=200):
+    def __init__(self, dimensions=200, model = None):
         self.cfg_analyzer = CFGAnalyzer()
-        self.model = None
+        self.model = model
         self.dimensions = dimensions
 
     def extract_functions_for_asm2vec(self, cfg_data: dict) -> List[Function]:
@@ -159,47 +161,26 @@ class Asm2VecComparator:
 
 
 
-    def compare_programs(self, prog1_path: str, prog2_path: str):
+    def train_model_sets(self, list_programs):
         """
-        Сравнивает две программы используя asm2vec
+        Обучение модели
         """
-        print(f"\n=== Анализ программы 1: {prog1_path} ===")
-        cfg1 = self.cfg_analyzer.analyze_executable(prog1_path)
-        functions1 = self.extract_functions_for_asm2vec(cfg1)
 
+        p = []
+        for progr in list_programs:
+            cfg1 = self.cfg_analyzer.analyze_executable(progr)
+            p = p + self.extract_functions_for_asm2vec(cfg1)
 
-        print(f"\n=== Анализ программы 2: {prog2_path} ===")
-        cfg2 = self.cfg_analyzer.analyze_executable(prog2_path)
-        functions2 = self.extract_functions_for_asm2vec(cfg2)
+        print(f"Всего функций для обучения: {len(p)}")
 
-        print(f"\nНайдено функций: prog1 - {len(functions1)}, prog2 - {len(functions2)}")
-
-        # Объединяем функции для обучения
-        all_functions = functions1 + functions2
-        print(f"Всего функций для обучения: {len(all_functions)}")
-
-        if len(all_functions) < 2:
+        if len(p) < 2:
             print("Недостаточно функций для анализа!")
             return None
 
         # Обучаем модель
-        self.train_model(all_functions)
+        self.train_model(p)
+        return self.model
 
-        # Векторизуем функции
-        print("\n=== Векторизация функций ===")
-        vectors1 = self.vectorize_functions(functions1)
-        vectors2 = self.vectorize_functions(functions2)
-
-        print(f"Успешно векторизовано: {len(vectors1)} функций из prog1, {len(vectors2)} из prog2")
-
-        # Сравниваем функции
-        similarities = self.calculate_similarities(vectors1, vectors2)
-
-        return {
-            'prog1_vectors': vectors1,
-            'prog2_vectors': vectors2,
-            'similarities': similarities
-        }
 
     def calculate_similarities(self, vectors1: Dict[str, np.ndarray],
                                vectors2: Dict[str, np.ndarray]) -> List[Tuple]:
@@ -285,17 +266,7 @@ class Asm2VecComparator:
         else:
             print("\nПохожих функций не найдено (порог схожести: 0.3)")
 
-    def save_model(self, path: str):
-        if self.model:
-            print(f"Сохранение модели в {path}")
-            self.model.save(path)
-        else:
-            print("Модель не обучена, нечего сохранять.")
 
-    def load_model(self, path: str):
-        print(f"Загрузка модели из {path}")
-        self.model = Asm2Vec.load(path)
-        self.dimensions = self.model.d
 
 
     def compare_with_pretrained_model(self, prog1_path: str, prog2_path: str):
@@ -325,6 +296,48 @@ class Asm2VecComparator:
             "similarities": similarities
         }
 
+    def get_similar(self, p1, p2):
+
+        print(f"\n=== Анализ программы 1: {p1} ===")
+        cfg1 = self.cfg_analyzer.analyze_executable(p1)
+        functions1 = self.extract_functions_for_asm2vec(cfg1)
+
+        print(f"\n=== Анализ программы 2: {p2} ===")
+        cfg2 = self.cfg_analyzer.analyze_executable(p2)
+        functions2 = self.extract_functions_for_asm2vec(cfg2)
+
+        # Векторизуем функции
+        print("\n=== Векторизация функций ===")
+        vectors1 = self.vectorize_functions(functions1)
+        vectors2 = self.vectorize_functions(functions2)
+
+        print(f"Успешно векторизовано: {len(vectors1)} функций из prog1, {len(vectors2)} из prog2")
+
+        # Сравниваем функции
+        similarities = self.calculate_similarities(vectors1, vectors2)
+
+        return {
+            'prog1_vectors': vectors1,
+            'prog2_vectors': vectors2,
+            'similarities': similarities
+        }
+
+    def save_model(self, filepath:str):
+        if self.model is None:
+            print("Нет обученной модели для сохранения")
+            return
+
+        with open(filepath, "wb") as f:
+            pickle.dump(self.model, f)
+        print(f"Модель сохранена в  {filepath}")
+
+    def load_model(self, filepath: str):
+        with open(filepath, "rb") as f:
+            self.model = pickle.load(f)
+        print("Модель успешно загружена")
+
+
+
 
 def main():
 
@@ -332,19 +345,34 @@ def main():
 
     program1 = r"D:\programming2025\MyResearch\coreutils-polybench-hashcat\aoc\O0\3mm"
     program2 = r"D:\programming2025\MyResearch\coreutils-polybench-hashcat\aoc\O2\3mm"
+    program3 = r"D:\programming2025\MyResearch\coreutils-polybench-hashcat\aoc\O3\3mm"
 
-
-    #program1 = sys.executable  # Текущий Python интерпретатор
-    #program2 = sys.executable  # Тот же файл для теста
 
     print("=== СРАВНЕНИЕ ПРОГРАММ С ASM2VEC ===")
-    print(f"Программа 1: {program1}")
-    print(f"Программа 2: {program2}")
+    # list_programs = []
+    folder_path = "./train_programs"
+    # files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))
+    #list_programs = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+    #list_programs = list_programs[:2]
+    list_programs = []
+    list_programs.append(program1)
+    list_programs.append(program2)
+    print(list_programs)
+    # list_programs.append(program1)
+    # list_programs.append(program2)
+    # list_programs.append(program3)
 
     try:
-        results = comparator.compare_programs(program1, program2)
-        comparator.save_model("./")
-        comparator.print_comparison_results(results)
+        trained_model = comparator.train_model_sets(list_programs)
+        #comparator.save_model("./mm")
+        #comparator.load_model("./mm")
+        sim = comparator.compare_with_pretrained_model(program1, program2)
+        comparator.print_comparison_results(sim)
+        print("as")
+        #kasm = Asm2Vec(d=5, initial_alpha=0.025, min_alpha=0.001, jobs=5000)
+        #results = comparator.train_model_sets(list_programs)
+        #vectorise_results = kasm.to_vec(results)
+        #comparator.print_comparison_results(results)
 
     except Exception as e:
         print(f"Ошибка: {e}")

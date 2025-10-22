@@ -3,10 +3,11 @@ import json
 import re
 import ppdeep
 import Levenshtein
-# from thefuzz import fuzz
+import tlsh
+from thefuzz import fuzz
 
 
-def create_hasher(hash_type="ssdeep"):
+def create_hasher(hash_type):
     """
     Создает функцию хеширования в зависимости от типа.
     :param hash_type: Тип хеширования ("ssdeep", "md5", "sha256" и т.д.)
@@ -14,8 +15,8 @@ def create_hasher(hash_type="ssdeep"):
     """
     if hash_type == "ssdeep":
         return ppdeep.hash
-    elif hash_type == "md5":
-        return lambda x: hashlib.md5(x.encode()).hexdigest()
+    elif hash_type == "tlsh":
+        return lambda x: tlsh.hash(x)
     elif hash_type == "sha256":
         return lambda x: hashlib.sha256(x.encode()).hexdigest()
     else:
@@ -92,8 +93,8 @@ class GroupInstructions:
     # return False
 
 
-    def find_group(self, instruction):
-
+    def find_group(self, instruction:str):
+        instruction = instruction.upper()
         for group_name, instructions in self.groups.items():
             if instruction in instructions:
                 return group_name
@@ -118,7 +119,7 @@ class GroupInstructions:
 
 
 # Функция генерации JSON объекта, c добавлением хеша ssdeep
-def op_parser(func, hash_type='ssdeep'):
+def op_parser(func, config):
     """
     Начальный разделитель блоков CFG
     :param func: funk
@@ -129,8 +130,9 @@ def op_parser(func, hash_type='ssdeep'):
     # with open(path, 'r') as f:
     # json_text = f.read()
     # data = json.loads(json_text)
+
     gi = GroupInstructions()
-    hasher = create_hasher(hash_type)
+    hasher = create_hasher(config.hash_type)
     mi = 0
     blocks = {}
     # Проходим через элементы списка верхнего уровня
@@ -149,20 +151,31 @@ def op_parser(func, hash_type='ssdeep'):
                 group_numbers = ""
 
                 if "ops" in block:
-
                     for op in block["ops"]:
-
                         if "opcode" in op:
-                            op['opcode'] = generalize_opcode(op['opcode'])
-                            opcodes.append(op["opcode"])
-                            opcodes2 = opcodes2 + op["opcode"] + "; "
-                            # hash_opcodes.append(hasher(op["opcode"]))
-                            hash_opcodes2 = hash_opcodes2 + (op["opcode"]) + "; "
-                            aaa = op["type"].upper()
+                            opcode = op['opcode']
 
-                            if aaa == 'NULL':
+                            if config.instructions_mode in ['generalize']:
+                                opcode = generalize_opcode(opcode)
+                            if config.instructions_mode in ['group']:
+                                #opcode = gi.find_group(opcode) or opcode
+                                aaa = op["type"]
+                                if aaa == 'null':
+                                    opcode = 'NULL'
+                                else:
+                                    opcode = gi.find_group(aaa)
+
+
+
+                            opcodes.append(opcode)
+                            opcodes2 = opcodes2 + opcode + "; "
+                            # hash_opcodes.append(hasher(op["opcode"]))
+                            hash_opcodes2 = hash_opcodes2 + (opcode) + "; "
+
+                            aaa = op["type"]
+                            if aaa == 'null':
                                 types += "NULL"
-                                group_numbers += "13"
+                                group_numbers += "D"
 
                             elif gi.find_group(aaa) == False:
                                 raise NotImplementedError("'type' is not in dictionary: " + str(aaa))
@@ -170,13 +183,14 @@ def op_parser(func, hash_type='ssdeep'):
                             else:
                                 types += str(gi.find_group(aaa))
                                 group_numbers += gi.group_number_parser(str(gi.find_group_index(gi.find_group(aaa))))
-                                #print("From group:", find_group(aaa))
+                                # print("From group:", find_group(aaa))
 
                     if "jump" in op:
-                        jumps = jumps + str(op["jump"]) + "; "
+                        jumps = jumps + str(op["jump"]) + ";"
 
                     if "fail" in op:
-                        fails = fails + str(op["fail"]) + "; "
+                        fails = fails + str(op["fail"]) + ";"
+
 
                     mi = mi + 1
                     item = {}
@@ -184,7 +198,10 @@ def op_parser(func, hash_type='ssdeep'):
                     item['block'] = block["addr"]
                     item['types'] = types
                     item['opcodes'] = opcodes2
-                    item['hashssdeep'] = hasher(opcodes2)  # ppdeep.hash(opcodes2)
+                    if config.hash_type == "tlsh":
+                        item['hashssdeep'] = tlsh.hash(opcodes2.encode())
+                    else:
+                        item['hashssdeep'] = hasher(opcodes2)  # ppdeep.hash(opcodes2)
                     item['hash'] = (hashlib.md5(opcodes2.encode())).hexdigest()
                     item['jumps'] = jumps
                     item['fails'] = fails
@@ -196,7 +213,7 @@ def op_parser(func, hash_type='ssdeep'):
 
 
 #! Переписать в два цикла
-def find_similar_blocks(json_data1, json_data2):
+def find_similar_blocks(json_data1, json_data2, config):
     """
     Нахождение максимально похожих по степени сравнения блоков
     :param json_data1:
@@ -221,7 +238,12 @@ def find_similar_blocks(json_data1, json_data2):
 
             compare_hash = compare_data['hashssdeep']
             #editdistance = Levenshtein.distance()
-            similarity = ppdeep.compare(block_hash, compare_hash) # fuzz.ratio(block_hash, compare_hash)
+            if config.hash_type == 'ssdeep':
+                similarity = ppdeep.compare(block_hash, compare_hash) # fuzz.ratio(block_hash, compare_hash)
+            elif config.hash_type == 'tlsh':
+                similarity = tlsh.diff(block_hash, compare_hash)
+            else:
+                similarity = fuzz.ratio(block_hash, compare_hash)
 
             similar_blocks[klen] = {
                 'block': block_id,

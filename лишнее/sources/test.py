@@ -1,8 +1,4 @@
-import os
-import numpy as np
-import hashlib
-from similarity import similarity
-from opcodeparser import  op_parser
+
 # fi = 'cfg'
 # files1 = os.path.join(os.path.abspath(os.curdir),"_" ,fi)
 # files1 = os.path.abspath(os.curdir) + "_" + fi
@@ -56,8 +52,8 @@ from opcodeparser import  op_parser
 # s = arr[:, 1]
 # print(s)
 
-s = 'hei'
-s = s.encode()
+#s = 'hei'
+#s = s.encode()
 # hash_object = hashlib.sha224(s)
 # hex_dig = hash_object.hexdigest()
 #
@@ -76,7 +72,7 @@ s = s.encode()
 # print(ssim)
 # print(lndf)
 
-print('----------')
+#print('----------')
 
 # print(op_parser(file2))
 # similar_blocks = {}
@@ -93,10 +89,10 @@ print('----------')
 # print(len(similar_blocks) == 0)
 
 
-my_dict = {3: {'block': '2', 'simcount': 100, 'simequal': 1, 'similar_to': '2'}}
-first_key, first_value = my_dict.popitem()
-my_dict[first_key] = first_value
+#my_dict = {3: {'block': '2', 'simcount': 100, 'simequal': 1, 'similar_to': '2'}}
+#first_key, first_value = my_dict.popitem()
+#my_dict[first_key] = first_value
 
-print("Первый ключ:", first_key)
-print("Первое значение:", first_value)
+#print("Первый ключ:", first_key)
+#print("Первое значение:", first_value)
 

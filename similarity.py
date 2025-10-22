@@ -8,7 +8,7 @@ from renamefile import *
 import pickle
 from functools import lru_cache
 import orjson # В 2-3x быстрее стандартного json
-
+from  config import safe_load_json
 def create_matrix2(json_data1, json_data2):
     """
     Генерация матрицы
@@ -16,8 +16,10 @@ def create_matrix2(json_data1, json_data2):
     :return:
     """
 
-    data1 = orjson.loads(json_data1)
-    data2 = orjson.loads(json_data2)
+    #data1 = orjson.loads(json_data1)
+    #data2 = orjson.loads(json_data2)
+    data1 = safe_load_json(json_data1)
+    data2 = safe_load_json(json_data2)
     size_matrix = max(len(data1), len(data2)) + 2
 
     # Создаем массивы индексов для быстрой векторизации
@@ -47,18 +49,19 @@ def create_matrix2(json_data1, json_data2):
 
 
 @lru_cache(maxsize=1000)
-def cached_op_parser(func_dict_tuple, cfg):
+def cached_op_parser(func_dict_tuple, cfg, config):
     # Преобразуем кортеж обратно в dict
     func_dict = dict(func_dict_tuple)
-    return op_parser(func_dict[cfg])
+    return op_parser(func_dict[cfg], config=config)
 
 @lru_cache(maxsize=1000)
-def cached_similarity(cfg1, cfg2, p1_funks_tuple, p2_funks_tuple):
+def cached_similarity(cfg1, cfg2, p1_funks_tuple, p2_funks_tuple, config):
     p1_funks = dict(p1_funks_tuple)
     p2_funks = dict(p2_funks_tuple)
-    return similarity(cfg1, cfg2, p1_funks, p2_funks)
+    return similarity(cfg1, cfg2, p1_funks, p2_funks, config=config)
 
-def similarity(cfg1, cfg2, p1_funks, p2_funks):
+
+def similarity(cfg1, cfg2, p1_funks, p2_funks, config):
     try:
         # Проверяем типы входных данных
         if not isinstance(cfg1, str) or not isinstance(cfg2, str):
@@ -71,21 +74,21 @@ def similarity(cfg1, cfg2, p1_funks, p2_funks):
             return 0.0, 0
 
         try:
-            op1 = op_parser(p1_funks[cfg1])
-            op2 = op_parser(p2_funks[cfg2])
+            op1 = op_parser(p1_funks[cfg1], config=config)
+            op2 = op_parser(p2_funks[cfg2], config=config)
         except Exception as e:
             print(f"Ошибка в op_parser: {e}", file=sys.stderr)
             return 0.0, 0
 
         try:
-            data1 = orjson.loads(op1)
-            data2 = orjson.loads(op2)
+            data1 = safe_load_json(op1)
+            data2 = safe_load_json(op2)
         except Exception as e:
             print(f"Ошибка в orjson.loads: {e}", file=sys.stderr)
             return 0.0, 0
 
         try:
-            sim_array = find_similar_blocks(op1, op2)
+            sim_array = find_similar_blocks(op1, op2, config= config)
             rename_op2, diff = rename_block(data1, data2, sim_array)
         except Exception as e:
             print(f"Ошибка в find_similar_blocks/rename_block: {e}", file=sys.stderr)
@@ -151,7 +154,7 @@ def compute_element(i, j, mat1, mat2, funk1, funk2):
     sim_j = similarity(mat1[0][j], mat2[0][j], funk1, funk2)[0]
     return (1 ^ (mat1[i][j] ^ mat2[i][j])) * (sim_i + sim_j)
 
-def process_chunk(chunk_indices, matrix1, matrix2, p1_funk, p2_funk):
+def process_chunk(chunk_indices, matrix1, matrix2, p1_funk, p2_funk, config):
     results = []
     # print(f"Размеры матриц: matrix1={len(matrix1)}x{len(matrix1[0])}, matrix2={len(matrix2)}x{len(matrix2[0])}", file=sys.stderr)
     
@@ -190,8 +193,8 @@ def process_chunk(chunk_indices, matrix1, matrix2, p1_funk, p2_funk):
             
             # Вычисляем similarity
             try:
-                sim_i, _ = similarity(val1_i, val2_i, p1_funk, p2_funk)
-                sim_j, _ = similarity(val1_j, val2_j, p1_funk, p2_funk)
+                sim_i, _ = similarity(val1_i, val2_i, p1_funk, p2_funk, config=config)
+                sim_j, _ = similarity(val1_j, val2_j, p1_funk, p2_funk, config=config)
             except Exception as e:
                 print(f"Ошибка в similarity: {e}", file=sys.stderr)
                 continue
@@ -218,7 +221,7 @@ def process_chunk(chunk_indices, matrix1, matrix2, p1_funk, p2_funk):
             
     return results
 
-def hemming_prog(matrix1, matrix2, maxlen, p1_funk, p2_funk):
+def hemming_prog(matrix1, matrix2, maxlen, p1_funk, p2_funk, config):
     import concurrent.futures
     from functools import partial
     import numpy as np
@@ -237,7 +240,8 @@ def hemming_prog(matrix1, matrix2, maxlen, p1_funk, p2_funk):
                           matrix1=matrix1,
                           matrix2=matrix2,
                           p1_funk=p1_funk,
-                          p2_funk=p2_funk)
+                          p2_funk=p2_funk,
+                          config=config)
             
             futures = [executor.submit(worker, chunk) for chunk in chunks]
             results = []

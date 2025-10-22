@@ -59,11 +59,11 @@ def incidence_matr_gen(lks):
     return matr
 
 
-def links_two_program(p1_funcs, p2_funcs, lks1, lks2):
+def links_two_program(p1_funcs, p2_funcs, lks1, lks2, config):
     # print("Generate matrices...")
     matrix1 = incidence_matr_gen(lks1)
     matrix2 = incidence_matr_gen(lks2)
-    p1_nodes, p2_nodes = main_compare(matrix1, matrix2, p1_funcs, p2_funcs)
+    p1_nodes, p2_nodes = main_compare(matrix1, matrix2, p1_funcs, p2_funcs, config=config)
     # print("processing p1_nodes...")
 
     for p1_node in p1_nodes:
