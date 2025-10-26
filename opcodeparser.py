@@ -5,6 +5,9 @@ import ppdeep
 import Levenshtein
 import tlsh
 from thefuzz import fuzz
+import sys
+sys.path.append(r"D:\programming2025\MyResearch\pyLZJD")
+from pyLZJD import lzjd
 
 
 def create_hasher(hash_type):
@@ -17,8 +20,9 @@ def create_hasher(hash_type):
         return ppdeep.hash
     elif hash_type == "tlsh":
         return lambda x: tlsh.hash(x)
-    elif hash_type == "sha256":
-        return lambda x: hashlib.sha256(x.encode()).hexdigest()
+    elif hash_type == "lzjd":
+        return lambda x: lzjd.digest(x)
+
     else:
         raise ValueError(f"Unsupported hash type: {hash_type}")
 
@@ -158,7 +162,7 @@ def op_parser(func, config):
                             if config.instructions_mode in ['generalize']:
                                 opcode = generalize_opcode(opcode)
                             if config.instructions_mode in ['group']:
-                                #opcode = gi.find_group(opcode) or opcode
+                                # opcode = gi.find_group(opcode) or opcode
                                 aaa = op["type"]
                                 if aaa == 'null':
                                     opcode = 'NULL'
@@ -198,10 +202,7 @@ def op_parser(func, config):
                     item['block'] = block["addr"]
                     item['types'] = types
                     item['opcodes'] = opcodes2
-                    if config.hash_type == "tlsh":
-                        item['hashssdeep'] = tlsh.hash(opcodes2.encode())
-                    else:
-                        item['hashssdeep'] = hasher(opcodes2)  # ppdeep.hash(opcodes2)
+                    item['fuzzyhash'] = hasher(opcodes2.encode())  # ppdeep.hash(opcodes2)
                     item['hash'] = (hashlib.md5(opcodes2.encode())).hexdigest()
                     item['jumps'] = jumps
                     item['fails'] = fails
@@ -226,7 +227,7 @@ def find_similar_blocks(json_data1, json_data2, config):
     similar_blocks = {}
     klen = 0
     for block_id, block_data in data1.items():
-        block_hash = block_data['hashssdeep']
+        block_hash = block_data['fuzzyhash']
 
         hash_equal = -1
         for compare_id, compare_data in data2.items():
@@ -236,12 +237,14 @@ def find_similar_blocks(json_data1, json_data2, config):
             else:
                 hash_equal = 0
 
-            compare_hash = compare_data['hashssdeep']
+            compare_hash = compare_data['fuzzyhash']
             #editdistance = Levenshtein.distance()
             if config.hash_type == 'ssdeep':
                 similarity = ppdeep.compare(block_hash, compare_hash) # fuzz.ratio(block_hash, compare_hash)
             elif config.hash_type == 'tlsh':
                 similarity = tlsh.diff(block_hash, compare_hash)
+            elif config.hash_type == 'lzjd':
+                similarity = lzjd.sim(block_hash, compare_hash)
             else:
                 similarity = fuzz.ratio(block_hash, compare_hash)
 
