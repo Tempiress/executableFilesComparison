@@ -17,17 +17,27 @@ from opcodeparser import op_parser
 from renamefile import rename_block
 
 
-def create_matrix2(json_data1, json_data2):
+def create_matrix2(data1, data2):
     """
     Генерация матрицы
     :param json_data1, json_data2:
     :return:
     """
 
+    # Безопасно вычисляем максимальный индекс блока (ID), который реально существует
+    max_id = 0
+    for d in (data1, data2):
+        for block in d.values():
+            max_id = max(max_id, int(block.get("NumBlock", 0)), int(block.get("NumBlockLinks", 0)),
+                         int(block.get("NumBlockFail", 0)))
+
+    # Матрица всегда должна вмещать самый большой ID
+    size_matrix = max_id + 2
+
     # data1 = orjson.loads(json_data1)
     # data2 = orjson.loads(json_data2)
-    data1 = safe_load_json(json_data1)
-    data2 = safe_load_json(json_data2)
+    data1 = safe_load_json(data1)
+    data2 = safe_load_json(data2)
     size_matrix = max(len(data1), len(data2)) + 2
 
     # Создаем массивы индексов для быстрой векторизации
@@ -97,6 +107,9 @@ def fast_similarity(pref1, pref2, config):
         # Этап 4: Матрицы и вычисления
         umatrix1, umatrix2 = create_matrix2(pref1.b_links, b_links2)
 
+        # ЗАЩИТА ОТ BROADCAST-ОШИБКИ: берем реальный размер, чтобы NumPy ничего не обрезал
+        actual_size = min(size_matrix0, umatrix1.shape[0])
+
         # УБРАЛИ: sim_dict = orjson.loads(sim_array)
         # (он у нас уже есть в виде словаря с Этапа 1)
 
@@ -114,11 +127,13 @@ def fast_similarity(pref1, pref2, config):
                     continue
 
         # ... (Вся матричная математика numpy остается без изменений) ...
-        m1_core = umatrix1[1:size_matrix0, 1:size_matrix0]
-        m2_core = umatrix2[1:size_matrix0, 1:size_matrix0]
+        m1_core = umatrix1[1:actual_size, 1:actual_size]
+        m2_core = umatrix2[1:actual_size, 1:actual_size]
 
         xor_result = 1 ^ (m1_core ^ m2_core)
-        sim_sum = sim_cache[1:size_matrix0][:, np.newaxis] + sim_cache[1:size_matrix0]
+        # Вырезаем нужный кусок из sim_cache, чтобы он в точности соответствовал размеру матриц
+        sim_slice = sim_cache[1:actual_size]
+        sim_sum = sim_slice[:, np.newaxis] + sim_slice
 
         A = np.sum(xor_result * sim_sum)
 

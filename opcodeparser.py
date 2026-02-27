@@ -230,7 +230,6 @@ def op_parser(func, config):
     return blocks #myjsondata
 
 
-# ! Переписать в два цикла
 def find_similar_blocks(json_data1, json_data2, config):
     """
     Нахождение максимально похожих по степени сравнения блоков
@@ -271,15 +270,25 @@ def find_similar_blocks(json_data1, json_data2, config):
 
                 edit_dist = cached_levenshtein(block_data["number_group"], compare_data["number_group"])
 
-            all_pairs.append({
-                'block': block_id,
-                'similar_to': compare_id,
-                'simcount': similarity,
-                'simequal': hash_equal,
-                'editdistance': edit_dist,
-                'is_same_id': 1 if block_data['block'] == compare_data['block'] else 0
-                # расстояние на строках, графах/ p235
-            })
+            # ДОБАВЛЯЕМ В ВИДЕ КОРТЕЖА (tuple)
+            # Минус перед edit_dist нужен, чтобы сортировка по убыванию поставила наименьшее расстояние наверх
+            all_pairs.append((hash_equal,
+                              1 if block_data['block'] == compare_data['block'] else 0,
+                              similarity,
+                              -edit_dist,
+                              block_id,
+                              compare_id))
+
+            all_pairs.sort(reverse=True)
+            # all_pairs.append({
+            #     'block': block_id,
+            #     'similar_to': compare_id,
+            #     'simcount': similarity,
+            #     'simequal': hash_equal,
+            #     'editdistance': edit_dist,
+            #     'is_same_id': 1 if block_data['block'] == compare_data['block'] else 0
+            #     # расстояние на строках, графах/ p235
+            # })
 
 
 
@@ -288,7 +297,7 @@ def find_similar_blocks(json_data1, json_data2, config):
     # 2. ПОТОМ СОВПАДЕНИЕ АДРЕСОВ (1) - это гарантирует 100% для одинаковых функций!
     # 3. Потом simcount (по убыванию)
     # 4. Редакционное расстояние (по возрастанию)
-    all_pairs.sort(key=lambda x: (x['simequal'], x['is_same_id'], x['simcount'], -x['editdistance']), reverse=True)
+    # all_pairs.sort(key=lambda x: (x['simequal'], x['is_same_id'], x['simcount'], -x['editdistance']), reverse=True)
 
     similar_blocks_output = {}
     used_blocks1 = set()
@@ -296,11 +305,17 @@ def find_similar_blocks(json_data1, json_data2, config):
     klen = 0
 
     for pair in all_pairs:
-        b1 = pair['block']
-        b2 = pair['similar_to']
+        b1 = pair[4]#pair['block']
+        b2 = pair[5]#pair['similar_to']
 
         if b1 not in used_blocks1 and b2 not in used_blocks2:
-            similar_blocks_output[klen] = pair
+            similar_blocks_output[klen] = {
+                'block': b1,
+                'similar_to': b2,
+                'simcount': pair[2],
+                'simequal': pair[0],
+                'editdistance': -pair[3]
+            }
             used_blocks1.add(b1)
             used_blocks2.add(b2)
             klen += 1

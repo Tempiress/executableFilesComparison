@@ -211,3 +211,4 @@ if __name__ == '__main__':
 # print( max(0, (300 - tlsh.diff(f1, f2))/300))
 # f1 = fuzzyhashlib.sdhash("agkjsekgjd'rpgier")
 # print(f1)
+
