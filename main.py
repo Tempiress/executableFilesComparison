@@ -53,7 +53,6 @@ def process_file_pair(aq, bq, file, l1_dir, l2_dir0, l2_dir, f):
         print(f"Error processing {aq} and {bq}: {e}")
 
 
-
 def start_program():
     # Берём один файл и сравниваем его все виды
     fileName = "3mm"

@@ -2,7 +2,7 @@ import json
 import logging
 
 import orjson
-
+from config import safe_load_json
 
 def block_links(json_data1):
     """
@@ -10,17 +10,16 @@ def block_links(json_data1):
     :param json_data1:
     :return:
     """
-    data = orjson.loads(json_data1)
+    data = json_data1 # orjson.loads(json_data1)
     links = {}
 
     for target_block, target_block_data in data.items():
-
         block_links = 0
         num_block_links = 0
         # Если нет блока добавляем на след блок
         if target_block_data["jumps"] is None or target_block_data["jumps"] == '':
 
-            next_block = str(int(target_block) + 1)
+            next_block = int(target_block) + 1
             if int(next_block) <= len(data):
                 links[target_block] = {
                     "block": target_block_data["block"],
@@ -70,6 +69,5 @@ def block_links(json_data1):
             links[target_block]["fail"] = target_fail
             links[target_block]["NumBlockFail"] = nbf
     # print("block_links")
-    return orjson.dumps(links)
-
+    return links #orjson.dumps(links)
 

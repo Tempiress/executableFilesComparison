@@ -19,6 +19,7 @@ try:
     from asm2vec.asm import Function
     from asm2vec.asm import parse_instruction
     from asm2vec.model import Asm2Vec
+    from asm2vec.parse import parse_fp
     #from asm2vec.asm import parse_instruction
 
     print("✓ asm2vec успешно импортирован!")
@@ -72,7 +73,7 @@ class Asm2VecComparator:
     def __init__(self, dimensions=200, model = None):
         self.cfg_analyzer = CFGAnalyzer()
         if model is None:
-            self.model = Asm2Vec(d=dimensions, initial_alpha=0.025, min_alpha=0.001, jobs=15)
+            self.model = Asm2Vec(d=dimensions, initial_alpha=0.025, min_alpha=0.001, jobs=150)
         else:
             self.model = model
         self.dimensions = dimensions
@@ -143,32 +144,26 @@ class Asm2VecComparator:
 
         return functions
 
-    def train_model(self, functions: List[Function]):
-        """
-        Обучает модель asm2vec на предоставленных функциях
-        """
-        #if len(functions) < 2:
-            #print("Недостаточно функций для обучения (нужно минимум 2)")
-            #return
+    def train_model(self, list_programs: List[Function]):
+        """обучение"""
+        # 1. Собрать ВСЕ функции из всех программ
+        all_functions = []
+        for program in list_programs:
+            cfg = self.cfg_analyzer.analyze_executable(program)
+            functions = list(self.extract_functions_for_asm2vec(cfg))
+            all_functions.extend(functions)
 
-        #print(f"Обучение модели на {len(functions)} функциях...")
+        print(f"Всего функций для обучения: {len(all_functions)}")
 
-        try:
-            # Создаем модель
-            #self.model = Asm2Vec(d=self.dimensions, initial_alpha=0.025, min_alpha=0.001, jobs=15)
-            train_repo = self.model.make_function_repo(functions)
-            # Обучаем модель
-            #print("Начало обучения...")
-            for ep in range(10):
-                self.model.train(train_repo)
-            #print("Модель обучена!")
-            return self.model
+        # Создание репозитория
+        train_repo = self.model.make_function_repo(all_functions)
 
-        except Exception as e:
-            print(f"Ошибка при обучении модели: {e}")
-            import traceback
-            traceback.print_exc()
+        # 3. Обучение 10 эпох на всём репозитории
+        for epoch in range(5):
+            print(f"Эпоха {epoch + 1}/5")
+            self.model.train(train_repo)
 
+        return self.model
 
     def vectorize_functions(self, functions: List[Function]) -> Dict[str, np.ndarray]:
         """
@@ -203,14 +198,14 @@ class Asm2VecComparator:
         """
         Обучение модели
         """
-
+        self.train_model([list_programs])
         #p = []
-        for progr in list_programs:
-            cfg1 = self.cfg_analyzer.analyze_executable(progr)
+        # for progr in list_programs:
+        #     cfg1 = self.cfg_analyzer.analyze_executable(progr)
             #p = p + self.extract_functions_for_asm2vec(cfg1)
             #print(f"Всего функций для обучения: {len(self.extract_functions_for_asm2vec(cfg1))}")
-            for func in self.extract_functions_for_asm2vec(cfg1):
-                self.train_model([func])
+            # for func in self.extract_functions_for_asm2vec(cfg1):
+            #     self.train_model([func])
 
         #print(f"Всего функций для обучения: {len(p)}")
 
@@ -307,22 +302,30 @@ class Asm2VecComparator:
         else:
             print("\nПохожих функций не найдено (порог схожести: 0.3)")
 
+    def compare_with_trained_model(self, query_program):
+        """Сравнение новой программы с обученной моделью"""
+        # 1. Извлечь функции из query
+        cfg = self.cfg_analyzer.analyze_executable(query_program)
+        query_functions = list(self.extract_functions_for_asm2vec(cfg))
 
+        # 2. Estimate векторов (веса модели фиксированы)
+        query_vectors = self.vectorize_functions(query_functions)
 
+        return query_vectors
 
     def compare_with_pretrained_model(self, prog1_path: str, prog2_path: str):
         if not self.model:
             print("! Модель не загружена")
             return None
 
-        # 1) Анализируем и извлекаем функции
+        # Анализ и извлечение функции
         cfg1 = self.cfg_analyzer.analyze_executable(prog1_path)
         functions1 = self.extract_functions_for_asm2vec(cfg1)
 
         cfg2 = self.cfg_analyzer.analyze_executable(prog2_path)
         functions2 = self.extract_functions_for_asm2vec(cfg2)
 
-        # 2) Сразу векторизуем, используя загруженную модель
+        # Сразу векторизуем, используя загруженную модель
         # Обучение (train_model) пропускается
         print("Векторизация функций с использованием предобученной модели...")
         vectors1 = self.vectorize_functions(functions1)
@@ -381,7 +384,7 @@ class Asm2VecComparator:
 
 
 def main():
-    comparator = Asm2VecComparator(dimensions=1000)
+    comparator = Asm2VecComparator(dimensions=20)
 
     program1 = r"D:\programming2025\MyResearch\coreutils-polybench-hashcat\aoc\O0\3mm"
     program2 = r"D:\programming2025\MyResearch\coreutils-polybench-hashcat\aoc\O2\3mm"
@@ -392,9 +395,9 @@ def main():
     folder_path = "./train_programs"
     files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
     list_programs = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
-    list_programs = list_programs[3:5]
-    #list_programs = []
-    #list_programs.append(program1)
+    #list_programs = list_programs[7:10]
+    list_programs = []
+    list_programs.append(program1)
     #list_programs.append(program1)
     print(list_programs)
     #list_programs.append(program1)
@@ -414,11 +417,23 @@ def main():
         # comparator.print_comparison_results(sim2)
         # =====================================================================
         # ========================Test 2=======================================
-        trained_model_0 = comparator.train_model_sets(list_programs)
-        sim = comparator.compare_with_pretrained_model(program1, program1)
-        comparator.save_model("./mm")
+        #trained_model_0 = comparator.train_model(list_programs) # train_model_sets(list_programs)
+        #sim = comparator.compare_with_pretrained_model(program1, program1)
+        #comparator.save_model("./mm")
         # #comparator.load_model("./mm")
-        comparator.print_comparison_results(sim)
+        #comparator.print_comparison_results(sim)
+
+
+        with open('./train_programs/HW8.exe.asm', 'r') as fp:
+            funcs = parse_fp(fp)
+
+        model = Asm2Vec(d=200)
+        train_repo = model.make_function_repo(funcs)
+        model.train(train_repo)
+        comparator2 = Asm2VecComparator(dimensions=20, model = model)
+        sim = comparator2.compare_with_pretrained_model(program1, program2)
+        comparator2.print_comparison_results(sim)
+        #comparator.load_model()
 
         # for i in range(20):
         #     trained_model_ = comparator.train_model_sets(list_programs)

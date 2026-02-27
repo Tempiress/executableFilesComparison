@@ -40,7 +40,7 @@ class CFGAnalyzer:
                 func_addr = func["addr"]
 
                 # Получаем CFG для функции
-                r2.cmd(f"agf @ {func_addr}")
+                # r2.cmd(f"agf @ {func_addr}")
                 cfg_json = r2.cmdj(f"agj {func_addr}")
 
                 cfg_data[func_name] = {

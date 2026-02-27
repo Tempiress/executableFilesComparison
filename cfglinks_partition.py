@@ -4,7 +4,7 @@ import numpy as np
 from line_profiler import profile
 from progress.bar import Bar
 
-from main_pairs_compare import main_compare
+from main_pairs_compare import main_compare, main_compareGPU
 from opcodeparser import *
 
 
@@ -63,8 +63,19 @@ def links_two_program(p1_funcs, p2_funcs, lks1, lks2, config):
     # print("Generate matrices...")
     matrix1 = incidence_matr_gen(lks1)
     matrix2 = incidence_matr_gen(lks2)
-    p1_nodes, p2_nodes = main_compare(matrix1, matrix2, p1_funcs, p2_funcs, config=config)
-    # print("processing p1_nodes...")
+
+    #p1_nodes_GPU, p2_nodes_GPU = main_compareGPU(matrix1, matrix2, p1_funcs, p2_funcs, config=config)
+    #p1_nodes_CUSTOM, p2_nodes_CUSTOM = main_compare(matrix1, matrix2, p1_funcs, p2_funcs, config=config)
+
+    if config.compare_mode == 'GPU':
+        p1_nodes, p2_nodes = main_compareGPU(matrix1, matrix2, p1_funcs, p2_funcs, config=config)
+    elif config.compare_mode == 'custom':
+        p1_nodes, p2_nodes = main_compare(matrix1, matrix2, p1_funcs, p2_funcs, config=config)
+    else:
+        raise NotImplementedError("unimportant compare mod! Stopping..")
+
+
+    print("processing p1_nodes...")
 
     for p1_node in p1_nodes:
         p1_node['new_label'] + 1 # Потому что матрица сдвинута
@@ -73,6 +84,8 @@ def links_two_program(p1_funcs, p2_funcs, lks1, lks2, config):
             if col_index != p1_node['new_label']:
                 swap_columns(matrix1, col_index, p1_node['new_label'] + 1)
                 swap_rows(matrix1, col_index, p1_node['new_label'] + 1)
+
+
 
 
     # НАЧАЛО Отладка

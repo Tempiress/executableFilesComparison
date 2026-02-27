@@ -3,7 +3,7 @@ r2pipe
 progress
 numpy
 
-
+Levenshtein
 ppdeep
 asyncio
 orjson
