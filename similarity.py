@@ -147,50 +147,6 @@ def fast_similarity(pref1, pref2, config):
         return 0.0, 0
 
 
-# --- ФУНКЦИЯ ДЛЯ ПРОЦЕССОВ ---
-def process_chunk_fast(chunk_indices, matrix1, matrix2, labels1, labels2, cache1, cache2, config):
-    results = []
-    for i, j in chunk_indices:
-        try:
-            if i - 1 >= len(labels1) or j - 1 >= len(labels2): continue
-
-            name1 = labels1[i - 1]
-            name2 = labels2[j - 1]
-
-            # Получаем ребра (топология)
-            try:
-                edge1 = int(matrix1[i][j])
-                edge2 = int(matrix2[i][j])
-            except (ValueError, TypeError):
-                edge1, edge2 = 0, 0
-
-            xor_res = 1 ^ (edge1 ^ edge2)
-
-            # Получаем имена узлов (функций) для сравнения
-            n1_i, n2_i = labels1[i - 1], labels2[i - 1]
-            n1_j, n2_j = labels1[j - 1], labels2[j - 1]
-
-            # Достаем из кэша готовые объекты
-            # Если функции нет в кэше, пропускаем или считаем 0
-            if n1_i not in cache1 or n2_i not in cache2:
-                sim_i = 0.0
-            else:
-                sim_i, _ = fast_similarity(cache1[n1_i], cache2[n2_i], config=config)
-
-            if n1_j not in cache1 or n2_j not in cache2:
-                sim_j = 0.0
-            else:
-                sim_j, _ = fast_similarity(cache1[n1_j], cache2[n2_j], config=config)
-
-            res = xor_res * (sim_i + sim_j)
-            # print(res)
-            results.append(res)
-
-        except Exception as e:
-            continue
-    return results
-
-
 # --- Точка входа  ---
 def hemming_prog(matrix1, matrix2, maxlen, p1_funks, p2_funks, config):
     # Извлекаем метки
@@ -220,43 +176,44 @@ def hemming_prog(matrix1, matrix2, maxlen, p1_funks, p2_funks, config):
         if name in p2_funks:
             cache2[name] = PrecomputedFunc(name, p2_funks[name], config)
 
-    # Параллельная обработка
     size_matrix = len(matrix1)
-    indices = [(i, j) for i in range(1, size_matrix) for j in range(1, size_matrix)]
+    if size_matrix <= 1: return 0.0
 
-    # Увеличиваем размер чанка, чтобы меньше вызывать процессы
-    chunk_size = 2000
-    chunks = [indices[i:i + chunk_size] for i in range(0, len(indices), chunk_size)]
+    print("Computing pairwise function similarities...")
+    max_k = min(len(labels1), len(labels2), size_matrix - 1)
+    sim_array = np.zeros(max_k, dtype=np.float32)
 
-    results = []
+    for k in range(max_k):
+        n1_k, n2_k = labels1[k], labels2[k]
+        sim_val = 0.0
+        if n1_k in cache1 and n2_k in cache2:
+            sim_val, _ = fast_similarity(cache1[n1_k], cache2[n2_k], config=config)
+        sim_array[k] = sim_val
 
-    # cpu_count для выбора числа процессов
-    max_workers = os.cpu_count() or 4
-
-    print(f"Starting parallel comparison on {max_workers} workers...")
-
+    print("Computing final matrix distances using broadcasting...")
     try:
-        for chunk in chunks:
-            res = process_chunk_fast(
-                             chunk_indices=chunk,
-                             matrix1=matrix1,
-                             matrix2=matrix2,
-                             labels1=labels1,
-                             labels2=labels2,
-                             cache1=cache1,  # Передаем кэш
-                             cache2=cache2,
-                             config=config)
-            if res: results.extend(res)
+        if hasattr(matrix1, 'astype'):
+            m1_core = matrix1[1:max_k+1, 1:max_k+1].astype(np.float32).astype(np.int8)
+            m2_core = matrix2[1:max_k+1, 1:max_k+1].astype(np.float32).astype(np.int8)
+        else:
+            raise ValueError()
+    except Exception:
+        # Fallback for Python lists or uncastable objects
+        m1_core = np.zeros((max_k, max_k), dtype=np.int8)
+        m2_core = np.zeros((max_k, max_k), dtype=np.int8)
+        for i in range(max_k):
+            for j in range(max_k):
+                try: m1_core[i, j] = int(matrix1[i+1][j+1])
+                except: pass
+                
+                try: m2_core[i, j] = int(matrix2[i+1][j+1])
+                except: pass
 
+    xor_res = 1 ^ (m1_core ^ m2_core)
+    sim_sum = sim_array[:, np.newaxis] + sim_array
+    
+    A = np.sum(xor_res * sim_sum)
 
-
-    except Exception as e:
-        print(f"Global error: {e}", file=sys.stderr)
-        return 0.0
-
-    if not results: return 0.0
-
-    A = sum(results)
     if maxlen <= 1: return 0.0
 
     C = float(A) / ((maxlen - 1) * (maxlen - 1) * 2)

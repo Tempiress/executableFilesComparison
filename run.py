@@ -136,15 +136,15 @@ if __name__ == '__main__':
      exe2 = r"H:\ResearchWorkCUDA\asm2vec-pytorch-master\Cleanmgr+.exe"
 
 
-     p5 = "./coreutils-polybench-hashcat/g10/O2/wc"
-     p6 = "./coreutils-polybench-hashcat/aoc/O2/wc"
+     p5 = "./coreutils-polybench-hashcat/g10/O2/expr"
+     p6 = "./coreutils-polybench-hashcat/aoc/O2/expr"
      #score = run_asm2vec_comparison(p1, p2)
 
      #print(f"{'-' * 10}\n Asm2vecCuda resut:\n{score}{'-'* 10}")
      #cfg1 = AnalysisConfig(hash_type='nilsimsa', instructions_mode='group')
 
-     cfg1 = AnalysisConfig(hash_type='ssdeep', instructions_mode='group', bin1_path=p1, bin2_path=p1, compare_mode='GPU')
-     q = run(p1, p1, cfg1)
+     cfg1 = AnalysisConfig(hash_type='ssdeep', instructions_mode='group', bin1_path=p5, bin2_path=p6, compare_mode='GPU')
+     q = run(p5, p6, cfg1)
      print("Results:", round(q, 4))
 
      finish = datetime.datetime.now()

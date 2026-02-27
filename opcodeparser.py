@@ -1,7 +1,7 @@
 import hashlib
 import json
 import re
-import ppdeep
+import pyssdeep
 import Levenshtein
 import tlsh
 from thefuzz import fuzz
@@ -15,7 +15,7 @@ from nilsimsa import Nilsimsa, compare_digests
 
 @lru_cache(maxsize=100000)
 def cached_ppdeep_compare(hash1, hash2):
-    return ppdeep.compare(hash1, hash2)
+    return pyssdeep.compare(hash1, hash2)
 
 @lru_cache(maxsize=100000)
 def cached_levenshtein(str1, str2):
@@ -24,7 +24,7 @@ def cached_levenshtein(str1, str2):
 
 def create_hasher(hash_type):
     if hash_type == "ssdeep":
-        return ppdeep.hash  # ppdeep должен быть установлен
+        return pyssdeep.get_hash_buffer  # ssdeep hashing
     elif hash_type == "tlsh":
         def tlsh_wrapper(data):
             if len(data) < 50:
@@ -107,7 +107,7 @@ class GroupInstructions:
         'FCI': ["CLC", "CLD", "CLI", "CMC", "LAHF", "POPF", "POPFL", "PUSHF", "PUSHFL", "SAHF", "STC", "STD", "STI"],
         'SRI': ["LDS", "LES", "LFS", "LGS", "LSS"],
         'MLI': ["CPUID", "LEA", "NOP", "UD2", "XLAT", "XLATB"],
-        'UNKNOWN': ["IO", "ILL", "LOAD", "STORE"]
+        'UNKNOWN': ["IO", "ILL", "LOAD", "STORE", "TRAP"]
     }
 
     def find_group(self, instruction: str):
@@ -279,7 +279,7 @@ def find_similar_blocks(json_data1, json_data2, config):
                               block_id,
                               compare_id))
 
-            all_pairs.sort(reverse=True)
+    all_pairs.sort(reverse=True)
             # all_pairs.append({
             #     'block': block_id,
             #     'similar_to': compare_id,
