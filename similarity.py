@@ -24,21 +24,20 @@ def create_matrix2(data1, data2):
     :return:
     """
 
+    # data1 = orjson.loads(json_data1)
+    # data2 = orjson.loads(json_data2)
+    data1 = safe_load_json(data1)
+    data2 = safe_load_json(data2)
+
     # Безопасно вычисляем максимальный индекс блока (ID), который реально существует
     max_id = 0
     for d in (data1, data2):
         for block in d.values():
             max_id = max(max_id, int(block.get("NumBlock", 0)), int(block.get("NumBlockLinks", 0)),
                          int(block.get("NumBlockFail", 0)))
-
-    # Матрица всегда должна вмещать самый большой ID
+                         
+    # Матрица всегда должна вмещать самый большой ID 
     size_matrix = max_id + 2
-
-    # data1 = orjson.loads(json_data1)
-    # data2 = orjson.loads(json_data2)
-    data1 = safe_load_json(data1)
-    data2 = safe_load_json(data2)
-    size_matrix = max(len(data1), len(data2)) + 2
 
     # Создаем массивы индексов для быстрой векторизации
     indices1 = [(int(block_data["NumBlock"]), int(block_data["NumBlockLinks"])) for block_data in data1.values()]

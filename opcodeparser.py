@@ -107,7 +107,7 @@ class GroupInstructions:
         'FCI': ["CLC", "CLD", "CLI", "CMC", "LAHF", "POPF", "POPFL", "PUSHF", "PUSHFL", "SAHF", "STC", "STD", "STI"],
         'SRI': ["LDS", "LES", "LFS", "LGS", "LSS"],
         'MLI': ["CPUID", "LEA", "NOP", "UD2", "XLAT", "XLATB"],
-        'UNKNOWN': ["IO", "ILL", "LOAD", "STORE", "TRAP"]
+        'UNKNOWN': ["IO", "ILL", "LOAD", "STORE", "TRAP", "MJMP", "SWI"]
     }
 
     def find_group(self, instruction: str):
@@ -171,12 +171,13 @@ def op_parser(func, config):
                         if "opcode" in op:
                             # Получаем базовый опкод
                             base_opcode = op['opcode']
+                            opcode = base_opcode
 
                             # Обработка режимов
-                            if config.instructions_mode in ['generalize']:
+                            if config.instructions_mode in ['generalize', 'both']:
                                 opcode = generalize_opcode(base_opcode)
 
-                            if config.instructions_mode in ['group']:
+                            if config.instructions_mode in ['group', 'both']:
                                 # opcode = gi.find_group(opcode) or opcode
                                 aaa = op.get("type", "null")
                                 if aaa == 'null':
@@ -190,7 +191,7 @@ def op_parser(func, config):
                                         raise NotImplementedError("'type' is not in dictionary: " + str(aaa))
                                     else:
                                         # Если режим не generalize и не group, оставляем как есть
-                                        opcode = base_opcode
+                                        opcode = base_opcode if config.instructions_mode == 'group' else opcode
 
                             opcodes.append(opcode)
                             opcodes2 = opcodes2 + opcode + "; "

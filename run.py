@@ -17,7 +17,7 @@ import re
 import random
 import torch
 import numpy as np
-
+from pathlib import Path
 
 def set_seed(seed=42):
     random.seed(seed)
@@ -58,10 +58,9 @@ def cfg_adder(call_graph, p_funcs):
     return call_graph
 
 
-def run(p1, p2, config):
-
+def extract_features(p1, p2):
+    p1, p2 = str(p1), str(p2)
     print("Compare two programs:" + p1 + " " + p2)
-    # 1. Создание папок с CFG файлами с помощью Radare2
     cfg_analyzer = CFGAnalyzer()
     print("Analyze Executable...")
     print("Analyze Executable p1...")
@@ -70,14 +69,11 @@ def run(p1, p2, config):
     p2_funcs = cfg_analyzer.analyze_executable(p2)
 
     print("get call graphs...")
-    # Создание файла связей блоков (Imports)
-    lks1 = cfg_analyzer.get_call_graph(p1)
-    lks2 = cfg_analyzer.get_call_graph(p2)
-
-    # Создание файла связей блоков (Imports)
     lks1 = cfg_adder(cfg_analyzer.get_call_graph(p1), p1_funcs)
     lks2 = cfg_adder(cfg_analyzer.get_call_graph(p2), p2_funcs)
+    return p1_funcs, p2_funcs, lks1, lks2
 
+def run_with_features(p1_funcs, p2_funcs, lks1, lks2, config):
     matrix1, matrix2 = links_two_program(p1_funcs, p2_funcs, lks1, lks2, config=config)
 
     if len(matrix1) < len(matrix2):
@@ -138,77 +134,71 @@ if __name__ == '__main__':
 
      p5 = "./coreutils-polybench-hashcat/g10/O2/expr"
      p6 = "./coreutils-polybench-hashcat/aoc/O2/expr"
+
+     python1 = "./train_programs/python-3.12.7-amd64.exe"
+     python2 = "./train_programs/python-3.14.3-amd64.exe"
      #score = run_asm2vec_comparison(p1, p2)
 
      #print(f"{'-' * 10}\n Asm2vecCuda resut:\n{score}{'-'* 10}")
-     #cfg1 = AnalysisConfig(hash_type='nilsimsa', instructions_mode='group')
+     #cfg1 = AnalysisConfig(hash_type='nilsimsa', instructions_mode='generalize')
 
-     cfg1 = AnalysisConfig(hash_type='ssdeep', instructions_mode='group', bin1_path=p5, bin2_path=p6, compare_mode='GPU')
-     q = run(p5, p6, cfg1)
-     print("Results:", round(q, 4))
-
-     finish = datetime.datetime.now()
-     print('Время работы: ' + str(finish - start))
-     #cfg2 = AnalysisConfig(hash_type='sha256', instructions_mode='group')
-     #q = run(p1, p2, config=AnalysisConfig(hash_type='sha256', instructions_mode='group'))
-
-     #cfg3 = AnalysisConfig(hash_type='ssdeep', instructions_mode='both')
-     #q = run(p1, p2, config=AnalysisConfig(hash_type='ssdeep', instructions_mode='both'))
-     # result_ssdeep_both = run(p1, p2, config=cfg3)
-     #cfg = AnalysisConfig(hash_type="ssdeep", instructions_mode="both")
-     #q = run("./coreutils-polybench-hashcat/aoc/O0/3mm", "./coreutils-polybench-hashcat/aoc/O2/3mm", config=cfg)
-     # q = run("./coreutils-polybench-hashcat/aoc/O0/keyspace", "./coreutils-polybench-hashcat/aoc/O2/keyspace")
-     #q = run("./coreutils-polybench-hashcat/aoc/O2/b2sum", "./coreutils-polybench-hashcat/aoc/O2/b2sum")
-     # q = run("./coreutils-polybench-hashcat/aoc/O2/b2sum", "./coreutils-polybench-hashcat/aoc/O2/b2sum")
-     # q = run("./coreutils-polybench-hashcat/aoc/O0/date", "./coreutils-polybench-hashcat/g07/O1/df")
+     #cfg1 = AnalysisConfig(hash_type='ssdeep', instructions_mode='generalize', bin1_path=p5, bin2_path=p6, compare_mode='GPU')
+     #q = run(p5, p6, cfg1)
      #print("Results:", round(q, 4))
-     #end_time = time.time()
-     #print(round(end_time - start_time, 4))
-    # h_types = ["ssdeep", "nilsimsa" ]
-    # i_modes = ["none", "generalize", "group"]
-    #
-    # run_set = {}
-    # i = 0
-    # for h_type in h_types:
-    #     for i_m in i_modes:
-    #         cfg = AnalysisConfig(hash_type=h_type, instructions_mode=i_m)
-    #         q = run("./coreutils-polybench-hashcat/aoc/O0/3mm", "./coreutils-polybench-hashcat/aoc/O2/3mm", config=cfg)
-    #         print(f"set: |hash_type: {h_type}| instruction_mode: {i_m}")
-    #         print("Result:", round(q, 4))
-    #         run_set[i] = {
-    #             "h_type": h_type,
-    #             "i_m": i_m,
-    #             "result:": round(q, 4)
-    #         }
-    #         i+=1
-    #
-    # print(1)
+
+     #finish = datetime.datetime.now()
+     #print('Время работы: ' + str(finish - start))
+
+     
+     clear_files_dir = Path("./coreutils-polybench-hashcat/aoc/O0/")
+     obf_files_dir = Path("./all_obf/")
+    
+     clear_files = os.listdir(clear_files_dir)
+
+     if os.path.exists("./Debug/results.txt"):
+         with open("./Debug/results.txt", "r", encoding="utf-8") as f:
+             results_content = f.read()
+         clear_files = list(filter(lambda x: x not in results_content, clear_files))
+
+     hash_types = ['ssdeep', 'nilsimsa']
+     instructions_modes = ['generalize', 'group', 'both']
+     compare_modes = ['GPU', 'custom']
+     with open("./Debug/results.txt", "a", encoding="utf-8") as f:
+        with open("./Debug/error.txt", "a", encoding="utf-8") as err_f: 
+            for filename in clear_files:
+                print("-" * 50)
+                if filename in os.listdir(obf_files_dir):
+                    p1_path = Path.joinpath(clear_files_dir, filename)
+                    p2_path = Path.joinpath(obf_files_dir, filename)
+                    
+                    try:
+                        print(f"Extracting features for {filename}...")
+                        p1_funcs, p2_funcs, lks1, lks2 = extract_features(p1_path, p2_path)
+                    except Exception as e:
+                        print(f"Failed to extract features for {filename}: {e}")
+                        err_f.write(f"Feature extraction error: {str(filename)}: {e} \n")
+                        err_f.flush()
+                        continue
+
+                    for hash_type in hash_types:
+                        for instruction_mode in instructions_modes:
+                            for compare_mode in compare_modes:
+                                try:
+                                    cfg = AnalysisConfig(hash_type = hash_type, instructions_mode = instruction_mode, compare_mode = compare_mode, bin1_path = str(p1_path), bin2_path = str(p2_path))
+                                    res = run_with_features(p1_funcs, p2_funcs, lks1, lks2, cfg)
+                                    print(f"=========> result: h_type: {hash_type} // i_mode: {instruction_mode} // c_mode: {compare_mode} // filename: {str(filename)}: {round(res, 4)} <=========") 
+                                    f.write(f"result: h_type: {hash_type} // i_mode: {instruction_mode} // c_mode: {compare_mode} // filename: {str(filename)}: {round(res, 4)} \n")
+                                    f.flush()
+                                except Exception as e:
+                                    print(f"=========> error: h_type: {hash_type} // i_mode: {instruction_mode} // c_mode: {compare_mode} // filename: {str(filename)}: {e} <=========")                           
+                                    err_f.write(f"error: h_type: {hash_type} // i_mode: {instruction_mode} // c_mode: {compare_mode} // filename: {str(filename)}: {e} \n")
+                                    err_f.flush()
+        print("-" * 50)
+        
+        
+
+     
 
 
 
-# -------------------------------------------
-#block_hash = 'fc646b194d96a62b53ea6b5ee098dd56d39c7bd5dd9e5d72378dcf5fc4adb844'
-#compare_hash = '4fb62730a0ebdcb2dc9c87cfbbc632b13d92a6b00f27c77531c3eea9cfd8cda7'
-#similarity = ppdeep.compare(block_hash, compare_hash)  # fuzz.ratio(block_hash, compare_hash)
-#start_time = time.time()
-# q = run("./coreutils-polybench-hashcat/c08/O0/expander", "./coreutils-polybench-hashcat/c08/O0/expander")
-
-
-# f1 = ppdeep.hash_from_file(".\\requirements.txt")
-# f2 = ppdeep.hash_from_file(".\\requirementscopy.txt")
-# print(f1)
-# print(f2)
-# print(ppdeep.compare(f1, f2)/100)
-
-#f1 = tlsh.hash("weyaquiryawo;yiaseghsehgdkrg;jdfhnbh;rthweyaquiryawo;yiaseghsehgdkrg;jdfhnbh;rthweyaquiryawo;yiaseghsehgdkrg;jdfhnbh;rthweyaquiryawo;yiaseghsehgdkrg;jdfhnbh;rthweyaquiryawo;yiaseghsehgdkrg;jdfhnbh;rthweyaquiryawo;yiaseghsehgdkrg;jdfhnbh;rthweyaquiryawo;yiaseghsehgdkrg;jdfhnbh;rth".encode())
-#f2 = tlsh.hash("mrbrlkjb;rjiboeierutjbdf;ljktgsk;rtnbst'[bjmrbrlkjb;rjiboeierutjbdf;ljktgsk;rtnbst'[bj[nesrjgjsg'lgejsgmrbrlkjb;rjiboeierutjbdf;ljktgsk;rtnbst'[bj[nesrjgjsg'lgejsgmrbrlkjb;rjiboeierutjbdf;ljktgsk;rtnbst'[bj[nesrjgjsg'lgejsgmrbrlkjb;rjiboeierutjbdf;ljktgsk;rtnbst'[bj[nesrjgjsg'lgejsgmrbrlkjb;rjiboeierutjbdf;ljktgsk;rtnbst'[bj[nesrjgjsg'lgejsg[nesrjgjsg'lgejsg".encode())
-#file1 = ".\\coreutils-polybench-hashcat\\aoc\O0\\dir"
-#file2 = ".\\coreutils-polybench-hashcat\\aoc\\O2\\dir"
-#f1 = tlsh.hash(open(file1, 'rb').read())
-#f2 = tlsh.hash(open(file2, 'rb').read())
-
-#print(abs((300 - tlsh.diff(f1, f2) )/300) )
-# print( max(0, (300 - tlsh.diff(f1, f2))/300))
-# f1 = fuzzyhashlib.sdhash("agkjsekgjd'rpgier")
-# print(f1)
 
