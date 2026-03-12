@@ -18,6 +18,7 @@ import random
 import torch
 import numpy as np
 from pathlib import Path
+from similarity import evaluate_matching
 
 def set_seed(seed=42):
     random.seed(seed)
@@ -74,26 +75,26 @@ def extract_features(p1, p2):
     return p1_funcs, p2_funcs, lks1, lks2
 
 def run_with_features(p1_funcs, p2_funcs, lks1, lks2, config):
-    matrix1, matrix2 = links_two_program(p1_funcs, p2_funcs, lks1, lks2, config=config)
+    matrix1, matrix2, p1_nodes, p2_nodes = links_two_program(p1_funcs, p2_funcs, lks1, lks2, config=config)
 
     if len(matrix1) < len(matrix2):
         hh = hemming_prog(matrix1, matrix2, max(len(matrix1), len(matrix2)), p1_funcs, p2_funcs, config=config)
     else:
         hh = hemming_prog(matrix2, matrix1, max(len(matrix1), len(matrix2)), p2_funcs, p1_funcs, config=config)
 
-    return hh
+    return hh, p1_nodes, p2_nodes
 
 
 
 
 def run_asm2vec_comparison(exe_path1, exe_path2):
     # 1. Путь к Python в виртуальном окружении с PyTorch
-    venv_python = r"H:\ResearchWorkCUDA\venv2\Scripts\python.exe"
+    venv_python = r".\venv2\Scripts\python.exe"
 
     # 2. Путь к скрипту сравнения
-    script_path = r"H:\ResearchWorkCUDA\asm2vec-pytorch-master\compare_full_binaries.py"
+    script_path = r".\asm2vec-pytorch-master\compare_full_binaries.py"
     # 3. Путь к модели
-    model_path = r"H:\ResearchWorkCUDA\asm2vec-pytorch-master\model_optim.pt"
+    model_path = r".\asm2vec-pytorch-master\model_optim.pt"
 
     cmd = [
         venv_python,
@@ -117,7 +118,7 @@ def run_asm2vec_comparison(exe_path1, exe_path2):
 if __name__ == '__main__':
      start = datetime.datetime.now()
 
-     obf_p1 = "H:/programming2026/ResearchWorkCUDA/all_obf/3mm"
+     obf_p1 = "./all_obf/3mm"
 
 
      p1 = "./coreutils-polybench-hashcat/aoc/O0/3mm"
@@ -145,7 +146,9 @@ if __name__ == '__main__':
      cfg1 = AnalysisConfig(hash_type='ssdeep', instructions_mode='both', bin1_path=p1, bin2_path=p1, compare_mode='GPU')
      p1_funcs, p2_funcs, lks1, lks2 = extract_features(p1, p1)
      # q = run_with_features(p5, p6, cfg1)
-     q = run_with_features(p1_funcs, p2_funcs, lks1, lks2, cfg1)
+     q, p1_nodes, p2_nodes = run_with_features(p1_funcs, p2_funcs, lks1, lks2, cfg1)
+     e_m = evaluate_matching(p1_nodes, p2_nodes)
+     print(f"Custom: correct: {e_m['correct']} total_matched: {e_m['total_matched']} precision: {e_m['precision']} recall: {e_m['recall']}")
      print("Results:", round(q, 4))
 
      finish = datetime.datetime.now()
@@ -154,50 +157,53 @@ if __name__ == '__main__':
 
      # -----------------------------------------------------------------------------------------
 
-     # clear_files_dir = Path("./coreutils-polybench-hashcat/aoc/O0/")
-     # obf_files_dir = Path("./all_obf/")
-     #
-     # clear_files = os.listdir(clear_files_dir)
-     #
-     # if os.path.exists("./Debug/results.txt"):
-     #     with open("./Debug/results.txt", "r", encoding="utf-8") as f:
-     #         results_content = f.read()
-     #     clear_files = list(filter(lambda x: x not in results_content, clear_files))
-     #
-     # hash_types = ['ssdeep', 'nilsimsa']
-     # instructions_modes = ['generalize', 'group', 'both']
-     # compare_modes = ['GPU', 'custom']
-     # with open("./Debug/results.txt", "a", encoding="utf-8") as f:
-     #    with open("./Debug/error.txt", "a", encoding="utf-8") as err_f:
-     #        for filename in clear_files:
-     #            print("-" * 50)
-     #            if filename in os.listdir(obf_files_dir):
-     #                p1_path = Path.joinpath(clear_files_dir, filename)
-     #                p2_path = Path.joinpath(obf_files_dir, filename)
-     #
-     #                try:
-     #                    print(f"Extracting features for {filename}...")
-     #                    p1_funcs, p2_funcs, lks1, lks2 = extract_features(p1_path, p2_path)
-     #                except Exception as e:
-     #                    print(f"Failed to extract features for {filename}: {e}")
-     #                    err_f.write(f"Feature extraction error: {str(filename)}: {e} \n")
-     #                    err_f.flush()
-     #                    continue
-     #
-     #                for hash_type in hash_types:
-     #                    for instruction_mode in instructions_modes:
-     #                        for compare_mode in compare_modes:
-     #                            try:
-     #                                cfg = AnalysisConfig(hash_type = hash_type, instructions_mode = instruction_mode, compare_mode = compare_mode, bin1_path = str(p1_path), bin2_path = str(p2_path))
-     #                                res = run_with_features(p1_funcs, p2_funcs, lks1, lks2, cfg)
-     #                                print(f"=========> result: h_type: {hash_type} // i_mode: {instruction_mode} // c_mode: {compare_mode} // filename: {str(filename)}: {round(res, 4)} <=========")
-     #                                f.write(f"result: h_type: {hash_type} // i_mode: {instruction_mode} // c_mode: {compare_mode} // filename: {str(filename)}: {round(res, 4)} \n")
-     #                                f.flush()
-     #                            except Exception as e:
-     #                                print(f"=========> error: h_type: {hash_type} // i_mode: {instruction_mode} // c_mode: {compare_mode} // filename: {str(filename)}: {e} <=========")
-     #                                err_f.write(f"error: h_type: {hash_type} // i_mode: {instruction_mode} // c_mode: {compare_mode} // filename: {str(filename)}: {e} \n")
-     #                                err_f.flush()
-     #    print("-" * 50)
+     clear_files_dir = Path("./coreutils-polybench-hashcat/aoc/O0/")
+     obf_files_dir = Path("./all_obf/")
+     
+     clear_files = os.listdir(clear_files_dir)
+     
+     if os.path.exists("./Debug/results.txt"):
+         with open("./Debug/results.txt", "r", encoding="utf-8") as f:
+             results_content = f.read()
+         #clear_files = list(filter(lambda x: x not in results_content, clear_files))
+         clear_files = list(filter(lambda x: f"filename: {x}" not in results_content, clear_files))
+     
+     hash_types = ['ssdeep', 'nilsimsa']
+     instructions_modes = ['none', 'generalize', 'group', 'both']
+     compare_modes = ['GPU', 'custom']
+     with open("./Debug/results.txt", "a", encoding="utf-8") as f:
+        with open("./Debug/error.txt", "a", encoding="utf-8") as err_f:
+            for filename in clear_files:
+                print("-" * 50)
+                if filename in os.listdir(obf_files_dir):
+                    p1_path = Path.joinpath(clear_files_dir, filename)
+                    p2_path = Path.joinpath(obf_files_dir, filename)
+     
+                    try:
+                        print(f"Extracting features for {filename}...")
+                        p1_funcs, p2_funcs, lks1, lks2 = extract_features(p1_path, p2_path)
+                    except Exception as e:
+                        print(f"Failed to extract features for {filename}: {e}")
+                        err_f.write(f"Feature extraction error: {str(filename)}: {e} \n")
+                        err_f.flush()
+                        continue
+     
+                    for hash_type in hash_types:
+                        for instruction_mode in instructions_modes:
+                            for compare_mode in compare_modes:
+                                try:
+                                    cfg = AnalysisConfig(hash_type = hash_type, instructions_mode = instruction_mode, compare_mode = compare_mode, bin1_path = str(p1_path), bin2_path = str(p2_path))
+                                    res, p1_nodes, p2_nodes = run_with_features(p1_funcs, p2_funcs, lks1, lks2, cfg)
+                                    e_m = evaluate_matching(p1_nodes, p2_nodes)
+                                    print(f"correct: {e_m['correct']} total_matched: {e_m['total_matched']} precision: {e_m['precision']} recall: {e_m['recall']}")
+                                    print(f"=========> result: {res} h_type: {hash_type} // i_mode: {instruction_mode} // c_mode: {compare_mode} // filename: {str(filename)}: {round(res, 4)} <=========")
+                                    f.write(f"filename: {str(filename)} // result: {round(res, 4)} // h_type: {hash_type} // i_mode: {instruction_mode} // c_mode: {compare_mode}  // correct: {e_m['correct']} // total_matched: {e_m['total_matched']} // precision: {e_m['precision']} // recall: {e_m['recall']} \n")
+                                    f.flush()
+                                except Exception as e:
+                                    print(f"=========> error: h_type: {hash_type} // i_mode: {instruction_mode} // c_mode: {compare_mode} // filename: {str(filename)}: {e} <=========")
+                                    err_f.write(f"error: h_type: {hash_type} // i_mode: {instruction_mode} // c_mode: {compare_mode} // filename: {str(filename)}: {e} \n")
+                                    err_f.flush()
+        print("-" * 50)
         
         
 

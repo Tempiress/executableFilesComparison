@@ -1,3 +1,4 @@
+from similarity import evaluate_matching
 import copy
 import asyncio
 import numpy as np
@@ -69,8 +70,11 @@ def links_two_program(p1_funcs, p2_funcs, lks1, lks2, config):
 
     if config.compare_mode == 'GPU':
         p1_nodes, p2_nodes = main_compareGPU(matrix1, matrix2, p1_funcs, p2_funcs, config=config)
+        e_m = evaluate_matching(p1_nodes, p2_nodes)
+        print(f"GPU: correct: {e_m['correct']} total_matched: {e_m['total_matched']} precision: {e_m['precision']} recall: {e_m['recall']}")
     elif config.compare_mode == 'custom':
         p1_nodes, p2_nodes = main_compare(matrix1, matrix2, p1_funcs, p2_funcs, config=config)
+
     else:
         raise NotImplementedError("unimportant compare mod! Stopping..")
 
@@ -78,7 +82,7 @@ def links_two_program(p1_funcs, p2_funcs, lks1, lks2, config):
     print("processing p1_nodes...")
 
     for p1_node in p1_nodes:
-        p1_node['new_label'] += 1 # Потому что матрица сдвинута
+        p1_node['new_label'] = 1 # Потому что матрица сдвинута
         if p1_node['old_label'] in matrix1[0]:
             col_index = np.where(matrix1[0] == p1_node['old_label'])[0][0]
             if col_index != p1_node['new_label']:
@@ -103,7 +107,7 @@ def links_two_program(p1_funcs, p2_funcs, lks1, lks2, config):
     #print("processing p2_nodes... ")
     # bar2 = Bar('Processing', max=len(p2_nodes))
     for p2_node in p2_nodes:
-        p2_node['new_label'] += 1 # Потому что матрица сдвинута
+        p2_node['new_label'] = 1 # Потому что матрица сдвинута
         # if hxconverter2(p2_node['old_label']) in matrix2[0]:
         if p2_node['old_label'] in matrix2[0]:
             # col_index = np.where(matrix2[0] == hxconverter2(p2_node['old_label']))[0][0]
@@ -126,4 +130,4 @@ def links_two_program(p1_funcs, p2_funcs, lks1, lks2, config):
     # file_martix2.close()
     # КОНЕЦ Отладка
 
-    return matrix1, matrix2
+    return matrix1, matrix2, p1_nodes, p2_nodes

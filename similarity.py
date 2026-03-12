@@ -17,6 +17,35 @@ from opcodeparser import op_parser
 from renamefile import rename_block
 
 
+
+def evaluate_matching(p1_nodes, p2_nodes):
+    """
+    Пусть функции p1_nodes и p2_nodes - это списки функций, которые соответствуют друг другу.
+    То есть, если p1_nodes[i] соответствует p2_nodes[i]
+    """
+
+    total_matched = len(p1_nodes) # Сколько пар нашёл алгоритм
+    correct = 0
+
+    for n1,  n2 in zip(p1_nodes, p2_nodes):
+        if n1['old_label'] == n2['old_label']:
+            correct += 1
+    
+    total_p1 = len(p1_nodes)
+
+    precision = round(correct / total_matched , 4) if total_matched else 0.0
+    recall = round(correct / total_p1, 4) if total_p1 else 0.0
+
+    return {
+        "correct" : correct,
+        "total_matched": total_matched,
+        "precision": precision,
+        "recall": recall
+    }
+
+    
+
+
 def create_matrix2(data1, data2):
     """
     Генерация матрицы
