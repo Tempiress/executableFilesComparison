@@ -35,7 +35,6 @@ def rename_block(data1, data2, sim_data):
     :return: dict, Massive of lens
     """
 
-    # Ручное копирование в 10-50 раз быстрее, чем copy.deepcopy()
     data2_copy = {k: v.copy() for k, v in data2.items()}
 
     # Используем SET вместо LIST для мгновенного поиска O(1)

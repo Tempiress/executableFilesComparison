@@ -29,7 +29,7 @@ def create_matrix2(data1, data2):
     data1 = safe_load_json(data1)
     data2 = safe_load_json(data2)
 
-    # Безопасно вычисляем максимальный индекс блока (ID), который реально существует
+    # вычисляем максимальный индекс блока (ID), который реально существует
     max_id = 0
     for d in (data1, data2):
         for block in d.values():
@@ -80,8 +80,6 @@ class PrecomputedFunc:
 
         # Строим граф связей.
         # ВАЖНО: Если функция block_links внутри делает orjson.loads(data),
-        # вам нужно зайти в block_links и убрать там .loads(), чтобы она принимала dict.
-        # Если вы пока не можете её изменить, можно временно обернуть так:
         # self.b_links = block_links(orjson.dumps(self.data).decode('utf-8'))
         self.b_links = block_links(self.data)
 
@@ -93,7 +91,6 @@ def fast_similarity(pref1, pref2, config):
 
         # Этап 2: Переименование блоков
         # ВАЖНО: rename_block раньше принимала sim_array (строку).
-        # Зайдите в renamefile.py и убедитесь, что функция rename_block НЕ делает
         # orjson.loads(sim_array), так как мы передаем готовый sim_dict.
         rename_op2, diff = rename_block(pref1.data, pref2.data, sim_dict)
 
@@ -106,11 +103,9 @@ def fast_similarity(pref1, pref2, config):
         # Этап 4: Матрицы и вычисления
         umatrix1, umatrix2 = create_matrix2(pref1.b_links, b_links2)
 
-        # ЗАЩИТА ОТ BROADCAST-ОШИБКИ: берем реальный размер, чтобы NumPy ничего не обрезал
+        # защита от ошибки: берем реальный размер, чтобы NumPy ничего не обрезал
         actual_size = min(size_matrix0, umatrix1.shape[0])
 
-        # УБРАЛИ: sim_dict = orjson.loads(sim_array)
-        # (он у нас уже есть в виде словаря с Этапа 1)
 
         sim_cache = np.zeros(size_matrix0, dtype=np.float32)
 
@@ -125,7 +120,6 @@ def fast_similarity(pref1, pref2, config):
                 except (ValueError, TypeError):
                     continue
 
-        # ... (Вся матричная математика numpy остается без изменений) ...
         m1_core = umatrix1[1:actual_size, 1:actual_size]
         m2_core = umatrix2[1:actual_size, 1:actual_size]
 

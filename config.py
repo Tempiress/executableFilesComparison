@@ -10,6 +10,12 @@ class AnalysisConfig:
     bin1_path: str = 'none'
     bin2_path: str = 'none'
 
+    def __post_init__(self):
+        if self.hash_type not in ('ssdeep', 'nilsimsa') or self.instructions_mode not in ('none', 'generalize', 'group', 'both') or self.compare_mode not in ('GPU', 'custom'):
+            raise AttributeError("incorrect of implement analysis config")
+
+
+
 
 def safe_load_json(data):
     # Если это уже распаршенный словарь — просто возвращаем его

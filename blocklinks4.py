@@ -80,7 +80,7 @@ def block_links(json_data1):
     data = json_data1  # orjson.loads(json_data1)
     links = {}
 
-    # -- СОЗДАЕМ ИНДЕКС АДРЕСОВ ОДИН РАЗ O(N) --
+    # -- создаём индекс адресов один раз O(N) --
     addr_to_key = {block_data["block"]: block_key for block_key, block_data in data.items()}
 
     for target_block, target_block_data in data.items():
@@ -121,7 +121,7 @@ def block_links(json_data1):
             if target_jump == check_block_data["block"]:
                 for target_block, target_block_data in data.items():
 
-                    # -- МГНОВЕННЫЙ ПОИСК O(1) ВМЕСТО ЦИКЛОВ O(N) --
+                    # -- мгновенный поиск O(1) вместо циклов O(N) --
                     # Поиск того, куда ведет jump
                     if target_jump in addr_to_key:
                         found_key = addr_to_key[target_jump]
