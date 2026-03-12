@@ -86,11 +86,13 @@ def block_links(json_data1):
     for target_block, target_block_data in data.items():
         block_links = 0
         num_block_links = 0
-        # Если нет блока добавляем на след блок
-        if target_block_data["jumps"] is None or target_block_data["jumps"] == '':
+        nbf = -1
+        target_fail = ''
 
+        # Если нет jump — линейный переход на следующий блок
+        if target_block_data["jumps"] is None or target_block_data["jumps"] == '':
             next_block = int(target_block) + 1
-            if int(next_block) <= len(data):
+            if next_block <= len(data):
                 links[target_block] = {
                     "block": target_block_data["block"],
                     "NumBlock": target_block_data["id"],
@@ -101,49 +103,43 @@ def block_links(json_data1):
                 }
             continue
 
+        # Парсим адрес jump
         try:
             target_jump = int(target_block_data["jumps"].rstrip('; '))
         except ValueError:
             logging.warning(f"Invalid jump value in block {target_block}")
+            continue
 
-        target_fail = ''
-
+        # Парсим адрес fail (для условных переходов)
         if target_block_data["fails"] != '':
             try:
                 target_fail = int(target_block_data["fails"].rstrip('; '))
             except ValueError:
                 logging.warning(f"Invalid fail value in block {target_block}")
-        nbf = -1
 
-        for check_block, check_block_data in data.items():
-            if target_block == check_block:
-                continue
-            if target_jump == check_block_data["block"]:
-                for target_block, target_block_data in data.items():
+        # -- O(1)-поиск блока назначения jump --
+        if target_jump in addr_to_key:
+            found_key = addr_to_key[target_jump]
+            if target_block != found_key:
+                block_links = target_jump
+                num_block_links = found_key
 
-                    # -- мгновенный поиск O(1) вместо циклов O(N) --
-                    # Поиск того, куда ведет jump
-                    if target_jump in addr_to_key:
-                        found_key = addr_to_key[target_jump]
-                        if target_block != found_key:
-                            block_links = target_jump
-                            num_block_links = found_key
+        links[target_block] = {
+            "block": target_block_data["block"],
+            "NumBlock": target_block_data["id"],
+            "links": block_links,
+            "NumBlockLinks": num_block_links,
+            "fail": target_fail,
+            "NumBlockFail": nbf
+        }
 
-                    links[target_block] = {
-                        "block": target_block_data["block"],
-                        "NumBlock": target_block_data["id"],
-                        "links": block_links,
-                        "NumBlockLinks": num_block_links,
-                        "fail": target_fail,
-                        "NumBlockFail": nbf
-                    }
+        # -- O(1)-поиск блока назначения fail --
+        if target_fail != '':
+            if target_fail in addr_to_key:
+                found_key = addr_to_key[target_fail]
+                if target_block != found_key:
+                    links[target_block]["fail"] = target_fail
+                    links[target_block]["NumBlockFail"] = data[found_key]["id"]
 
-                    # Поиск того, куда ведет fail
-                    if target_fail != '':
-                        if target_fail in addr_to_key:
-                            found_key = addr_to_key[target_fail]
-                            if target_block != found_key:
-                                links[target_block]["fail"] = target_fail
-                                links[target_block]["NumBlockFail"] = data[found_key]["id"]
     # print("block_links")
     return links  # orjson.dumps(links)

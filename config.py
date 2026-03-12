@@ -11,7 +11,7 @@ class AnalysisConfig:
     bin2_path: str = 'none'
 
     def __post_init__(self):
-        if self.hash_type not in ('ssdeep', 'nilsimsa') or self.instructions_mode not in ('none', 'generalize', 'group', 'both') or self.compare_mode not in ('GPU', 'custom'):
+        if self.hash_type not in ('ssdeep', 'nilsimsa', 'lzjd', 'tlsh') or self.instructions_mode not in ('none', 'generalize', 'group', 'both') or self.compare_mode not in ('GPU', 'custom'):
             raise AttributeError("incorrect of implement analysis config")
 
 
