@@ -157,7 +157,7 @@ def op_parser(func, config):
         if "blocks" in item:
             # Если существует, проходим через элементы в "blocks"
             for block in item["blocks"]:
-                opcodes = []
+                opcodes = ""
                 opcodes2 = ""
                 types = ""
                 # hash_opcodes = []
@@ -173,6 +173,7 @@ def op_parser(func, config):
                             base_opcode = op['opcode']
                             opcode = base_opcode
 
+
                             # Обработка режимов
                             if config.instructions_mode in ['generalize', 'both']:
                                 opcode = generalize_opcode(base_opcode)
@@ -185,18 +186,23 @@ def op_parser(func, config):
                                     group_name = 'NULL'
                                 else:
                                     found_group = gi.find_group(aaa)
+                                    # opcode = opcode.replace(aaa, found_group)
+                                    if found_group is not False:
+                                        parts = opcode.split(maxsplit=1)
 
-                                    if found_group is False:
-                                        # opcode = f"UNKNOWN_{aaa}"
-                                        raise NotImplementedError("'type' is not in dictionary: " + str(aaa))
+                                        if len(parts) > 1:
+                                            opcode = f"{found_group} {parts[1]}"
+
                                     else:
-                                        # Если режим не generalize и не group, оставляем как есть
-                                        opcode = base_opcode if config.instructions_mode == 'group' else opcode
+                                        raise NotImplementedError("'type' is not in dictionary: " + str(aaa))
+                            if config.instructions_mode in ['none']:
+                                # Если режим не generalize и не group, оставляем как есть
+                                opcode = base_opcode
 
-                            opcodes.append(opcode)
+                            opcodes = opcodes + base_opcode + "; "
                             opcodes2 = opcodes2 + opcode + "; "
                             # hash_opcodes.append(hasher(op["opcode"]))
-                            hash_opcodes2 = hash_opcodes2 + (opcode) + "; "
+                            hash_opcodes2 = hash_opcodes2 + opcode + "; "
                             # op["type"]
                             aaa = op.get("type", "null")
 
@@ -206,7 +212,6 @@ def op_parser(func, config):
                             else:
                                 types += str(gi.find_group(aaa))
                                 group_numbers += gi.group_number_parser(str(gi.find_group_index(gi.find_group(aaa))))
-                                # print("From group:", find_group(aaa))
 
                     if "jump" in op:
                         jumps = jumps + str(op["jump"]) + ";"
@@ -218,10 +223,10 @@ def op_parser(func, config):
                     item = {}
                     item['id'] = mi
                     item['block'] = block["addr"]
-                    item['types'] = types
+                    #item['types'] = types
                     item['opcodes'] = opcodes2
                     item['fuzzyhash'] = hasher(opcodes2.encode())  # ppdeep.hash(opcodes2)
-                    item['hash'] = (hashlib.md5(opcodes2.encode())).hexdigest()
+                    item['hash'] = (hashlib.md5(opcodes.encode())).hexdigest()
                     item['jumps'] = jumps
                     item['fails'] = fails
                     item['number_group'] = group_numbers
@@ -280,17 +285,6 @@ def find_similar_blocks(json_data1, json_data2, config):
                               block_id,
                               compare_id))
 
-    all_pairs.sort(reverse=True)
-            # all_pairs.append({
-            #     'block': block_id,
-            #     'similar_to': compare_id,
-            #     'simcount': similarity,
-            #     'simequal': hash_equal,
-            #     'editdistance': edit_dist,
-            #     'is_same_id': 1 if block_data['block'] == compare_data['block'] else 0
-            #     # расстояние на строках, графах/ p235
-            # })
-
 
 
     # Сортируем:
@@ -299,6 +293,8 @@ def find_similar_blocks(json_data1, json_data2, config):
     # 3. Потом simcount (по убыванию)
     # 4. Редакционное расстояние (по возрастанию)
     # all_pairs.sort(key=lambda x: (x['simequal'], x['is_same_id'], x['simcount'], -x['editdistance']), reverse=True)
+    all_pairs.sort(reverse=True)
+
 
     similar_blocks_output = {}
     used_blocks1 = set()
@@ -306,8 +302,8 @@ def find_similar_blocks(json_data1, json_data2, config):
     klen = 0
 
     for pair in all_pairs:
-        b1 = pair[4]#pair['block']
-        b2 = pair[5]#pair['similar_to']
+        b1 = pair[4] # pair['block']
+        b2 = pair[5] # pair['similar_to']
 
         if b1 not in used_blocks1 and b2 not in used_blocks2:
             similar_blocks_output[klen] = {
