@@ -3,7 +3,7 @@ import logging
 import asyncio
 from typing import Dict, List, Tuple
 import json
-
+import time
 
 class CFGAnalyzer:
     def __init__(self):
@@ -39,6 +39,11 @@ class CFGAnalyzer:
                 func_name = func.get("name", f"unnamed_{func['addr']}")
                 func_addr = func["addr"]
 
+
+                if func.get("nbbs", 0) < 2:
+                    #cfg_json2 = r2.cmdj(f"agj {func_addr}")
+                    continue
+
                 # Получаем CFG для функции
                 # r2.cmd(f"agf @ {func_addr}")
                 cfg_json = r2.cmdj(f"agj {func_addr}")
@@ -55,6 +60,8 @@ class CFGAnalyzer:
 
         except Exception as e:
             logging.error(f"Error analyzing {exe_dist}: {e}")
+            with open(f"error_log{time.time()}.txt", "a") as f:
+                f.write(f"Error analyzing {exe_dist}: {e}\n")
             raise
         finally:
             if 'r2' in locals():
@@ -84,6 +91,8 @@ class CFGAnalyzer:
 
         except Exception as e:
             logging.error(f"Error getting call graph for {exe_dist}: {e}")
+            with open(f"error_log{time.time()}.txt", "a") as f:
+                f.write(f"Error analyzing {exe_dist}: {e}\n")
             raise
         finally:
             if 'r2' in locals():

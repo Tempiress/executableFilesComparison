@@ -251,5 +251,12 @@ if __name__ == '__main__':
     pyt1= r"H:\ResearchWorkCUDA\train_programs\python-3.12.7-amd64.exe"
     pyt2 = r"H:\ResearchWorkCUDA\train_programs\python-3.14.3-amd64.exe"
 
-    w = compare_binaries(pyt1, pyt2, model_p, epochs=20)
+    obf_p1 = r"./all_obf/3mm"
+    p1 = r"./coreutils-polybench-hashcat/aoc/O0/3mm"
+    p2 = r"./coreutils-polybench-hashcat/aoc/O2/3mm"
+
+    w = compare_binaries(obf_p1, p1, model_p, epochs=20)
     print(f"{w}")
+
+
+    

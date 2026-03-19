@@ -1,5 +1,6 @@
 import concurrent.futures
 import os
+import time
 from functools import partial
 from progress.bar import Bar
 from similarity import similarity
@@ -57,8 +58,11 @@ def main_compare(matrix1, matrix2, p1_funks, p2_funks, config):
 
     worker = partial(main_compare_assist, p1_funks = p1_funks, p2_funks = p2_funks, config=config)
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=os.cpu_count() or 4) as executor:
-        # Отправляем задачи более мелкими порциями
+    # ThreadPoolExecutor вместо ProcessPoolExecutor:
+    # на Windows каждый spawn-процесс заново грузит torch (~500MB виртуальной памяти),
+    # что вызывает WinError 1455 при большом числе воркеров/пар.
+    # Потоки используют один процесс — torch загружается только один раз.
+    with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count() or 4) as executor:
         future_to_pair = {
             executor.submit(worker, pair): pair
             for pair in Pairs
@@ -69,6 +73,8 @@ def main_compare(matrix1, matrix2, p1_funks, p2_funks, config):
                 PairWithSim.append(future.result())
             except Exception as e:
                 print(f"Error processing pair: {e}")
+                with open(f"error_log{time.time()}.txt", "a") as f:
+                    f.write(f"Error analyzing: {e}\n")
 
     # Сортировка пар по убыванию схожести
     PairWithSim.sort(key=lambda x: x["sim"], reverse=True)
@@ -148,7 +154,7 @@ def main_compareGPU(matrix1, matrix2, p1_funks, p2_funks, config):
 
     # Загрузка данных и модели
     print("[*] Загрузка и обучение модели asm2vec...")
-    model_path = "H:\\programming2026\\ResearchWorkCUDA\\asm2vec_pytorch_master\\model_optim.pt"
+    model_path = "H:\\programming2026\\ResearchWorkCUDA\\asm2vec_pytorch_master\\model.pt"
 
     # Загружаем все файлы скопом
     all_files = files1_paths + files2_paths

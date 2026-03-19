@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import traceback
 from multiprocessing import Value, Lock
 import numpy as np
@@ -16,6 +17,29 @@ from blocklinks4 import block_links
 from opcodeparser import op_parser
 from renamefile import rename_block
 
+
+
+# Минимальное число блоков для CFG-структурного сравнения.
+# Функции с меньшим числом блоков сравниваются по контенту (fuzzyhash/MD5).
+MIN_BLOCKS_FOR_GRAPH = 4
+
+
+def _block_content_similarity(data1, data2, config) -> float:
+    """
+    Fallback-метрика для простых функций без ветвлений.
+    Не использует граф CFG — считает среднюю схожесть блоков по fuzzyhash/MD5.
+    """
+    sim_dict = find_similar_blocks(data1, data2, config=config)
+    if not sim_dict:
+        return 0.0
+    total = 0.0
+    for val in sim_dict.values():
+        if val.get('simequal', 0) == 1:
+            total += 1.0
+        else:
+            total += val.get('simcount', 0) / 100.0
+    # Нормируем по размеру большей функции, чтобы штрафовать за лишние блоки
+    return total / max(len(data1), len(data2))
 
 
 def evaluate_matching(p1_nodes, p2_nodes):
@@ -147,6 +171,8 @@ def fast_similarity(pref1, pref2, config):
                         simequal = val.get('simequal', 0)
                         sim_cache[idx] = 1.0 if simequal == 1 else val.get('simcount', 0) / 100.0
                 except (ValueError, TypeError):
+                    with open(f"error_log{time.time()}.txt", "a") as f:
+                        f.write(f"Error analyzing {val}: {e}\n")
                     continue
 
         m1_core = umatrix1[1:actual_size, 1:actual_size]
@@ -166,6 +192,8 @@ def fast_similarity(pref1, pref2, config):
 
     except Exception as e:
         print(f"Error inside fast_similarity: {e}", file=sys.stderr)
+        with open(f"error_log{time.time()}.txt", "a") as f:
+            f.write(f"Error analyzing: {e}\n")
         return 0.0, 0
 
 
@@ -209,8 +237,18 @@ def hemming_prog(matrix1, matrix2, maxlen, p1_funks, p2_funks, config):
         n1_k, n2_k = labels1[k], labels2[k]
         sim_val = 0.0
         if n1_k in cache1 and n2_k in cache2:
-            sim_val, _ = fast_similarity(cache1[n1_k], cache2[n2_k], config=config)
+            pref1_c = cache1[n1_k]
+            pref2_c = cache2[n2_k]
+            nblocks1 = len(pref1_c.data)
+            nblocks2 = len(pref2_c.data)
+            if nblocks1 >= MIN_BLOCKS_FOR_GRAPH and nblocks2 >= MIN_BLOCKS_FOR_GRAPH:
+                # Полный CFG-структурный анализ
+                sim_val, diff = fast_similarity(pref1_c, pref2_c, config=config)
+            else:
+                # Fallback: контентная схожесть блоков без графа
+                sim_val = _block_content_similarity(pref1_c.data, pref2_c.data, config)
         sim_array[k] = sim_val
+        print(f"  [{k}] {labels1[k]!r:30} <-> {labels2[k]!r:30}  sim={sim_array[k]:.4f}  (blocks: {len(cache1.get(n1_k, type('', (), {'data': {}})()).data) if n1_k in cache1 else '?'}/{len(cache2.get(n2_k, type('', (), {'data': {}})()).data) if n2_k in cache2 else '?'})") if n1_k in cache1 and n2_k in cache2 else print(f"  [{k}] {labels1[k]!r:30} <-> {labels2[k]!r:30}  sim=0.0000  (not found)")
 
     print("Computing final matrix distances using broadcasting...")
     try:

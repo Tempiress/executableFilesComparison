@@ -61,7 +61,11 @@ def incidence_matr_gen(lks):
 
 
 def links_two_program(p1_funcs, p2_funcs, lks1, lks2, config):
-    # print("Generate matrices...")
+    # Оставляем в call graph только те функции, которые есть в p_funcs
+    # (остальные были отфильтрованы по nbbs < 2 и нам не нужны)
+    lks1 = [item for item in lks1 if item["name"] in p1_funcs]
+    lks2 = [item for item in lks2 if item["name"] in p2_funcs]
+
     matrix1 = incidence_matr_gen(lks1)
     matrix2 = incidence_matr_gen(lks2)
 
