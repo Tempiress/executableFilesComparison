@@ -9,6 +9,8 @@ from pathlib import Path
 import asm2vec
 import torch
 import logging
+from opcodeparser import generalize_opcode
+
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
@@ -167,6 +169,139 @@ def bin2asm(filename, opath, minlen):
 
     r.quit()
     return count
+
+
+def fn2asm_transformed(pdf, minlen):
+    # 1. Проверка на пустоту
+    if pdf is None or 'ops' not in pdf:
+        return None
+
+    ops = pdf['ops']
+
+    # 2. Фильтр по длине
+    if len(ops) < minlen:
+        return None
+
+    # 3. Фильтр невалидных инструкций
+    if 'invalid' in [op.get('type', '') for op in ops]:
+        return None
+
+    # 4. Нормализация адресов и сбор меток
+    labels = {}
+    scope = set()
+
+    # Сначала собираем все адреса инструкций в этом блоке
+    for op in ops:
+        addr = op.get('offset', op.get('addr'))
+        if addr is not None:
+            scope.add(addr)
+            op['addr'] = addr  # Унифицируем ключ
+
+    # Теперь ищем переходы ВНУТРИ функции
+    for i, op in enumerate(ops):
+        target = op.get('jump')
+        if target is not None and target in scope:
+            labels.setdefault(target, i)
+
+    # 5. Генерация текста
+    output = ''
+    for op in ops:
+        cur_addr = op['addr']
+
+        # Добавляем метку (LABEL:), если на этот адрес есть переход
+        if cur_addr in labels:
+            output += f'LABEL{labels[cur_addr]}:\n'
+
+        # Формируем инструкцию
+        # ВАЖНО: Используем мнемонику (je, call), а не тип (cjmp, ucall)
+        # r2 кладет мнемонику в 'opcode' (например "je 0x401000") или 'disasm'
+        full_opcode = op.get('opcode') or op.get('disasm', '')
+        full_opcode = generalize_opcode(full_opcode)
+        mnemonic = full_opcode.split()[0] if full_opcode else op.get('type', 'nop')
+
+        target = op.get('jump')
+        if target is not None and target in labels:
+            # Инструкция с переходом на метку (внутри функции)
+            output += f' {mnemonic} LABEL{labels[target]}\n'
+        else:
+            # Обычная инструкция
+            output += f' {normalize(full_opcode)}\n'
+
+    return output
+
+
+def bin2asm_transformed(filename, opath, minlen):
+    # Если это не валидный бинарник, пробуем продолжить (вдруг это shellcode), но с логом
+    if not validEXE(filename):
+        logging.info(f"File {filename} header not recognized, trying anyway...")
+
+    try:
+        # Открываем r2. flags=['-2'] отключает stderr для чистоты
+        r = r2pipe.open(str(filename), flags=["-2"])
+        r.cmd('aaaa')  # Анализ
+    except Exception as e:
+        logging.error(f"Failed to open {filename}: {e}")
+        return 0
+
+    count = 0
+    # Получаем список всех функций
+    functions = r.cmdj('aflj')
+
+    if not functions:
+        logging.warning(f"No functions found in {filename}")
+        r.quit()
+        return 0
+
+    for fn in functions:
+        func_addr = fn['addr']
+        func_size = fn.get('size', 0)
+        func_name = fn.get('name', f"func_{func_addr:x}")
+
+        # Санитизация имени
+        safe_name = re.sub(r'[<>:"/\\|?*\x00-\x1f]', '_', func_name)
+        if not safe_name:
+            safe_name = f"{func_addr:x}"
+
+        # 1. Пробуем умный дизассемблинг (граф)
+        ops_json = r.cmdj(f'pdfj @ {func_addr}')
+
+        # 2. Fallback: если граф не построился, берем линейный дамп
+        if not ops_json or not ops_json.get('ops'):
+            if func_size > 0:
+                try:
+                    raw_ops = r.cmdj(f'pDj {func_size} @ {func_addr}')
+                    if raw_ops:
+                        ops_json = {'ops': raw_ops, 'name': func_name}
+                except Exception:
+                    pass
+
+        # Если все равно пусто — пропускаем
+        if not ops_json:
+            continue
+
+        asm = fn2asm_transformed(ops_json, minlen)
+
+        if asm:
+            uid = safe_name
+            # Заголовок с точкой и пробелом, чтобы Function.load понял, что это метаданные
+            header = f' .name {func_name}\n .offset {func_addr:016x}\n .file {filename.name}\n'
+            full_asm = header + asm
+
+            try:
+                # Создаем файл
+                out_file = opath / uid
+                with open(out_file, 'w', encoding='utf-8') as f:
+                    f.write(full_asm)
+                count += 1
+            except Exception as e:
+                logging.error(f"Error writing file {uid}: {e}")
+
+    r.quit()
+    return count
+
+
+
+
 
 
 def cosine_similarity(v1, v2):
