@@ -51,6 +51,8 @@ def process_file_pair(aq, bq, file, l1_dir, l2_dir0, l2_dir, f):
 
     except Exception as e:
         print(f"Error processing {aq} and {bq}: {e}")
+        with open(f"error_log{time.time()}.txt", "a") as f:
+            f.write(f"Error analyzing {aq} and {bq}: {e}\n")
 
 
 

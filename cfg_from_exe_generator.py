@@ -1,6 +1,7 @@
 import r2pipe
 import os
 import logging
+import time
 
 
 async def create_cfgs_from_exe(exe_dist, save_path):
@@ -22,6 +23,9 @@ async def create_cfgs_from_exe(exe_dist, save_path):
             raise ValueError("No functions found in the binary.")
     except Exception as e:
         logging.error(f"Error processing file {exe_dist}: {e}")
+        with open(f"error_log{time.time()}.txt", "a") as f:
+            f.write(f"Error analyzing {exe_dist}: {e}\n")
+        raise
 
     # function_address = functions[0]
     # r2.cmd(f"agf @ {function_address}")

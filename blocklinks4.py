@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 
 import orjson
 from config import safe_load_json
@@ -108,6 +109,8 @@ def block_links(json_data1):
             target_jump = int(target_block_data["jumps"].rstrip('; '))
         except ValueError:
             logging.warning(f"Invalid jump value in block {target_block}")
+            with open(f"error_log{time.time()}.txt", "a") as f:
+                f.write(f"Invalid jump value in block {target_block}\n")
             continue
 
         # Парсим адрес fail (для условных переходов)
@@ -116,6 +119,9 @@ def block_links(json_data1):
                 target_fail = int(target_block_data["fails"].rstrip('; '))
             except ValueError:
                 logging.warning(f"Invalid fail value in block {target_block}")
+                with open(f"error_log{time.time()}.txt", "a") as f:
+                    f.write(f"Invalid fail value in block {target_block}\n")
+                continue
 
         # -- O(1)-поиск блока назначения jump --
         if target_jump in addr_to_key:
