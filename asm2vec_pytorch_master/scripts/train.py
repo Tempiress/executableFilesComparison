@@ -1,3 +1,8 @@
+import sys
+from pathlib import Path
+# Добавляем папку asm2vec_pytorch_master в путь поиска, чтобы найти пакет asm2vec
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 import torch
 import click
 import asm2vec

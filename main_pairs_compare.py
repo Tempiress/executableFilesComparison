@@ -123,10 +123,14 @@ def main_compareGPU(matrix1, matrix2, p1_funks, p2_funks, config):
     DISASSEMBLE_PATH2.mkdir()
 
     # Дизассемблирование (извлекаем все функции сразу)
+    # В зависимости от режима используем сырые или обобщённые опкоды для asm2vec
+    # use_transformed = config.instructions_mode in ('generalize', 'group', 'both', 'none')
+    disasm_fn = bin2asm.bin2asm_transformed # if use_transformed else bin2asm.bin2asm
+
     print(f"[*] Дизассемблирование файла {config.bin1_path}...")
-    count1, _ = bin2asm.cli(config.bin1_path, DISASSEMBLE_PATH1, 6)
+    count1 = disasm_fn(Path(config.bin1_path), DISASSEMBLE_PATH1, 6)
     print(f"[*] Дизассемблирование файла {config.bin2_path}...")
-    count2, _ = bin2asm.cli(config.bin2_path, DISASSEMBLE_PATH2, 6)
+    count2 = disasm_fn(Path(config.bin2_path), DISASSEMBLE_PATH2, 6)
 
     if count1 == 0 or count2 == 0:
         print("Ошибка: Функции не найдены")
@@ -154,7 +158,10 @@ def main_compareGPU(matrix1, matrix2, p1_funks, p2_funks, config):
 
     # Загрузка данных и модели
     print("[*] Загрузка и обучение модели asm2vec...")
-    model_path = "H:\\programming2026\\ResearchWorkCUDA\\asm2vec_pytorch_master\\model.pt"
+    if config.instructions_mode in ('generalize', 'both'):
+        model_path = "H:\\programming2026\\ResearchWorkCUDA\\asm2vec_pytorch_master\\model_generalize.pt"
+    else:
+        model_path = "H:\\programming2026\\ResearchWorkCUDA\\asm2vec_pytorch_master\\model_generalize.pt"
 
     # Загружаем все файлы скопом
     all_files = files1_paths + files2_paths

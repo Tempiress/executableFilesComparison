@@ -1,5 +1,6 @@
 import hashlib
 import json
+import time
 import re
 import pyssdeep
 import Levenshtein
@@ -279,17 +280,17 @@ def find_similar_blocks(json_data1, json_data2, config):
             # ДОБАВЛЯЕМ В ВИДЕ КОРТЕЖА (tuple)
             # Минус перед edit_dist нужен, чтобы сортировка по убыванию поставила наименьшее расстояние наверх
             all_pairs.append((hash_equal,
-                              1 if block_data['block'] == compare_data['block'] else 0,
                               similarity,
                               -edit_dist,
                               block_id,
-                              compare_id))
+                              1 if block_data['block'] == compare_data['block'] else 0
+                              ))
 
 
 
     # Сортируем:
-    # 1. Сначала крипто-хэш (1)
-    # 2. ПОТОМ СОВПАДЕНИЕ АДРЕСОВ (1) - это гарантирует 100% для одинаковых функций!
+    # 1. Сначала крипто-хэш
+    # 2. ПОТОМ СОВПАДЕНИЕ АДРЕСОВ - это гарантирует 100% для одинаковых функций
     # 3. Потом simcount (по убыванию)
     # 4. Редакционное расстояние (по возрастанию)
     # all_pairs.sort(key=lambda x: (x['simequal'], x['is_same_id'], x['simcount'], -x['editdistance']), reverse=True)

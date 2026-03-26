@@ -160,4 +160,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     score = compare_programs(args.bin1, args.bin2, args.model, epochs=20)
-    print(score)
+    # print(score)
