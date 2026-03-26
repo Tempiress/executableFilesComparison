@@ -1,165 +1,289 @@
 import os
+import sys
+import time
+import traceback
 from multiprocessing import Value, Lock
 import numpy as np
 from blocklinks4 import *
 from opcodeparser import *
-from renamefile import *
-import pickle
-from functools import lru_cache
-import orjson # В 2-3x быстрее стандартного json
+# from renamefile import *
+# import pickle
+# from functools import lru_cache
+import orjson  # В 2-3x быстрее стандартного json
+from config import safe_load_json
+import concurrent.futures
+from functools import partial
+from blocklinks4 import block_links
+from opcodeparser import op_parser
+from renamefile import rename_block
 
-def create_matrix2(json_data1, json_data2):
+
+
+# Минимальное число блоков для CFG-структурного сравнения.
+# Функции с меньшим числом блоков сравниваются по контенту (fuzzyhash/MD5).
+MIN_BLOCKS_FOR_GRAPH = 4
+
+
+def _block_content_similarity(data1, data2, config) -> float:
+    """
+    Fallback-метрика для простых функций без ветвлений.
+    Не использует граф CFG — считает среднюю схожесть блоков по fuzzyhash/MD5.
+    """
+    sim_dict = find_similar_blocks(data1, data2, config=config)
+    if not sim_dict:
+        return 0.0
+    total = 0.0
+    for val in sim_dict.values():
+        if val.get('simequal', 0) == 1:
+            total += 1.0
+        else:
+            total += val.get('simcount', 0) / 100.0
+    # Нормируем по размеру большей функции, чтобы штрафовать за лишние блоки
+    return total / max(len(data1), len(data2))
+
+
+def evaluate_matching(p1_nodes, p2_nodes):
+    """
+    Пусть функции p1_nodes и p2_nodes - это списки функций, которые соответствуют друг другу.
+    То есть, если p1_nodes[i] соответствует p2_nodes[i]
+    """
+
+    total_matched = len(p1_nodes) # Сколько пар нашёл алгоритм
+    correct = 0
+
+    for n1,  n2 in zip(p1_nodes, p2_nodes):
+        if n1['old_label'] == n2['old_label']:
+            correct += 1
+    
+    total_p1 = len(p1_nodes)
+
+    precision = round(correct / total_matched , 4) if total_matched else 0.0
+    recall = round(correct / total_p1, 4) if total_p1 else 0.0
+
+    return {
+        "correct" : correct,
+        "total_matched": total_matched,
+        "precision": precision,
+        "recall": recall
+    }
+
+    
+
+
+def create_matrix2(data1, data2):
     """
     Генерация матрицы
     :param json_data1, json_data2:
     :return:
     """
 
-    data1 = orjson.loads(json_data1)
-    data2 = orjson.loads(json_data2)
-    size_matrix = max(len(data1), len(data2)) + 2
+    # data1 = orjson.loads(json_data1)
+    # data2 = orjson.loads(json_data2)
+    data1 = safe_load_json(data1)
+    data2 = safe_load_json(data2)
 
-    matrix1 = np.zeros((size_matrix, size_matrix), dtype=int)
+    # вычисляем максимальный индекс блока (ID), который реально существует
+    max_id = 0
+    for d in (data1, data2):
+        for block in d.values():
+            max_id = max(max_id, int(block.get("NumBlock", 0)), int(block.get("NumBlockLinks", 0)),
+                         int(block.get("NumBlockFail", 0)))
+                         
+    # Матрица всегда должна вмещать самый большой ID 
+    size_matrix = max_id + 2
 
-    for block_id, block_data in data1.items():
-        matrix1[int(block_data["NumBlock"])][int(block_data["NumBlockLinks"])] = 1
-        matrix1[int(block_data["NumBlock"])][int(block_data["NumBlockFail"])] = 1
+    # Создаем массивы индексов для быстрой векторизации
+    indices1 = [(int(block_data["NumBlock"]), int(block_data["NumBlockLinks"])) for block_data in data1.values()]
+    indices1_fail = [(int(block_data["NumBlock"]), int(block_data["NumBlockFail"])) for block_data in data1.values()]
 
-    matrix2 = np.zeros((size_matrix, size_matrix), dtype=int)
+    indices2 = [(int(block_data["NumBlock"]), int(block_data["NumBlockLinks"])) for block_data in data2.values()]
+    indices2_fail = [(int(block_data["NumBlock"]), int(block_data["NumBlockFail"])) for block_data in data2.values()]
 
-    for block_id, block_data in data2.items():
-        matrix2[int(block_data["NumBlock"])][int(block_data["NumBlockLinks"])] = 1
-        matrix2[int(block_data["NumBlock"])][int(block_data["NumBlockFail"])] = 1
+    # Создаем матрицы и заполняем их за один проход
+    matrix1 = np.zeros((size_matrix, size_matrix), dtype=np.int8)
+    matrix2 = np.zeros((size_matrix, size_matrix), dtype=np.int8)
+
+    if indices1:
+        rows1, cols1 = zip(*indices1)
+        matrix1[rows1, cols1] = 1
+        rows1_fail, cols1_fail = zip(*indices1_fail)
+        matrix1[rows1_fail, cols1_fail] = 1
+
+    if indices2:
+        rows2, cols2 = zip(*indices2)
+        matrix2[rows2, cols2] = 1
+        rows2_fail, cols2_fail = zip(*indices2_fail)
+        matrix2[rows2_fail, cols2_fail] = 1
 
     return matrix1, matrix2
 
 
-@lru_cache(maxsize=1000)
-def cached_op_parser(func_dict_tuple, cfg):
-    # Преобразуем кортеж обратно в dict
-    func_dict = dict(func_dict_tuple)
-    return op_parser(func_dict[cfg])
-
-def similarity(cfg1, cfg2, p1_funks, p2_funks):
-    """
-     Число Хемминга (0-идентич., 1- не иднетич.)
-    :param: cfg1 cfg2
-    :return: double, difference
-    """
-    op1 = op_parser(p1_funks[cfg1])
-    op2 = op_parser(p2_funks[cfg2])
-
-    #p1_tuple = tuple(sorted(p1_funks.items()))
-    #p2_tuple = tuple(sorted(p2_funks.items()))
-
-    #print(op1.__class__)
-    #op11 = cached_op_parser(p1_tuple, cfg1)
-    #op22 = cached_op_parser(p2_tuple, cfg2)
-    # print(op11.__class__)
-
-    data1 = orjson.loads(op1)
-    data2 = orjson.loads(op2)
-    sim_array = find_similar_blocks(op1, op2)
-    rename_op2, diff = rename_block(data1, data2, sim_array)
-
-    sim_dict = orjson.loads(sim_array)
-    b_links1 = block_links(op1)
-    b_links2 = block_links(rename_op2)
-
-    size_matrix0 = min(len(data1), len(data2)) + 1
-    max_size_matrix = max(len(data1), len(data2)) + 1
-    umatrix1, umatrix2 = create_matrix2(b_links1, b_links2)
-
-    # Оптимизация 1: Предварительно вычисляем keys для всех блоков
-    keys_cache = {}
-    for key, value in sim_dict.items():
-        block = value.get("block")
-        if block not in keys_cache:
-            keys_cache[block] = []
-        keys_cache[block].append(key)
-
-    # Оптимизация 2: Предварительно вычисляем sim значения
-    sim_cache = {}
-    for i in range(1, size_matrix0):
-        block = str(i)
-        if block in keys_cache and keys_cache[block]:
-            first_key = keys_cache[block][0]
-            sim_value = 1 if sim_dict[first_key]["simequal"] == 1 else sim_dict[first_key]["simcount"] / 100
-            sim_cache[block] = sim_value
-        else:
-            sim_cache[block] = 0
-
-    A = 0
-    for i in range(1, size_matrix0):
-        for j in range(1, size_matrix0):
-            A0 = sim_cache[str(i)] + sim_cache[str(j)]
-            A += (1 ^ (umatrix1[i][j] ^ umatrix2[i][j])) * A0
 
 
-    C = float(A) / ((max_size_matrix - 1) * (max_size_matrix - 1) * 2)
-    # print("end similarity.")
-    return C, diff
 
-#
-# def create_matrix(json_data1):
-#     """
-#     Генерация матрицы
-#     :param json_data1:
-#     :return:
-#     """
-#     # dt = block_links(json_data1)
-#     data = orjson.loads(json_data1)
-#     size_matrix = len(data) + 2
-#
-#     matrix = np.zeros((size_matrix, size_matrix), dtype=int)
-#
-#     for block_id, block_data in data.items():
-#         matrix[int(block_data["NumBlock"])][int(block_data["NumBlockLinks"])] = 1
-#
-#     return matrix
+# --- КЛАСС ДЛЯ КЭШИРОВАНИЯ ---
+class PrecomputedFunc:
+    """Хранит уже распаршенные данные функции, чтобы не считать их каждый раз"""
+
+    def __init__(self, name, func_data, config):
+        self.name = name
+
+        # op_parser теперь возвращает словарь (dict)
+        self.data = op_parser(func_data, config=config)
+
+        # Строим граф связей.
+        # ВАЖНО: Если функция block_links внутри делает orjson.loads(data),
+        # self.b_links = block_links(orjson.dumps(self.data).decode('utf-8'))
+        self.b_links = block_links(self.data)
 
 
-# Выносим функцию в глобальную область
-def compute_element(i, j, mat1, mat2, funk1, funk2):
-    sim_i = similarity(mat1[0][i], mat2[0][i], funk1, funk2)[0]
-    sim_j = similarity(mat1[0][j], mat2[0][j], funk1, funk2)[0]
-    return (1 ^ (mat1[i][j] ^ mat2[i][j])) * (sim_i + sim_j)
-
-def hemming_prog(matrix1, matrix2, maxlen, p1_funk, p2_funk):
-    import concurrent.futures
-    import sys
-    from functools import partial
-
-    size_matrix = len(matrix1)
-    indices = [(i, j) for i in range(1, size_matrix)
-               for j in range(1, size_matrix)]
-
-
-    print(f"Count of indexes in hemming prog: {len(indices)}")
-    # Создаем partial функцию с передачей данных
-    worker = partial(compute_element,
-                     mat1=matrix1,
-                     mat2=matrix2,
-                     funk1=p1_funk,
-                     funk2=p2_funk)
-
+def fast_similarity(pref1, pref2, config):
     try:
+        # Этап 1: Поиск похожих блоков (передаем словари, получаем словарь)
+        sim_dict = find_similar_blocks(pref1.data, pref2.data, config=config)
 
-        with concurrent.futures.ProcessPoolExecutor(max_workers=33) as executor:
-            futures = [executor.submit(worker, i, j) for i, j in indices]
+        # Этап 2: Переименование блоков
+        # ВАЖНО: rename_block раньше принимала sim_array (строку).
+        # orjson.loads(sim_array), так как мы передаем готовый sim_dict.
+        rename_op2, diff = rename_block(pref1.data, pref2.data, sim_dict)
 
-            results = []
-            for future in concurrent.futures.as_completed(futures):
+        # Этап 3: Построение графа для переименованной функции
+        b_links2 = block_links(rename_op2)
+
+        size_matrix0 = min(len(pref1.data), len(pref2.data)) + 1
+        max_size_matrix = max(len(pref1.data), len(pref2.data)) + 1
+
+        # Этап 4: Матрицы и вычисления
+        umatrix1, umatrix2 = create_matrix2(pref1.b_links, b_links2)
+
+        # защита от ошибки: берем реальный размер, чтобы NumPy ничего не обрезал
+        actual_size = min(size_matrix0, umatrix1.shape[0])
+
+
+        sim_cache = np.zeros(size_matrix0, dtype=np.float32)
+
+        # Оптимизированный цикл заполнения весов
+        if isinstance(sim_dict, dict):
+            for key, val in sim_dict.items():
                 try:
-                    results.append(future.result())
-                except Exception as e:
-                    print(f"Ошибка в процессе: {e}", file=sys.stderr)
-                    raise
+                    idx = int(val.get('block', -1))
+                    if 0 < idx < size_matrix0:
+                        simequal = val.get('simequal', 0)
+                        sim_cache[idx] = 1.0 if simequal == 1 else val.get('simcount', 0) / 100.0
+                except (ValueError, TypeError):
+                    with open(f"error_log{time.time()}.txt", "a") as f:
+                        f.write(f"Error analyzing {val}: {e}\n")
+                    continue
+
+        m1_core = umatrix1[1:actual_size, 1:actual_size]
+        m2_core = umatrix2[1:actual_size, 1:actual_size]
+
+        xor_result = 1 ^ (m1_core ^ m2_core)
+        # Вырезаем нужный кусок из sim_cache, чтобы он в точности соответствовал размеру матриц
+        sim_slice = sim_cache[1:actual_size]
+        sim_sum = sim_slice[:, np.newaxis] + sim_slice
+
+        A = np.sum(xor_result * sim_sum)
+
+        if max_size_matrix <= 1: return 0.0, diff
+
+        C = float(A) / ((max_size_matrix - 1) * (max_size_matrix - 1) * 2)
+        return C, diff
 
     except Exception as e:
-        print(f"Глобальная ошибка: {e}", file=sys.stderr)
-        raise
+        print(f"Error inside fast_similarity: {e}", file=sys.stderr)
+        with open(f"error_log{time.time()}.txt", "a") as f:
+            f.write(f"Error analyzing: {e}\n")
+        return 0.0, 0
 
-    A = sum(results)
+
+# --- Точка входа  ---
+def hemming_prog(matrix1, matrix2, maxlen, p1_funks, p2_funks, config):
+    # Извлекаем метки
+    def get_headers(mat):
+        if hasattr(mat, 'shape'):
+            if mat.shape[0] > 0 and mat.shape[1] > 1: return mat[0, 1:]
+        elif len(mat) > 0 and len(mat[0]) > 1:
+            return mat[0][1:]
+        return []
+
+    labels1 = get_headers(matrix1)
+    labels2 = get_headers(matrix2)
+
+    if len(labels1) == 0 or len(labels2) == 0: return 0.0
+
+    print("Pre-computing function data...")
+    # Парсим всё 1 раз
+    cache1 = {}
+    cache2 = {}
+
+    # Чтобы не парсить лишнее, берем только те функции, что есть в матрице
+    for name in set(labels1):
+        if name in p1_funks:
+            cache1[name] = PrecomputedFunc(name, p1_funks[name], config)
+
+    for name in set(labels2):
+        if name in p2_funks:
+            cache2[name] = PrecomputedFunc(name, p2_funks[name], config)
+
+    size_matrix = len(matrix1)
+    if size_matrix <= 1: return 0.0
+
+    print("Computing pairwise function similarities...")
+    max_k = min(len(labels1), len(labels2), size_matrix - 1)
+    sim_array = np.zeros(max_k, dtype=np.float32)
+
+    for k in range(max_k):
+        n1_k, n2_k = labels1[k], labels2[k]
+        sim_val = 0.0
+        if n1_k in cache1 and n2_k in cache2:
+            pref1_c = cache1[n1_k]
+            pref2_c = cache2[n2_k]
+            nblocks1 = len(pref1_c.data)
+            nblocks2 = len(pref2_c.data)
+            if nblocks1 >= MIN_BLOCKS_FOR_GRAPH and nblocks2 >= MIN_BLOCKS_FOR_GRAPH:
+                # Полный CFG-структурный анализ
+                sim_val, diff = fast_similarity(pref1_c, pref2_c, config=config)
+            else:
+                # Fallback: контентная схожесть блоков без графа
+                sim_val = _block_content_similarity(pref1_c.data, pref2_c.data, config)
+        sim_array[k] = sim_val
+        print(f"  [{k}] {labels1[k]!r:30} <-> {labels2[k]!r:30}  sim={sim_array[k]:.4f}  (blocks: {len(cache1.get(n1_k, type('', (), {'data': {}})()).data) if n1_k in cache1 else '?'}/{len(cache2.get(n2_k, type('', (), {'data': {}})()).data) if n2_k in cache2 else '?'})") if n1_k in cache1 and n2_k in cache2 else print(f"  [{k}] {labels1[k]!r:30} <-> {labels2[k]!r:30}  sim=0.0000  (not found)")
+
+    print("Computing final matrix distances using broadcasting...")
+    try:
+        if hasattr(matrix1, 'astype'):
+            m1_core = matrix1[1:max_k+1, 1:max_k+1].astype(np.float32).astype(np.int8)
+            m2_core = matrix2[1:max_k+1, 1:max_k+1].astype(np.float32).astype(np.int8)
+        else:
+            raise ValueError()
+    except Exception:
+        # Fallback for Python lists or uncastable objects
+        m1_core = np.zeros((max_k, max_k), dtype=np.int8)
+        m2_core = np.zeros((max_k, max_k), dtype=np.int8)
+        for i in range(max_k):
+            for j in range(max_k):
+                try: m1_core[i, j] = int(matrix1[i+1][j+1])
+                except: pass
+                
+                try: m2_core[i, j] = int(matrix2[i+1][j+1])
+                except: pass
+
+    xor_res = 1 ^ (m1_core ^ m2_core)
+    sim_sum = sim_array[:, np.newaxis] + sim_array
+    
+    A = np.sum(xor_res * sim_sum)
+
+    if maxlen <= 1: return 0.0
+
     C = float(A) / ((maxlen - 1) * (maxlen - 1) * 2)
     return C
+
+
+def similarity(cfg1, cfg2, p1_funks, p2_funks, config):
+    # будет медленной, так как создает PrecomputedFunc на лету
+    if cfg1 not in p1_funks or cfg2 not in p2_funks: return 0.0, 0
+
+    pref1 = PrecomputedFunc(cfg1, p1_funks[cfg1], config)
+    pref2 = PrecomputedFunc(cfg2, p2_funks[cfg2], config)
+    return fast_similarity(pref1, pref2, config)

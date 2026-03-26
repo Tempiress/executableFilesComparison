@@ -51,9 +51,12 @@ def process_file_pair(aq, bq, file, l1_dir, l2_dir0, l2_dir, f):
 
     except Exception as e:
         print(f"Error processing {aq} and {bq}: {e}")
+        with open(f"error_log{time.time()}.txt", "a") as f:
+            f.write(f"Error analyzing {aq} and {bq}: {e}\n")
 
 
-def start_program():
+
+def start_program(hash_type='ssdeep'):
     # Берём один файл и сравниваем его все виды
     fileName = "3mm"
     filenames = os.listdir('./coreutils-polybench-hashcat/aoc/Os/')
@@ -114,25 +117,7 @@ def start_program():
 
 
 
-# filenames = os.listdir('./coreutils-polybench-hashcat/aoc/Os/')
-# filenames.remove('2mm')
-# l1 = os.listdir('./coreutils-polybench-hashcat/')  # aoc, c07, c06
-# # print(l1[])
-#
-# f = open(f"./Debugging./dbg{str(datetime.datetime.now().hour)}{datetime.datetime.now().minute}.txt", mode='a')
-# for fileindex in range(1, len(filenames)):
-#     for dirindex1 in range(0, len(l1)):
-#         l2 = os.listdir(f'./coreutils-polybench-hashcat/{l1[dirindex1]}')  # O0 O1 O2
-#         print("len:" + str(len(l1)))
-#         for dirindex2 in range(1, len(l2)):
-#             aq = f'./coreutils-polybench-hashcat/{l1[dirindex1]}/{l2[dirindex2]}/{filenames[fileindex]}'
-#             bq = f'./coreutils-polybench-hashcat/{l1[dirindex1]}/{l2[dirindex2]}/{filenames[fileindex + 1]}'
-#             q = run(aq, bq)
-#
-#             f.write(f'./coreutils-polybench-hashcat/{l1[dirindex1]}/{l2[0]}/{filenames[fileindex]} ' + f'&& ./coreutils-polybench-hashcat/{l1[dirindex1]}/{l2[dirindex2]}/{filenames[fileindex + 1]} '
-#                     + '-> ' + str(round(q, 4)) + '\n' + '--------' + ' \n')
-#
-# f.close()
+
 
 if __name__ == '__main__':
     import threading

@@ -1,12 +1,12 @@
-thefuzz == 0.20.0
-r2pipe~=1.8.0
-progress~=1.6
+thefuzz
+r2pipe
+progress
 numpy
 
-
-ppdeep~=20200505
-asyncio~=3.4.3
-orjson~=3.9.7
+Levenshtein
+ppdeep
+asyncio
+orjson
 py-tlsh
 line_profiler
 orjson
