@@ -132,8 +132,7 @@ class PrecomputedFunc:
         self.data = op_parser(func_data, config=config)
 
         # Строим граф связей.
-        # ВАЖНО: Если функция block_links внутри делает orjson.loads(data),
-        # self.b_links = block_links(orjson.dumps(self.data).decode('utf-8'))
+
         self.b_links = block_links(self.data)
 
 
@@ -142,9 +141,7 @@ def fast_similarity(pref1, pref2, config):
         # Этап 1: Поиск похожих блоков (передаем словари, получаем словарь)
         sim_dict = find_similar_blocks(pref1.data, pref2.data, config=config)
 
-        # Этап 2: Переименование блоков
-        # ВАЖНО: rename_block раньше принимала sim_array (строку).
-        # orjson.loads(sim_array), так как мы передаем готовый sim_dict.
+        # Этап 2: Переименование блоков.
         rename_op2, diff = rename_block(pref1.data, pref2.data, sim_dict)
 
         # Этап 3: Построение графа для переименованной функции
@@ -170,7 +167,7 @@ def fast_similarity(pref1, pref2, config):
                     if 0 < idx < size_matrix0:
                         simequal = val.get('simequal', 0)
                         sim_cache[idx] = 1.0 if simequal == 1 else val.get('simcount', 0) / 100.0
-                except (ValueError, TypeError):
+                except (ValueError, TypeError) as e:
                     with open(f"error_log{time.time()}.txt", "a") as f:
                         f.write(f"Error analyzing {val}: {e}\n")
                     continue

@@ -4,14 +4,14 @@ import orjson
 @dataclass
 class AnalysisConfig:
     hash_type: str = 'ssdeep'   # 'ssdeep' | 'nilsimsa'
-    instructions_mode: str = 'none'  # 'none'|'generalize'|'group'|'both'
+    instructions_mode: str = 'none'  # 'none'|'generalize'|'group'|'both' | 'group_only'
     asm2vec_mode: bool = False
     compare_mode: str = 'GPU'   # 'GPU' | 'custom'
     bin1_path: str = 'none'
     bin2_path: str = 'none'
 
     def __post_init__(self):
-        if self.hash_type not in ('ssdeep', 'nilsimsa', 'lzjd', 'tlsh') or self.instructions_mode not in ('none', 'generalize', 'group', 'both') or self.compare_mode not in ('GPU', 'custom'):
+        if self.hash_type not in ('ssdeep', 'nilsimsa', 'lzjd', 'tlsh') or self.instructions_mode not in ('none', 'generalize', 'group', 'both', 'group_only') or self.compare_mode not in ('GPU', 'custom'):
             raise AttributeError("incorrect of implement analysis config")
 
 

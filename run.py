@@ -122,7 +122,7 @@ if __name__ == '__main__':
 
 
      p1 = "./coreutils-polybench-hashcat/aoc/O0/3mm"
-     p2 = "./coreutils-polybench-hashcat/g10/O2/3mm"
+     #p2 = "./coreutils-polybench-hashcat/g10/O2/3mm"
      p2 = "./coreutils-polybench-hashcat/aoc/O2/3mm"
 
 
@@ -140,19 +140,19 @@ if __name__ == '__main__':
      python2 = "./train_programs/python-3.14.3-amd64.exe"
      #score = run_asm2vec_comparison(p1, p2)
 
-     # print(f"{'-' * 10}\n Asm2vecCuda resut:\n{score}{'-'* 10}")
-     # cfg1 = AnalysisConfig(hash_type='nilsimsa', instructions_mode='generalize')
+     #print(f"{'-' * 10}\n Asm2vecCuda resut:\n{score}{'-'* 10}")
+     #cfg1 = AnalysisConfig(hash_type='nilsimsa', instructions_mode='generalize')
 
-     cfg1 = AnalysisConfig(hash_type='ssdeep', instructions_mode='both', bin1_path=p1, bin2_path=p1, compare_mode='GPU')
-     p1_funcs, p2_funcs, lks1, lks2 = extract_features(p1, p1)
-     # q = run_with_features(p5, p6, cfg1)
-     q, p1_nodes, p2_nodes = run_with_features(p1_funcs, p2_funcs, lks1, lks2, cfg1)
-     e_m = evaluate_matching(p1_nodes, p2_nodes)
-     print(f"Custom: correct: {e_m['correct']} total_matched: {e_m['total_matched']} precision: {e_m['precision']} recall: {e_m['recall']}")
-     print("Results:", round(q, 4))
+    #  cfg1 = AnalysisConfig(hash_type='ssdeep', instructions_mode='group_only', bin1_path=p1, bin2_path=p2, compare_mode='GPU')
+    #  p1_funcs, p2_funcs, lks1, lks2 = extract_features(p1, p2)
+    #  # q = run_with_features(p5, p6, cfg1)
+    #  q, p1_nodes, p2_nodes = run_with_features(p1_funcs, p2_funcs, lks1, lks2, cfg1)
+    #  e_m = evaluate_matching(p1_nodes, p2_nodes)
+    #  print(f"Custom: correct: {e_m['correct']} total_matched: {e_m['total_matched']} precision: {e_m['precision']} recall: {e_m['recall']}")
+    #  print("Results:", round(q, 4))
 
-     finish = datetime.datetime.now()
-     print('Время работы: ' + str(finish - start))
+    #  finish = datetime.datetime.now()
+    #  print('Время работы: ' + str(finish - start))
 
 
      # -----------------------------------------------------------------------------------------
@@ -162,17 +162,21 @@ if __name__ == '__main__':
      
      clear_files = os.listdir(clear_files_dir)
      
-     if os.path.exists("./Debug/results.txt"):
-         with open("./Debug/results.txt", "r", encoding="utf-8") as f:
+     
+     path_to_results = "./Debug/results_generalize.txt"
+     path_to_error = "./Debug/error_generalize.txt"
+     
+     if os.path.exists(path_to_results):
+         with open(path_to_results, "r", encoding="utf-8") as f:
              results_content = f.read()
          #clear_files = list(filter(lambda x: x not in results_content, clear_files))
          clear_files = list(filter(lambda x: f"filename: {x}" not in results_content, clear_files))
      
      hash_types = ['ssdeep', 'nilsimsa']
-     instructions_modes = ['none', 'generalize', 'group', 'both']
+     instructions_modes = ['none', 'generalize', 'group', 'group_only', 'both']
      compare_modes = ['GPU', 'custom']
-     with open("./Debug/results.txt", "a", encoding="utf-8") as f:
-        with open("./Debug/error.txt", "a", encoding="utf-8") as err_f:
+     with open(path_to_results, "a", encoding="utf-8") as f:
+        with open(path_to_error, "a", encoding="utf-8") as err_f:
             for filename in clear_files:
                 print("-" * 50)
                 if filename in os.listdir(obf_files_dir):
@@ -192,6 +196,8 @@ if __name__ == '__main__':
                         for instruction_mode in instructions_modes:
                             for compare_mode in compare_modes:
                                 try:
+                                    #if instruction_mode == 'group_only' and hash_type == 'nilsimsa':
+                                        #continue
                                     cfg = AnalysisConfig(hash_type = hash_type, instructions_mode = instruction_mode, compare_mode = compare_mode, bin1_path = str(p1_path), bin2_path = str(p2_path))
                                     res, p1_nodes, p2_nodes = run_with_features(p1_funcs, p2_funcs, lks1, lks2, cfg)
                                     e_m = evaluate_matching(p1_nodes, p2_nodes)

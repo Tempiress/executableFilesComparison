@@ -179,7 +179,7 @@ def op_parser(func, config):
                             if config.instructions_mode in ['generalize', 'both']:
                                 opcode = generalize_opcode(base_opcode)
 
-                            if config.instructions_mode in ['group', 'both']:
+                            if config.instructions_mode in ['group', 'group_only', 'both']:
                                 # opcode = gi.find_group(opcode) or opcode
                                 aaa = op.get("type", "null")
                                 if aaa == 'null':
@@ -196,6 +196,8 @@ def op_parser(func, config):
 
                                     else:
                                         raise NotImplementedError("'type' is not in dictionary: " + str(aaa))
+                            
+
                             if config.instructions_mode in ['none']:
                                 # Если режим не generalize и не group, оставляем как есть
                                 opcode = base_opcode
@@ -226,7 +228,7 @@ def op_parser(func, config):
                     item['block'] = block["addr"]
                     #item['types'] = types
                     item['opcodes'] = opcodes2
-                    item['fuzzyhash'] = hasher(opcodes2.encode())  # ppdeep.hash(opcodes2)
+                    item['fuzzyhash'] = hasher(opcodes2.encode()) if config.instructions_mode != 'group_only' else ''
                     item['hash'] = (hashlib.md5(opcodes.encode())).hexdigest()
                     item['jumps'] = jumps
                     item['fails'] = fails
@@ -263,6 +265,20 @@ def find_similar_blocks(json_data1, json_data2, config):
                 similarity = 100  # ppdeep выдаёт 100 для идентичных хэшей
                 edit_dist = 0
             else:
+                if config.instructions_mode in ["group_only"]:
+                    edit_dist = cached_levenshtein(block_data["number_group"], compare_data["number_group"])
+                    # group_only: не используем fuzzyhash, только Левенштейн по group-последовательности
+                    # Порядок элементов совпадает с читающим кодом: [0]=hash_equal,[1]=is_same_addr,[2]=similarity,[3]=-edit_dist,[4]=block_id,[5]=compare_id
+                    all_pairs.append((hash_equal,
+                        1 if block_data['block'] == compare_data['block'] else 0,
+                        0,          # similarity=0 (fuzzyhash не считаем)
+                        -edit_dist,
+                        block_id,
+                        compare_id
+                        ))
+                    continue
+
+                    
                 if config.hash_type == 'ssdeep':
                     similarity = cached_ppdeep_compare(block_hash, compare_hash)  # fuzz.ratio(block_hash, compare_hash)
                 elif config.hash_type == 'tlsh':
@@ -278,13 +294,14 @@ def find_similar_blocks(json_data1, json_data2, config):
                 edit_dist = cached_levenshtein(block_data["number_group"], compare_data["number_group"])
 
             # ДОБАВЛЯЕМ В ВИДЕ КОРТЕЖА (tuple)
+            # Порядок: [0]=hash_equal, [1]=is_same_addr, [2]=similarity, [3]=-edit_dist, [4]=block_id, [5]=compare_id
             # Минус перед edit_dist нужен, чтобы сортировка по убыванию поставила наименьшее расстояние наверх
             all_pairs.append((hash_equal,
+                              1 if block_data['block'] == compare_data['block'] else 0,
                               similarity,
                               -edit_dist,
                               block_id,
-                              1 if block_data['block'] == compare_data['block'] else 0
-                              ))
+                              compare_id))
 
 
 

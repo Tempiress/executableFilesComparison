@@ -124,8 +124,8 @@ def main_compareGPU(matrix1, matrix2, p1_funks, p2_funks, config):
 
     # Дизассемблирование (извлекаем все функции сразу)
     # В зависимости от режима используем сырые или обобщённые опкоды для asm2vec
-    # use_transformed = config.instructions_mode in ('generalize', 'group', 'both', 'none')
-    disasm_fn = bin2asm.bin2asm_transformed # if use_transformed else bin2asm.bin2asm
+    use_transformed = config.instructions_mode in ('generalize', 'group', 'both')
+    disasm_fn = bin2asm.bin2asm_transformed if use_transformed else bin2asm.bin2asm
 
     print(f"[*] Дизассемблирование файла {config.bin1_path}...")
     count1 = disasm_fn(Path(config.bin1_path), DISASSEMBLE_PATH1, 6)
@@ -158,10 +158,10 @@ def main_compareGPU(matrix1, matrix2, p1_funks, p2_funks, config):
 
     # Загрузка данных и модели
     print("[*] Загрузка и обучение модели asm2vec...")
-    if config.instructions_mode in ('generalize', 'both'):
+    if config.instructions_mode in ('generalize', 'group', 'both'):
         model_path = "H:\\programming2026\\ResearchWorkCUDA\\asm2vec_pytorch_master\\model_generalize.pt"
     else:
-        model_path = "H:\\programming2026\\ResearchWorkCUDA\\asm2vec_pytorch_master\\model_generalize.pt"
+        model_path = "H:\\programming2026\\ResearchWorkCUDA\\asm2vec_pytorch_master\\model.pt"
 
     # Загружаем все файлы скопом
     all_files = files1_paths + files2_paths
