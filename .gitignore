@@ -24,3 +24,6 @@ sandbox/
 /asm2vec_pytorch_master/bin1/*
 /asm2vec_pytorch_master/scripts/asm/*
 /asm2vec_pytorch_master/scripts/temp_disassemble_path/
+/temp_disassemble_path/*
+/train_data_generalize/*
+/OBF/*

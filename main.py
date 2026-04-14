@@ -125,11 +125,11 @@ def start_program():
 #         l2 = os.listdir(f'./coreutils-polybench-hashcat/{l1[dirindex1]}')  # O0 O1 O2
 #         print("len:" + str(len(l1)))
 #         for dirindex2 in range(1, len(l2)):
-#             aq = f'./coreutils-polybench-hashcat/{l1[dirindex1]}/{l2[dirindex2]}/{filenames[fileindex]}'
-#             bq = f'./coreutils-polybench-hashcat/{l1[dirindex1]}/{l2[dirindex2]}/{filenames[fileindex + 1]}'
+#             aq = f'./coreutils-polybench-hashcat;{l1[dirindex1]};{l2[dirindex2]};{filenames[fileindex]}'
+#             bq = f'./coreutils-polybench-hashcat;{l1[dirindex1]};{l2[dirindex2]};{filenames[fileindex + 1]}'
 #             q = run(aq, bq)
 #
-#             f.write(f'./coreutils-polybench-hashcat/{l1[dirindex1]}/{l2[0]}/{filenames[fileindex]} ' + f'&& ./coreutils-polybench-hashcat/{l1[dirindex1]}/{l2[dirindex2]}/{filenames[fileindex + 1]} '
+#             f.write(f'./coreutils-polybench-hashcat;{l1[dirindex1]};{l2[0]};{filenames[fileindex]} ' + f'&& ./coreutils-polybench-hashcat;{l1[dirindex1]};{l2[dirindex2]};{filenames[fileindex + 1]} '
 #                     + '-> ' + str(round(q, 4)) + '\n' + '--------' + ' \n')
 #
 # f.close()

@@ -1,16 +1,28 @@
 import re
 import os
+import sys
+from pathlib import Path
+
+# --- Настройка путей (ДОЛЖНА БЫТЬ ДО локальных импортов) ---
+# Корень проекта: ResearchWorkCUDA/ (содержит opcodeparser.py)
+_project_root = Path(__file__).parent.parent.parent
+# Папка asm2vec_pytorch_master/ (содержит пакет asm2vec)
+_asm2vec_root = Path(__file__).parent.parent
+
+for _p in [str(_project_root), str(_asm2vec_root)]:
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+# --- конец настройки путей ---
+
 import click
 import r2pipe
 import hashlib
 import shutil
 import tempfile
-from pathlib import Path
-import asm2vec
 import torch
 import logging
 from opcodeparser import generalize_opcode
-
+import asm2vec
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
@@ -395,6 +407,99 @@ def cli2(ipath1, ipath2, mpath, epochs, lr=0.02, device='auto'):
         # print(f'cosine similarity : {sim:.6f}')
         return round(sim, 6)
 
+def cli3(ipath1, ipath2, mpath, epochs, lr=0.02, device='auto'):
+    if device == 'auto':
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+    # Создаем временную директорию, которая удалится после выхода из блока with
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+
+        # Функция для подготовки пути (если exe -> конвертируем, если папка/txt -> оставляем)
+        def prepare_input(input_path):
+            path_obj = Path(input_path)
+
+            # Если это директория - возвращаем как есть
+            if path_obj.is_dir():
+                return path_obj
+
+            # Если это файл, проверяем, ASM это или бинарник
+            try:
+                with open(path_obj, 'r', encoding='utf-8') as f:
+                    head = f.read(10)
+                    if head.strip().startswith('.name'):
+                        return path_obj  # Это уже ASM
+            except (UnicodeDecodeError, OSError):
+                pass  # Это бинарник
+
+            # Это бинарник, конвертируем
+            print(f"[Info] Converting {path_obj.name} to ASM...")
+            out_subdir = temp_path / path_obj.name
+            out_subdir.mkdir(exist_ok=True)
+
+            cnt = bin2asm_transformed(path_obj, out_subdir, minlen=10)
+            if cnt == 0:
+                print(f"[Warning] No functions extracted from {path_obj.name}")
+
+            return out_subdir
+
+        # Подготавливаем пути (конвертируем бинарники на лету)
+        real_path1 = prepare_input(ipath1)
+        real_path2 = prepare_input(ipath2)
+
+        # load model, tokens
+        #print("[Info] Loading model and data...")
+        model, tokens = asm2vec.utils.load_model(mpath, device=device)
+
+        # Загружаем функции из подготовленных путей
+        functions, tokens_new = asm2vec.utils.load_data([real_path1, real_path2])
+
+        if not functions:
+            print("[Error] No valid functions loaded! Check binary analysis.")
+            return 0.0
+
+        #print(f"[Info] Loaded {len(functions)} functions total.")
+
+        tokens.update(tokens_new)
+        model.update(2, tokens.size())
+        model = model.to(device)
+
+        # train function embedding
+        #print("[Info] Starting training/inference...")
+        model = asm2vec.utils.train(
+            functions,
+            tokens,
+            model=model,
+            epochs=epochs,
+            device=device,
+            mode='test',
+            learning_rate=lr
+        )
+
+        # Сравнение
+        # В режиме test мы дообучаем вектора для НОВЫХ функций.
+        # model.embeddings_f содержит вектора для functions в том порядке, в каком они в load_data
+        # Если load_data загрузил [funcA_bin1, funcB_bin1, funcA_bin2, ...], то нам нужно знать, что сравнивать.
+        # Для простого случая (сравнение двух файлов целиком) часто берут среднее или best match.
+        # В вашем оригинальном коде брались индексы 0 и 1. Это сработает, только если в каждом бинарнике всего по 1 функции.
+
+        # Чтобы не ломать логику, оставим как было, но добавим предупреждение
+        if len(functions) < 2:
+            print("[Error] Not enough functions to compare.")
+            return 0.0
+
+        v1, v2 = model.to('cpu').embeddings_f(torch.tensor([0, 1]))
+
+        sim = cosine_similarity(v1, v2)
+        # print(f'cosine similarity : {sim:.6f}')
+        return round(sim, 6)
+
+
+
+
+
+
+
 
 #@click.command()
 #@click.option('-i', '--input', 'ipath', help='input directory / file', required=True)
@@ -423,6 +528,43 @@ def cli(ipath, opath, minlen):
     # file
     elif os.path.exists(ipath):
         fcount += bin2asm(ipath, opath, minlen)
+        bcount += 1
+    else:
+        print(f'[Error] No such file or directory: {ipath}')
+
+    print(f'[+] Total scan binary: {bcount} => Total generated assembly functions: {fcount}')
+    return bcount, fcount
+
+
+if __name__ == '__main__':
+    # Пример вызова для теста (закомментировано)
+    # cli("path/to/exe", "./asm", 10)
+    pass
+
+
+
+def cli_transformed(ipath, opath, minlen):
+    '''
+    Extract assembly functions from binary executable
+    '''
+    ipath = Path(ipath)
+    opath = Path(opath)
+
+    # create output directory
+    if not os.path.exists(opath):
+        os.mkdir(opath)
+
+    fcount, bcount = 0, 0
+
+    # directory
+    if os.path.isdir(ipath):
+        for f in os.listdir(ipath):
+            if not os.path.islink(ipath / f) and not os.path.isdir(ipath / f):
+                fcount += bin2asm_transformed(ipath / f, opath, minlen)
+                bcount += 1
+    # file
+    elif os.path.exists(ipath):
+        fcount += bin2asm_transformed(ipath, opath, minlen)
         bcount += 1
     else:
         print(f'[Error] No such file or directory: {ipath}')

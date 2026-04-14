@@ -143,16 +143,16 @@ if __name__ == '__main__':
      #print(f"{'-' * 10}\n Asm2vecCuda resut:\n{score}{'-'* 10}")
      #cfg1 = AnalysisConfig(hash_type='nilsimsa', instructions_mode='generalize')
 
-    #  cfg1 = AnalysisConfig(hash_type='ssdeep', instructions_mode='group_only', bin1_path=p1, bin2_path=p2, compare_mode='GPU')
-    #  p1_funcs, p2_funcs, lks1, lks2 = extract_features(p1, p2)
-    #  # q = run_with_features(p5, p6, cfg1)
-    #  q, p1_nodes, p2_nodes = run_with_features(p1_funcs, p2_funcs, lks1, lks2, cfg1)
-    #  e_m = evaluate_matching(p1_nodes, p2_nodes)
-    #  print(f"Custom: correct: {e_m['correct']} total_matched: {e_m['total_matched']} precision: {e_m['precision']} recall: {e_m['recall']}")
-    #  print("Results:", round(q, 4))
+     cfg1 = AnalysisConfig(hash_type='ssdeep', instructions_mode='group_only', bin1_path=p1, bin2_path=p2, compare_mode='GPU')
+     p1_funcs, p2_funcs, lks1, lks2 = extract_features(p1, p2)
+     # q = run_with_features(p5, p6, cfg1)
+     q, p1_nodes, p2_nodes = run_with_features(p1_funcs, p2_funcs, lks1, lks2, cfg1)
+     e_m = evaluate_matching(p1_nodes, p2_nodes)
+     print(f"Custom: correct: {e_m['correct']} total_matched: {e_m['total_matched']} precision: {e_m['precision']} recall: {e_m['recall']}")
+     print("Results:", round(q, 4))
 
-    #  finish = datetime.datetime.now()
-    #  print('Время работы: ' + str(finish - start))
+     finish = datetime.datetime.now()
+     print('Время работы: ' + str(finish - start))
 
 
      # -----------------------------------------------------------------------------------------
