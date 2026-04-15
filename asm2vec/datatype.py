@@ -1,6 +1,8 @@
-import torch
 import random
 import warnings
+
+import torch
+
 
 class Token:
     def __init__(self, name, index):

@@ -1,7 +1,8 @@
-import r2pipe
-import os
 import logging
+import os
 import time
+
+import r2pipe
 
 
 async def create_cfgs_from_exe(exe_dist, save_path):

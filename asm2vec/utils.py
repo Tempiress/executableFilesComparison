@@ -1,10 +1,13 @@
 import os
 import time
+from pathlib import Path
+
 import torch
 from torch.utils.data import DataLoader, Dataset
-from pathlib import Path
+
 from .datatype import Tokens, Function, Instruction
 from .model import ASM2VEC
+
 
 class AsmDataset(Dataset):
     def __init__(self, x, y):

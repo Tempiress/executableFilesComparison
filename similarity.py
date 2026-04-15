@@ -1,23 +1,13 @@
-import os
-import sys
-import time
-import traceback
-from multiprocessing import Value, Lock
 import numpy as np
-from blocklinks4 import *
-from opcodeparser import *
+
+from blocklinks4 import block_links
 # from renamefile import *
 # import pickle
 # from functools import lru_cache
-import orjson  # В 2-3x быстрее стандартного json
 from config import safe_load_json
-import concurrent.futures
-from functools import partial
-from blocklinks4 import block_links
+from opcodeparser import *
 from opcodeparser import op_parser
 from renamefile import rename_block
-
-
 
 # Минимальное число блоков для CFG-структурного сравнения.
 # Функции с меньшим числом блоков сравниваются по контенту (fuzzyhash/MD5).

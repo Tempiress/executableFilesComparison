@@ -1,12 +1,9 @@
-from similarity import evaluate_matching
 import copy
-import asyncio
+
 import numpy as np
-from line_profiler import profile
-from progress.bar import Bar
 
 from main_pairs_compare import main_compare, main_compareGPU
-from opcodeparser import *
+from similarity import evaluate_matching
 
 
 # def count_links(path):

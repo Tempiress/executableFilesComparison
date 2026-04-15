@@ -1,15 +1,12 @@
-import sys
-import os
-import r2pipe
+import datetime
 import logging
-from typing import Dict, List, Tuple, Any, Set, Generator
-import json
-import numpy as np
-from collections import defaultdict, deque
 import pickle
 import random
-import datetime
-from sklearn.model_selection import train_test_split
+import sys
+from typing import Dict, List, Tuple
+
+import numpy as np
+import r2pipe
 
 #from numba import njit
 # Добавляем путь к asm2vec

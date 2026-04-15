@@ -1,11 +1,11 @@
-import numpy as np
-import torch
+import argparse
 import os
 import shutil
 import sys
-import statistics
 from pathlib import Path
-import argparse
+
+import numpy as np
+import torch
 
 # Добавляем путь к scripts, чтобы импортировать bin2asm
 sys.path.append(os.path.join(os.getcwd(), 'scripts'))

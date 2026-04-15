@@ -1,13 +1,11 @@
-import sys
-import os
-import r2pipe
 import logging
-from typing import Dict, List, Tuple, Any
-import json
-import numpy as np
-from collections import defaultdict
+import os
 import pickle
+import sys
+from typing import Dict, List, Tuple
 
+import numpy as np
+import r2pipe
 
 # Добавляем путь к asm2vec
 ASM2VEC_PATH = r"D:\programming2025\MyResearch\asm2vec"

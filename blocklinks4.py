@@ -1,9 +1,6 @@
-import json
 import logging
 import time
 
-import orjson
-from config import safe_load_json
 
 # def block_links(json_data1):
 #     """

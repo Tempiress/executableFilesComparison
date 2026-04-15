@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+
 import orjson
+
 
 @dataclass
 class AnalysisConfig:

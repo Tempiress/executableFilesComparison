@@ -1,9 +1,12 @@
-import torch
 import os
 import shutil
 import sys
 from pathlib import Path
+
+import torch
+
 from bin2asm import cli
+
 # Импортируем существующие модули проекта
 # Предполагаем структуру:
 # ./asm2vec/ (utils.py, datatype.py, model.py)

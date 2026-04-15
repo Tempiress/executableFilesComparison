@@ -1,9 +1,9 @@
-import r2pipe
 import logging
-import asyncio
-from typing import Dict, List, Tuple
-import json
 import time
+from typing import Dict
+
+import r2pipe
+
 
 class CFGAnalyzer:
     def __init__(self):

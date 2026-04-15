@@ -1,24 +1,19 @@
+import datetime
 import glob
 import os
-import time
-import tlsh
-import ppdeep
-import concurrent.futures
-import datetime
-from cfg_from_exe_generator import call_func_graph, create_cfgs_from_exe
-from cfglinks_partition import links_two_program
-from memory_cfg_from_exe_generator import CFGAnalyzer
-from similarity import hemming_prog
-import asyncio
-from config import AnalysisConfig
-import subprocess
-import sys
-import re
 import random
-import torch
-import numpy as np
+import subprocess
 from pathlib import Path
+
+import numpy as np
+import torch
+
+from cfglinks_partition import links_two_program
+from config import AnalysisConfig
+from memory_cfg_from_exe_generator import CFGAnalyzer
 from similarity import evaluate_matching
+from similarity import hemming_prog
+
 
 def set_seed(seed=42):
     random.seed(seed)

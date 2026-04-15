@@ -1,5 +1,3 @@
-import copy
-
 # def rename_block(data1, data2, sim_data):
 #     """
 #     Переименование блоков второго файла

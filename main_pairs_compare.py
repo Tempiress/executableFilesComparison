@@ -1,15 +1,16 @@
 import concurrent.futures
 import os
-import time
-from functools import partial
-from progress.bar import Bar
-from similarity import similarity
-import torch
-from pathlib import Path
+import random
 import shutil
 import sys
-import random
+import time
+from functools import partial
+from pathlib import Path
+
 import numpy as np
+import torch
+
+from similarity import similarity
 
 sys.path.append(os.path.join(os.getcwd(), 'scripts'))
 
@@ -256,6 +257,8 @@ def main_compareGPU(matrix1, matrix2, p1_funks, p2_funks, config):
         used_p2.add(fn2)
         counter += 1
 
+    if temp_dir.exists():
+        shutil.rmtree(temp_dir)
     print("End of main_compare \n")
     return p1_nodes, p2_nodes
 

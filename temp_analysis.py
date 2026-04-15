@@ -1,4 +1,3 @@
-import re
 from collections import defaultdict
 
 def analyze_results():

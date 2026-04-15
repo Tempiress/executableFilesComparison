@@ -1,19 +1,14 @@
+import concurrent.futures
 import datetime
 import os
+import time
 
 import ppdeep
-import r2pipe
 import tlsh
 
 from run import run
-import time
-import concurrent.futures
-from functools import partial
 
-from progress.bar import Bar
-from progress.spinner import Spinner
-import asyncio
-from memory_cfg_from_exe_generator import CFGAnalyzer
+
 # from tqdm import tqdm
 
 
