@@ -17,6 +17,7 @@ for _p in [str(_project_root), str(_asm2vec_root)]:
 import click
 import r2pipe
 import hashlib
+import pickle
 import shutil
 import tempfile
 import torch
@@ -118,24 +119,58 @@ def bin2asm(filename, opath, minlen):
     if not validEXE(filename):
         logging.info(f"File {filename} header not recognized, trying anyway...")
 
-    try:
-        # Открываем r2. flags=['-2'] отключает stderr для чистоты
-        r = r2pipe.open(str(filename), flags=["-2"])
-        r.cmd('aaaa')  # Анализ
-    except Exception as e:
-        logging.error(f"Failed to open {filename}: {e}")
-        return 0
+    # Проверяем кэш (динамический поиск папки .r2_cache вверх по дереву директорий)
+    cache_dir = None
+    for parent in Path(__file__).resolve().parents:
+        if (parent / ".r2_cache").exists() or parent.name == "ResearchWorkCUDA":
+            cache_dir = parent / ".r2_cache"
+            break
+    if not cache_dir:
+        cache_dir = Path(__file__).resolve().parent.parent / ".r2_cache"
+
+    abs_path = os.path.abspath(filename)
+    path_hash = hashlib.md5(abs_path.encode("utf-8")).hexdigest()
+    mtime = int(os.path.getmtime(abs_path))
+    size = os.path.getsize(abs_path)
+
+    cache_file = cache_dir / f"cache_{path_hash}_{mtime}_{size}.pkl"
+    functions = None
+    from_cache = False
+
+    if cache_file.exists():
+        try:
+            with open(cache_file, "rb") as f:
+                data = pickle.load(f)
+                functions = data["cfg_data"]
+                from_cache = True
+                #logging.info(f"Loaded {filename} functions from cache")
+        except Exception as e:
+            logging.error(f"Failed to load cache file {cache_file}: {e}")
+            functions = None
+
+    # Если кэша нет, открываем Radare2 как обычно
+    r = None
+    if not from_cache:
+
+        try:
+            r = r2pipe.open(str(filename), flags=["-2"])
+            r.cmd('aaa')  # Анализ
+            functions = r.cmdj('aflj')
+        except Exception as e:
+            logging.error(f"Failed to open {filename}: {e}")
+            return 0
 
     count = 0
-    # Получаем список всех функций
-    functions = r.cmdj('aflj')
-
     if not functions:
         logging.warning(f"No functions found in {filename}")
-        r.quit()
+        if r:
+            r.quit()
         return 0
 
-    for fn in functions:
+    # Обходим функции: берем значения словаря (.values()) если кэш, иначе список
+    func_iterable = functions.values() if from_cache else functions
+
+    for fn in func_iterable:
         func_addr = fn['addr']
         func_size = fn.get('size', 0)
         func_name = fn.get('name', f"func_{func_addr:x}")
@@ -145,18 +180,52 @@ def bin2asm(filename, opath, minlen):
         if not safe_name:
             safe_name = f"{func_addr:x}"
 
-        # 1. Пробуем умный дизассемблинг (граф)
-        ops_json = r.cmdj(f'pdfj @ {func_addr}')
+        ops_json = None
 
-        # 2. Fallback: если граф не построился, берем линейный дамп
-        if not ops_json or not ops_json.get('ops'):
-            if func_size > 0:
-                try:
-                    raw_ops = r.cmdj(f'pDj {func_size} @ {func_addr}')
-                    if raw_ops:
-                        ops_json = {'ops': raw_ops, 'name': func_name}
-                except Exception:
-                    pass
+        if from_cache:
+            # Восстанавливаем ops_json напрямую из графа в памяти (без Radare2!)
+            cfg_json = fn.get('cfg')
+            raw_ops = []
+            if cfg_json:
+                if isinstance(cfg_json, list):
+                    for item in cfg_json:
+                        if isinstance(item, dict):
+                            blocks = item.get('blocks', [])
+                            if blocks:
+                                for block in blocks:
+                                    ops = block.get('ops', [])
+                                    if ops:
+                                        raw_ops.extend(ops)
+                            else:
+                                ops = item.get('ops', [])
+                                if ops:
+                                    raw_ops.extend(ops)
+                elif isinstance(cfg_json, dict):
+                    blocks = cfg_json.get('blocks', [])
+                    if blocks:
+                        for block in blocks:
+                            ops = block.get('ops', [])
+                            if ops:
+                                raw_ops.extend(ops)
+                    else:
+                        ops = cfg_json.get('ops', [])
+                        if ops:
+                            raw_ops.extend(ops)
+            if raw_ops:
+                ops_json = {'ops': raw_ops, 'name': func_name}
+        else:
+            # 1. Пробуем умный дизассемблинг (граф)
+            ops_json = r.cmdj(f'pdfj @ {func_addr}')
+
+            # 2. Fallback: если граф не построился, берем линейный дамп
+            if not ops_json or not ops_json.get('ops'):
+                if func_size > 0:
+                    try:
+                        raw_ops = r.cmdj(f'pDj {func_size} @ {func_addr}')
+                        if raw_ops:
+                            ops_json = {'ops': raw_ops, 'name': func_name}
+                    except Exception:
+                        pass
 
         # Если все равно пусто — пропускаем
         if not ops_json:
@@ -179,7 +248,8 @@ def bin2asm(filename, opath, minlen):
             except Exception as e:
                 logging.error(f"Error writing file {uid}: {e}")
 
-    r.quit()
+    if r:
+        r.quit()
     return count
 
 
@@ -247,24 +317,57 @@ def bin2asm_transformed(filename, opath, minlen):
     if not validEXE(filename):
         logging.info(f"File {filename} header not recognized, trying anyway...")
 
-    try:
-        # Открываем r2. flags=['-2'] отключает stderr для чистоты
-        r = r2pipe.open(str(filename), flags=["-2"])
-        r.cmd('aaaa')  # Анализ
-    except Exception as e:
-        logging.error(f"Failed to open {filename}: {e}")
-        return 0
+    # Проверяем кэш (динамический поиск папки .r2_cache вверх по дереву директорий)
+    cache_dir = None
+    for parent in Path(__file__).resolve().parents:
+        if (parent / ".r2_cache").exists() or parent.name == "ResearchWorkCUDA":
+            cache_dir = parent / ".r2_cache"
+            break
+    if not cache_dir:
+        cache_dir = Path(__file__).resolve().parent.parent / ".r2_cache"
+
+    abs_path = os.path.abspath(filename)
+    path_hash = hashlib.md5(abs_path.encode("utf-8")).hexdigest()
+    mtime = int(os.path.getmtime(abs_path))
+    size = os.path.getsize(abs_path)
+    cache_file = cache_dir / f"cache_{path_hash}_{mtime}_{size}.pkl"
+    functions = None
+    from_cache = False
+
+    if cache_file.exists():
+
+        try:
+            with open(cache_file, "rb") as f:
+                data = pickle.load(f)
+                functions = data["cfg_data"]
+                from_cache = True
+                logging.info(f"Loaded {filename} functions from cache (transformed bin2asm).")
+        except Exception as e:
+            logging.error(f"Failed to load cache file {cache_file}: {e}")
+            functions = None
+
+    # Если кэша нет, открываем Radare2 как обычно
+    r = None
+    if not from_cache:
+        try:
+            r = r2pipe.open(str(filename), flags=["-2"])
+            r.cmd('aaa')  # Анализ
+            functions = r.cmdj('aflj')
+        except Exception as e:
+            logging.error(f"Failed to open {filename}: {e}")
+            return 0
 
     count = 0
-    # Получаем список всех функций
-    functions = r.cmdj('aflj')
-
     if not functions:
         logging.warning(f"No functions found in {filename}")
-        r.quit()
+        if r:
+            r.quit()
         return 0
 
-    for fn in functions:
+    # Обходим функции: берем значения словаря (.values()) если кэш, иначе список
+    func_iterable = functions.values() if from_cache else functions
+
+    for fn in func_iterable:
         func_addr = fn['addr']
         func_size = fn.get('size', 0)
         func_name = fn.get('name', f"func_{func_addr:x}")
@@ -274,18 +377,52 @@ def bin2asm_transformed(filename, opath, minlen):
         if not safe_name:
             safe_name = f"{func_addr:x}"
 
-        # 1. Пробуем умный дизассемблинг (граф)
-        ops_json = r.cmdj(f'pdfj @ {func_addr}')
+        ops_json = None
 
-        # 2. Fallback: если граф не построился, берем линейный дамп
-        if not ops_json or not ops_json.get('ops'):
-            if func_size > 0:
-                try:
-                    raw_ops = r.cmdj(f'pDj {func_size} @ {func_addr}')
-                    if raw_ops:
-                        ops_json = {'ops': raw_ops, 'name': func_name}
-                except Exception:
-                    pass
+        if from_cache:
+            # Восстанавливаем ops_json напрямую из графа в памяти (без Radare2!)
+            cfg_json = fn.get('cfg')
+            raw_ops = []
+            if cfg_json:
+                if isinstance(cfg_json, list):
+                    for item in cfg_json:
+                        if isinstance(item, dict):
+                            blocks = item.get('blocks', [])
+                            if blocks:
+                                for block in blocks:
+                                    ops = block.get('ops', [])
+                                    if ops:
+                                        raw_ops.extend(ops)
+                            else:
+                                ops = item.get('ops', [])
+                                if ops:
+                                    raw_ops.extend(ops)
+                elif isinstance(cfg_json, dict):
+                    blocks = cfg_json.get('blocks', [])
+                    if blocks:
+                        for block in blocks:
+                            ops = block.get('ops', [])
+                            if ops:
+                                raw_ops.extend(ops)
+                    else:
+                        ops = cfg_json.get('ops', [])
+                        if ops:
+                            raw_ops.extend(ops)
+            if raw_ops:
+                ops_json = {'ops': raw_ops, 'name': func_name}
+        else:
+            # 1. Пробуем умный дизассемблинг (граф)
+            ops_json = r.cmdj(f'pdfj @ {func_addr}')
+
+            # 2. Fallback: если граф не построился, берем линейный дамп
+            if not ops_json or not ops_json.get('ops'):
+                if func_size > 0:
+                    try:
+                        raw_ops = r.cmdj(f'pDj {func_size} @ {func_addr}')
+                        if raw_ops:
+                            ops_json = {'ops': raw_ops, 'name': func_name}
+                    except Exception:
+                        pass
 
         # Если все равно пусто — пропускаем
         if not ops_json:
@@ -308,7 +445,8 @@ def bin2asm_transformed(filename, opath, minlen):
             except Exception as e:
                 logging.error(f"Error writing file {uid}: {e}")
 
-    r.quit()
+    if r:
+        r.quit()
     return count
 
 
