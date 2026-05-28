@@ -1,35 +1,21 @@
-import os
 import shutil
 import sys
 from pathlib import Path
 
 import torch
 
-from scripts.bin2asm import cli
+# --- Настройка путей ---
+# __file__ = .../asm2vec_pytorch_master/scripts/summary_realise_copy.py
+_scripts_dir = Path(__file__).parent          # .../scripts/
+_asm2vec_master = _scripts_dir.parent         # .../asm2vec_pytorch_master/
+_project_root = _asm2vec_master.parent        # .../ResearchWorkCUDA/
 
-# Импортируем существующие модули проекта
-# Предполагаем структуру:
-# ./asm2vec/ (utils.py, datatype.py, model.py)
-# ./scripts/ (bin2asm.py)
-sys.path.append(os.path.join(os.getcwd(), 'scripts'))
+for _p in [str(_scripts_dir), str(_asm2vec_master), str(_project_root)]:
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+# --- конец настройки путей ---
 
-root_path = Path(__file__).parent.parent.resolve()
-
-ee = (os.path.join(str(root_path), 'asm2vec'))
-if str(root_path) not in sys.path:
-    sys.path.append(os.path.join(str(root_path), 'asm2vec'))
-
-try:
-    from scripts.bin2asm import bin2asm
-except ImportError:
-    # Если bin2asm.py лежит просто в корне или в другой папке
-    try:
-        import bin2asm
-    except ImportError:
-        print("Ошибка: Не удалось импортировать bin2asm. Убедитесь, что bin2asm.py находится в папке scripts/.")
-        sys.exit(1)
-
-
+from scripts.bin2asm import cli_transformed
 import asm2vec.utils
 import asm2vec.datatype
 
@@ -62,10 +48,10 @@ def compare_binaries(bin1_path, bin2_path, model_path, epochs=10, device='auto',
     print(f"[*] Дизассемблирование файла {bin1_path}...")
     # Используем функцию bin2asm из готовой реализации
     # count1 = bin2asm(Path(bin1_path), out1, minlen=10)
-    count1, count_func1 = cli(bin1_path, DISASSEMBLE_PATH1, 10)
+    count1, count_func1 = cli_transformed(bin1_path, DISASSEMBLE_PATH1, 10)
     print(f"[*] Дизассемблирование файла {bin2_path}...")
     # count2 = bin2asm(Path(bin2_path), out2, minlen=10)
-    count2, count_func2 = cli(bin2_path, DISASSEMBLE_PATH2, 10)
+    count2, count_func2 = cli_transformed(bin2_path, DISASSEMBLE_PATH2, 10)
 
     if count1 == 0 or count2 == 0:
         print("Ошибка: Функции не найдены")
@@ -135,7 +121,7 @@ def compare_binaries(bin1_path, bin2_path, model_path, epochs=10, device='auto',
             # Считаем похожесть
             score = cosine_similarity(vec1, vec2)
 
-            # Добавляем в список кандидатов
+            # Добавляем в список
             all_candidates.append((score, i, j))
 
     # Шаг 2: Сортируем список по убыванию похожести (лучшие сверху)
@@ -177,9 +163,10 @@ def compare_binaries(bin1_path, bin2_path, model_path, epochs=10, device='auto',
     # 2. Взвешенная сумма
     weighted_sim_sum = sum(match['score'] * match['weight'] for match in final_matches)
     total_weight_bin1 = sum(len(f[0].insts) for f in funcs_bin1)
+    total_weight_bin2 = sum(len(f[0].insts) for f in funcs_bin2)
 
     # Метрика: взвешенное сходство
-    score_weighted = weighted_sim_sum / total_weight_bin1 if total_weight_bin1 > 0 else 0
+    score_weighted = weighted_sim_sum / max(total_weight_bin1, total_weight_bin2) #if total_weight_bin1 > 0 else 0
 
     # Метрика В: Среднее только по хорошим совпадениям (моя идея)
     # Полезна для оценки: "Если функция нашлась, насколько сильно ее переписали?"
@@ -238,19 +225,28 @@ if __name__ == '__main__':
 
     file_b = r"D:\programming2025\asm2vec-pytorch-master\HW3.exe"
     ww = r"D:\programming2025\MyResearch\coreutils-polybench-hashcat\c10\O2\combinator"
-    model_p = r"D:\programming2025\asm2vec-pytorch-master\model.pt"
+    model_p = r"./asm2vec_pytorch_master/model.pt"
+    gen_model_p = r"./asm2vec_pytorch_master/model_generalize.pt"
 
     bb1 = r"D:\programming2025\asm2vecRework\MyResearch\coreutils-polybench-hashcat\c09\O0\prepare"
     bb2 = r"D:\programming2025\asm2vecRework\MyResearch\coreutils-polybench-hashcat\g10\O2\prepare"
+
+    p2 = "./coreutils-polybench-hashcat/g10/O2/3mm"
+    p2 = "./coreutils-polybench-hashcat/aoc/O2/3mm"
+
 
     cc1 = r"D:\programming2025\MyResearch\train_programs\elevator.exe"
     cc2 = r"D:\programming2025\MyResearch\train_programs\x64dbg.exe"
 
     pyt1= r"H:\ResearchWorkCUDA\train_programs\python-3.12.7-amd64.exe"
     pyt2 = r"H:\ResearchWorkCUDA\train_programs\python-3.14.3-amd64.exe"
-    
+
     obf_p1 = r"./all_obf/3mm"
     p1 = r"./coreutils-polybench-hashcat/aoc/O0/3mm"
-    
-    w = compare_binaries(pyt1, pyt2, model_p, epochs=20)
+    p2 = r"./coreutils-polybench-hashcat/aoc/O2/3mm"
+
+    w = compare_binaries(pyt1, pyt2, gen_model_p, epochs=20)
     print(f"{w}")
+
+
+    

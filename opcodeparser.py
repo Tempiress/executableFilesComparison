@@ -286,6 +286,8 @@ def find_similar_blocks(json_data1, json_data2, config):
                     similarity = lzjd.sim(block_hash, compare_hash)
                 elif config.hash_type == 'nilsimsa':
                     similarity = compare_digests(block_hash, compare_hash)
+                    # Normalize nilsimsa similarity (0-128) to 0-100 range
+                    similarity = min(100, int(similarity * 100 / 128))
 
                 else:
                     similarity = fuzz.ratio(block_hash, compare_hash)

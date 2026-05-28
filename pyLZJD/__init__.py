@@ -1,6 +1,6 @@
 name = "pyLZJD"
 
-import pyximport
 import numpy
+import pyximport
 
 from .lzjd import digest, sim, vectorize

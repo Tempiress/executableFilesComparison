@@ -27,3 +27,6 @@ sandbox/
 /temp_disassemble_path/*
 /train_data_generalize/*
 /OBF/*
+/results/error/*
+/train_data/*
+/scienseWorkdNotes/

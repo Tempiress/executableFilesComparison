@@ -1,8 +1,8 @@
 import concurrent.futures
 import os
 import random
-import shutil
 import sys
+import tempfile
 import time
 from functools import partial
 from pathlib import Path
@@ -14,13 +14,22 @@ from similarity import similarity
 
 sys.path.append(os.path.join(os.getcwd(), 'scripts'))
 
+try:
+    import pynvml
+    NVML_AVAILABLE = True
+except ImportError:
+    NVML_AVAILABLE = False
+
 root_path = Path(__file__).parent.resolve()
 
 try:
     from asm2vec_pytorch_master.scripts import bin2asm
 except ImportError:
-    print("Ошибка: Не удалось импортировать bin2asm. Убедитесь, что bin2asm.py находится в папке scripts/.")
-    sys.exit(1)
+    try:
+        from scripts import bin2asm
+    except ImportError:
+        print("Ошибка: Не удалось импортировать bin2asm. Убедитесь, что bin2asm.py находится в папке scripts/.")
+        sys.exit(1)
 
 
 def set_seed(seed=42):
@@ -112,153 +121,153 @@ def main_compareGPU(matrix1, matrix2, p1_funks, p2_funks, config):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     print(f"DEVICE: {device}")
 
-    # Подготовка папок
-    temp_dir = Path("temp_disassemble_path_maincompare")
-    if temp_dir.exists():
-        shutil.rmtree(temp_dir)
-    temp_dir.mkdir()
+    # Используем tempfile.TemporaryDirectory() для автоматического управления временными директориями
+    # Это предотвращает race condition при многопроцессорном выполнении
+    with tempfile.TemporaryDirectory(prefix="asm2vec_compare_") as temp_dir:
+        temp_path = Path(temp_dir)
 
-    DISASSEMBLE_PATH1 = temp_dir / "bin1"
-    DISASSEMBLE_PATH2 = temp_dir / "bin2"
-    DISASSEMBLE_PATH1.mkdir()
-    DISASSEMBLE_PATH2.mkdir()
+        DISASSEMBLE_PATH1 = temp_path / "bin1"
+        DISASSEMBLE_PATH2 = temp_path / "bin2"
+        DISASSEMBLE_PATH1.mkdir()
+        DISASSEMBLE_PATH2.mkdir()
 
-    # Дизассемблирование (извлекаем все функции сразу)
-    # В зависимости от режима используем сырые или обобщённые опкоды для asm2vec
-    use_transformed = config.instructions_mode in ('generalize', 'group', 'both')
-    disasm_fn = bin2asm.bin2asm_transformed if use_transformed else bin2asm.bin2asm
+        # Дизассемблирование (извлекаем все функции сразу)
+        # В зависимости от режима используем сырые или обобщённые опкоды для asm2vec
+        use_transformed = config.instructions_mode in ('generalize', 'group', 'both')
+        disasm_fn = bin2asm.bin2asm_transformed if use_transformed else bin2asm.bin2asm
 
-    print(f"[*] Дизассемблирование файла {config.bin1_path}...")
-    count1 = disasm_fn(Path(config.bin1_path), DISASSEMBLE_PATH1, 6)
-    print(f"[*] Дизассемблирование файла {config.bin2_path}...")
-    count2 = disasm_fn(Path(config.bin2_path), DISASSEMBLE_PATH2, 6)
+        print(f"[*] Дизассемблирование файла {config.bin1_path}...")
+        count1 = disasm_fn(Path(config.bin1_path), DISASSEMBLE_PATH1, 6)
+        print(f"[*] Дизассемблирование файла {config.bin2_path}...")
+        count2 = disasm_fn(Path(config.bin2_path), DISASSEMBLE_PATH2, 6)
 
-    if count1 == 0 or count2 == 0:
-        print("Ошибка: Функции не найдены")
-        return [], []
+        if count1 == 0 or count2 == 0:
+            print("Ошибка: Функции не найдены")
+            return [], []
 
+        files1_paths = []
+        files1_indices = []
+        for i in range(1, len(matrix1)):
+            fname = matrix1[0][i]
+            fpath = DISASSEMBLE_PATH1 / fname
+            if fpath.exists():
+                files1_paths.append(fpath)
+                files1_indices.append(fname)  # Сохраняем имя для идентификации
 
+        files2_paths = []
+        files2_indices = []
+        for i in range(1, len(matrix2)):
+            fname = matrix2[0][i]
+            fpath = DISASSEMBLE_PATH2 / fname
+            if fpath.exists():
+                files2_paths.append(fpath)
+                files2_indices.append(fname)
 
-    files1_paths = []
-    files1_indices = []
-    for i in range(1, len(matrix1)):
-        fname = matrix1[0][i]
-        fpath = DISASSEMBLE_PATH1 / fname
-        if fpath.exists():
-            files1_paths.append(fpath)
-            files1_indices.append(fname)  # Сохраняем имя для идентификации
+        # Загрузка данных и модели
+        print("[*] Загрузка и обучение модели asm2vec...")
+        if config.instructions_mode in ('generalize'):
+            model_path = "./models/model_generalize.pt"
+        elif config.instructions_mode in ('group'):
+            model_path = "./models/model_group.pt"
+        elif config.instructions_mode in ('both'):
+            model_path = "./models/model_both.pt"
+        else:
+            model_path = "./asm2vec_pytorch_master/model.pt"
 
-    files2_paths = []
-    files2_indices = []
-    for i in range(1, len(matrix2)):
-        fname = matrix2[0][i]
-        fpath = DISASSEMBLE_PATH2 / fname
-        if fpath.exists():
-            files2_paths.append(fpath)
-            files2_indices.append(fname)
+        # Загружаем все файлы скопом
+        all_files = files1_paths + files2_paths
 
-    # Загрузка данных и модели
-    print("[*] Загрузка и обучение модели asm2vec...")
-    if config.instructions_mode in ('generalize', 'group', 'both'):
-        model_path = "H:\\programming2026\\ResearchWorkCUDA\\asm2vec_pytorch_master\\model_generalize.pt"
-    else:
-        model_path = "H:\\programming2026\\ResearchWorkCUDA\\asm2vec_pytorch_master\\model.pt"
+        # Загружаем базовую модель
+        model, tokens = asm2vec.utils.load_model(model_path, device=device)
 
-    # Загружаем все файлы скопом
-    all_files = files1_paths + files2_paths
+        # Парсим функции
+        functions, tokens_new = asm2vec.utils.load_data(all_files)
 
-    # Загружаем базовую модель
-    model, tokens = asm2vec.utils.load_model(model_path, device=device)
+        if not functions:
+            print("[Error] Функции не загрузились.")
+            return [], []
 
-    # Парсим функции
-    functions, tokens_new = asm2vec.utils.load_data(all_files)
+        # Обновляем словарь и модель
+        tokens.update(tokens_new)
+        model.update(len(functions), tokens.size())
+        model = model.to(device)
 
-    if not functions:
-        print("[Error] Функции не загрузились.")
-        return [], []
+        # Обучение (Fine-tuning) один раз для всех векторов
+        model = asm2vec.utils.train(
+            functions,
+            tokens,
+            model=model,
+            epochs=50,  # Увеличил с 20 до 50 для точности
+            device=device,
+            mode='test',
+            learning_rate=0.02
+        )
 
-    # Обновляем словарь и модель
-    tokens.update(tokens_new)
-    model.update(len(functions), tokens.size())
-    model = model.to(device)
+        # 6. Получение векторов и матричное сравнение
+        print("[*] Вычисление матрицы схожести...")
 
-    # Обучение (Fine-tuning) один раз для всех векторов
-    model = asm2vec.utils.train(
-        functions,
-        tokens,
-        model=model,
-        epochs=50,  # Увеличил с 20 до 50 для точности
-        device=device,
-        mode='test',
-        learning_rate=0.02
-    )
+        # Извлекаем векторы (они уже на GPU или переносим)
+        # embeddings_f возвращает тензор (N, embedding_dim)
+        all_embeddings = model.embeddings_f(torch.arange(len(functions)).to(device))
 
-    # 6. Получение векторов и матричное сравнение
-    print("[*] Вычисление матрицы схожести...")
+        # Разделяем обратно на группу 1 и группу 2
+        n1 = len(files1_paths)
+        embeddings1 = all_embeddings[:n1]  # Векторы первого бинарника
+        embeddings2 = all_embeddings[n1:]  # Векторы второго бинарника
 
-    # Извлекаем векторы (они уже на GPU или переносим)
-    # embeddings_f возвращает тензор (N, embedding_dim)
-    all_embeddings = model.embeddings_f(torch.arange(len(functions)).to(device))
+        # Нормализация векторов (для Cosine Similarity: A . B / (|A|*|B|))
+        # Нормируем векторы сразу, чтобы потом просто перемножать
+        embeddings1 = embeddings1 / embeddings1.norm(dim=1, keepdim=True)
+        embeddings2 = embeddings2 / embeddings2.norm(dim=1, keepdim=True)
 
-    # Разделяем обратно на группу 1 и группу 2
-    n1 = len(files1_paths)
-    embeddings1 = all_embeddings[:n1]  # Векторы первого бинарника
-    embeddings2 = all_embeddings[n1:]  # Векторы второго бинарника
+        # Матричное умножение: (N1, Dim) x (Dim, N2) -> (N1, N2)
+        # В ячейке [i][j] будет cosine similarity между i-й функцией bin1 и j-й функцией bin2
+        similarity_matrix = torch.mm(embeddings1, embeddings2.t())
 
-    # Нормализация векторов (для Cosine Similarity: A . B / (|A|*|B|))
-    # Нормируем векторы сразу, чтобы потом просто перемножать
-    embeddings1 = embeddings1 / embeddings1.norm(dim=1, keepdim=True)
-    embeddings2 = embeddings2 / embeddings2.norm(dim=1, keepdim=True)
+        # Переносим на CPU для обработки списков
+        sim_matrix_cpu = similarity_matrix.detach().cpu().numpy()
 
-    # Матричное умножение: (N1, Dim) x (Dim, N2) -> (N1, N2)
-    # В ячейке [i][j] будет cosine similarity между i-й функцией bin1 и j-й функцией bin2
-    similarity_matrix = torch.mm(embeddings1, embeddings2.t())
+        # 7. Формирование списка пар для жадного алгоритма
+        print("[*] Поиск уникальных пар...")
+        Pairs = []
 
-    # Переносим на CPU для обработки списков
-    sim_matrix_cpu = similarity_matrix.detach().cpu().numpy()
+        # Проходим по матрице и собираем все связи
+        rows, cols = sim_matrix_cpu.shape
+        for r in range(rows):
+            for c in range(cols):
+                score = float(sim_matrix_cpu[r, c])
+                # Сохраняем (score, имя_функции_1, имя_функции_2)
+                Pairs.append((score, files1_indices[r], files2_indices[c]))
 
-    # 7. Формирование списка пар для жадного алгоритма
-    print("[*] Поиск уникальных пар...")
-    Pairs = []
+        # Сортируем по убыванию
+        Pairs.sort(key=lambda x: x[0], reverse=True)
 
-    # Проходим по матрице и собираем все связи
-    rows, cols = sim_matrix_cpu.shape
-    for r in range(rows):
-        for c in range(cols):
-            score = float(sim_matrix_cpu[r, c])
-            # Сохраняем (score, имя_функции_1, имя_функции_2)
-            Pairs.append((score, files1_indices[r], files2_indices[c]))
+        # 8. Жадный выбор лучших пар
+        used_p1 = set()
+        used_p2 = set()
+        p1_nodes = []
+        p2_nodes = []
+        counter = 0
 
-    # Сортируем по убыванию
-    Pairs.sort(key=lambda x: x[0], reverse=True)
+        for score, fn1, fn2 in Pairs:
+            if fn1 in used_p1 or fn2 in used_p2:
+                continue
 
-    # 8. Жадный выбор лучших пар
-    used_p1 = set()
-    used_p2 = set()
-    p1_nodes = []
-    p2_nodes = []
-    counter = 0
+            # Можно добавить порог отсечения, например if score < 0.5: break
 
-    for score, fn1, fn2 in Pairs:
-        if fn1 in used_p1 or fn2 in used_p2:
-            continue
+            p1_nodes.append({
+                "new_label": counter,
+                "old_label": fn1
+            })
+            p2_nodes.append({
+                "new_label": counter,
+                "old_label": fn2
+            })
+            used_p1.add(fn1)
+            used_p2.add(fn2)
+            counter += 1
 
-        # Можно добавить порог отсечения, например if score < 0.5: break
-
-        p1_nodes.append({
-            "new_label": counter,
-            "old_label": fn1
-        })
-        p2_nodes.append({
-            "new_label": counter,
-            "old_label": fn2
-        })
-        used_p1.add(fn1)
-        used_p2.add(fn2)
-        counter += 1
-
-    if temp_dir.exists():
-        shutil.rmtree(temp_dir)
+    # Временная директория автоматически удаляется при выходе из with
     print("End of main_compare \n")
     return p1_nodes, p2_nodes
 
