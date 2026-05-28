@@ -146,10 +146,12 @@ def process_file_pair_comprehensive(args):
     # 1. Feature Extraction (spawns Radare2 exactly once per pair)
     try:
         cfg_analyzer = CFGAnalyzer()
-        p1_funcs = cfg_analyzer.analyze_executable(str(p1_path))
-        p2_funcs = cfg_analyzer.analyze_executable(str(p2_path))
-        lks1 = cfg_analyzer.get_call_graph(str(p1_path))
-        lks2 = cfg_analyzer.get_call_graph(str(p2_path))
+        p1_funcs, lks1 = cfg_analyzer.get_analyzers(str(p1_path))
+        p2_funcs, lks2 = cfg_analyzer.get_analyzers(str(p2_path))
+        # p1_funcs = cfg_analyzer.analyze_executable(str(p1_path))
+        # p2_funcs = cfg_analyzer.analyze_executable(str(p2_path))
+        # lks1 = cfg_analyzer.get_call_graph(str(p1_path))
+        # lks2 = cfg_analyzer.get_call_graph(str(p2_path))
     except Exception as e:
         error_msg = f'Feature extraction failed: {e}'
         for h_type, i_mode, c_mode in configs_to_run:
