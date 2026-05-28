@@ -148,6 +148,7 @@ def process_file_pair_comprehensive(args):
         cfg_analyzer = CFGAnalyzer()
         p1_funcs, lks1 = cfg_analyzer.get_analyzers(str(p1_path))
         p2_funcs, lks2 = cfg_analyzer.get_analyzers(str(p2_path))
+        
         # p1_funcs = cfg_analyzer.analyze_executable(str(p1_path))
         # p2_funcs = cfg_analyzer.analyze_executable(str(p2_path))
         # lks1 = cfg_analyzer.get_call_graph(str(p1_path))
@@ -217,8 +218,8 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(description='GPU-aware batch comparison with checkpoint')
-    parser.add_argument('--batch-size', type=int, default=2, help='Batch size')
-    parser.add_argument('--workers', type=int, default=2, help='Number of workers')
+    parser.add_argument('--batch-size', type=int, default=4, help='Batch size')
+    parser.add_argument('--workers', type=int, default=3, help='Number of workers')
     parser.add_argument('--log-file', type=str, default='results/logs/resource.log', help='Resource log')
     parser.add_argument('--checkpoint-file', type=str, default='results/logs/checkpoint.log', help='Checkpoint file')
     parser.add_argument('--comparison-log', type=str, default='results/logs/batch_results.log', help='Results log')
@@ -231,8 +232,7 @@ def main():
         os.makedirs(log_dir, exist_ok=True)
     checkpoint_dir = os.path.dirname(args.checkpoint_file)
     if checkpoint_dir:
-        if checkpoint_dir.exists() == False:
-            os.makedirs(checkpoint_dir)
+        os.makedirs(checkpoint_dir, exist_ok=True)
     
     print(f"GPU available: {torch.cuda.is_available()}")
     if torch.cuda.is_available():
@@ -257,12 +257,19 @@ def main():
         clear_files = set(f for f in os.listdir(clear_files_dir) if (clear_files_dir / f).is_file())
         
         pairs = []
-        for tech in sorted(obf_techs):
-            tech_dir = obf_base_dir / tech
-            for f in sorted(os.listdir(tech_dir)):
-                if f in clear_files and (tech_dir / f).is_file():
+        # for tech in sorted(obf_techs):
+        #     tech_dir = obf_base_dir / tech
+        #     for f in sorted(os.listdir(tech_dir)):
+        #         if f in clear_files and (tech_dir / f).is_file():
+        #             pairs.append((clear_files_dir / f, tech_dir / f))
+
+        # Цикл по отсортированному списку чистых файлов
+        for f in sorted(clear_files):
+            for tech in sorted(obf_techs):
+                tech_dir = obf_base_dir / tech
+                if (tech_dir / f).is_file():
                     pairs.append((clear_files_dir / f, tech_dir / f))
-    
+
     print(f"Total pairs to process: {len(pairs)}")
     
     processed = get_processed_pairs(Path(args.checkpoint_file))
@@ -275,9 +282,9 @@ def main():
     shutdown_event = threading.Event()
     
     def signal_handler(signum, frame):
-        print(f"\nReceived signal {signum}, shutting down...")
-        shutdown_event.set()
-        print("Waiting for workers to finish...")
+        print(f"\nReceived signal {signum}, shutting down immediately...")
+        import os
+        os._exit(0)
     
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
@@ -316,7 +323,7 @@ def main():
         'score', 'precision', 'recall', 'correct', 'total_matched', 'error'
     ]
     
-    with concurrent.futures.ProcessPoolExecutor(max_workers=args.workers) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
         futures = []
         for task in tasks_to_submit:
             if shutdown_event.is_set():
