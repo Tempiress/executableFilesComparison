@@ -32,23 +32,31 @@ def _block_content_similarity(data1, data2, config) -> float:
     return total / max(len(data1), len(data2))
 
 
-def evaluate_matching(p1_nodes, p2_nodes):
+def evaluate_matching(p1_nodes, p2_nodes, total_p1=None):
     """
     Пусть функции p1_nodes и p2_nodes - это списки функций, которые соответствуют друг другу.
     То есть, если p1_nodes[i] соответствует p2_nodes[i]
+    total_p1 Все функции P1
     """
 
-    total_matched = len(p1_nodes) # Сколько пар нашёл алгоритм
+     # Сколько пар нашёл алгоритм
+    total_matched = len(p1_nodes) 
     correct = 0
 
     for n1,  n2 in zip(p1_nodes, p2_nodes):
         if n1['old_label'] == n2['old_label']:
             correct += 1
     
-    total_p1 = len(p1_nodes)
 
-    precision = round(correct / total_matched , 4) if total_matched else 0.0
-    recall = round(correct / total_p1, 4) if total_p1 else 0.0
+    # Доля верных среди найденных
+    precision = round(correct / total_matched, 4) if total_matched else 0.0
+
+    
+    if total_p1 is not None:
+        # Полнота относительно P1 . Среди всех функций P1
+        recall = round(correct / total_p1, 4)
+    else:
+        raise NotImplementedError("count of len p1 is not implemented")
 
     return {
         "correct" : correct,
@@ -235,7 +243,7 @@ def hemming_prog(matrix1, matrix2, maxlen, p1_funks, p2_funks, config):
                 # Fallback: контентная схожесть блоков без графа
                 sim_val = _block_content_similarity(pref1_c.data, pref2_c.data, config)
         sim_array[k] = sim_val
-        print(f"  [{k}] {labels1[k]!r:30} <-> {labels2[k]!r:30}  sim={sim_array[k]:.4f}  (blocks: {len(cache1.get(n1_k, type('', (), {'data': {}})()).data) if n1_k in cache1 else '?'}/{len(cache2.get(n2_k, type('', (), {'data': {}})()).data) if n2_k in cache2 else '?'})") if n1_k in cache1 and n2_k in cache2 else print(f"  [{k}] {labels1[k]!r:30} <-> {labels2[k]!r:30}  sim=0.0000  (not found)")
+        #print(f"  [{k}] {labels1[k]!r:30} <-> {labels2[k]!r:30}  sim={sim_array[k]:.4f}  (blocks: {len(cache1.get(n1_k, type('', (), {'data': {}})()).data) if n1_k in cache1 else '?'}/{len(cache2.get(n2_k, type('', (), {'data': {}})()).data) if n2_k in cache2 else '?'})") if n1_k in cache1 and n2_k in cache2 else print(f"  [{k}] {labels1[k]!r:30} <-> {labels2[k]!r:30}  sim=0.0000  (not found)")
 
     print("Computing final matrix distances using broadcasting...")
     try:

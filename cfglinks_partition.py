@@ -71,7 +71,7 @@ def links_two_program(p1_funcs, p2_funcs, lks1, lks2, config):
 
     if config.compare_mode == 'GPU':
         p1_nodes, p2_nodes = main_compareGPU(matrix1, matrix2, p1_funcs, p2_funcs, config=config)
-        e_m = evaluate_matching(p1_nodes, p2_nodes)
+        e_m = evaluate_matching(p1_nodes, p2_nodes, total_p1=len(p1_funcs))
         print(f"GPU: correct: {e_m['correct']} total_matched: {e_m['total_matched']} precision: {e_m['precision']} recall: {e_m['recall']}")
     elif config.compare_mode == 'custom':
         p1_nodes, p2_nodes = main_compare(matrix1, matrix2, p1_funcs, p2_funcs, config=config)

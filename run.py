@@ -142,7 +142,7 @@ if __name__ == '__main__':
      p1_funcs, p2_funcs, lks1, lks2 = extract_features(p1, p2)
      # q = run_with_features(p5, p6, cfg1)
      q, p1_nodes, p2_nodes = run_with_features(p1_funcs, p2_funcs, lks1, lks2, cfg1)
-     e_m = evaluate_matching(p1_nodes, p2_nodes)
+     e_m = evaluate_matching(p1_nodes, p2_nodes, total_p1=len(p1_funcs))
      print(f"Custom: correct: {e_m['correct']} total_matched: {e_m['total_matched']} precision: {e_m['precision']} recall: {e_m['recall']}")
      print("Results:", round(q, 4))
 

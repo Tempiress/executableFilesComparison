@@ -183,7 +183,7 @@ def process_file_pair_comprehensive(args):
                 bin2_path=str(p2_path)
             )
             res, p1_nodes, p2_nodes = run_with_features(p1_funcs, p2_funcs, lks1, lks2, config=config)
-            e_m = evaluate_matching(p1_nodes, p2_nodes)
+            e_m = evaluate_matching(p1_nodes, p2_nodes, total_p1=len(p1_funcs))
             
             results.append({
                 'program': program,
@@ -197,6 +197,8 @@ def process_file_pair_comprehensive(args):
                 'recall': round(float(e_m.get('recall', 0.0)), 4),
                 'correct': e_m.get('correct', 0),
                 'total_matched': e_m.get('total_matched', 0),
+                'total_p1': len(p1_funcs),
+                'total_p2': len(p2_funcs),
                 'error': ''
             })
         except Exception as e:
@@ -320,10 +322,11 @@ def main():
     CSV_FIELDS = [
         'timestamp', 'program', 'obfuscation', 'engine',
         'hash_type', 'instructions_mode', 'compare_mode',
-        'score', 'precision', 'recall', 'correct', 'total_matched', 'error'
+        'score', 'precision', 'recall', 'correct', 'total_matched',
+        'total_p1', 'total_p2', 'error'
     ]
     
-    with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=args.workers) as executor:
         futures = []
         for task in tasks_to_submit:
             if shutdown_event.is_set():
@@ -368,6 +371,8 @@ def main():
                         'recall': result.get('recall', ''),
                         'correct': result.get('correct', ''),
                         'total_matched': result.get('total_matched', ''),
+                        'total_p1': result.get('total_p1', ''),
+                        'total_p2': result.get('total_p2', ''),
                         'error': result.get('error', '')
                     }
                     writer.writerow(row)

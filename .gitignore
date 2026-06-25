@@ -30,3 +30,4 @@ sandbox/
 /results/error/*
 /train_data/*
 /scienseWorkdNotes/
+.r2_cache/*

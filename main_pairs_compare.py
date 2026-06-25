@@ -203,7 +203,7 @@ def main_compareGPU(matrix1, matrix2, p1_funks, p2_funks, config):
             learning_rate=0.02
         )
 
-        # 6. Получение векторов и матричное сравнение
+        # Получение векторов и матричное сравнение
         print("[*] Вычисление матрицы схожести...")
 
         # Извлекаем векторы (они уже на GPU или переносим)
@@ -227,7 +227,7 @@ def main_compareGPU(matrix1, matrix2, p1_funks, p2_funks, config):
         # Переносим на CPU для обработки списков
         sim_matrix_cpu = similarity_matrix.detach().cpu().numpy()
 
-        # 7. Формирование списка пар для жадного алгоритма
+        # Формирование списка пар для жадного алгоритма
         print("[*] Поиск уникальных пар...")
         Pairs = []
 
@@ -242,7 +242,7 @@ def main_compareGPU(matrix1, matrix2, p1_funks, p2_funks, config):
         # Сортируем по убыванию
         Pairs.sort(key=lambda x: x[0], reverse=True)
 
-        # 8. Жадный выбор лучших пар
+        # Жадный выбор лучших пар
         used_p1 = set()
         used_p2 = set()
         p1_nodes = []
