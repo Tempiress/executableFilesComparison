@@ -73,11 +73,11 @@ def preprocess_function(args):
                     continue
                 
                 if mode == 'generalize':
-                    import opcodeparser
-                    full_opcode = opcodeparser.generalize_opcode(full_opcode)
+                    from src.core.instruction_parser import generalize_instruction as generalize_opcode
+                    full_opcode = generalize_opcode(full_opcode)
                 elif mode == 'group':
-                    import opcodeparser
-                    gi = opcodeparser.GroupInstructions()
+                    from src.core.instruction_parser import GroupInstructions
+                    gi = GroupInstructions()
                     op_type = op.get('type', '')
                     if op_type:
                         group = gi.find_group(op_type)
@@ -88,9 +88,9 @@ def preprocess_function(args):
                             else:
                                 full_opcode = group
                 elif mode == 'both':
-                    import opcodeparser
-                    full_opcode = opcodeparser.generalize_opcode(full_opcode)
-                    gi = opcodeparser.GroupInstructions()
+                    from src.core.instruction_parser import generalize_instruction as generalize_opcode, GroupInstructions
+                    full_opcode = generalize_opcode(full_opcode)
+                    gi = GroupInstructions()
                     op_type = op.get('type', '')
                     if op_type:
                         group = gi.find_group(op_type)

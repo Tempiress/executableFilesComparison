@@ -41,10 +41,10 @@ def cli(ipath1, ipath2, mpath, epochs, device, lr):
     print(f'cosine similarity : {cosine_similarity(v1, v2):.6f}')
     return round(cosine_similarity(v1, v2), 6)
 
-if __name__ == '__main__':
+#if __name__ == '__main__':
     #a = r"D:\programming2025\asm2vec-pytorch-master\bin1\00a1a6945abb454b62167cbec6f6207f23b7cab04d645c54ddefd300022814d0"
     #b = r"D:\programming2025\asm2vec-pytorch-master\bin1\00ddb37c624f16030aa3d81a39f226a6a48a07c3718235bff9a3e95fd01ba1f4"
 
-    n = r"H:\programming2026\ResearchWorkCUDA\asm2vec-pytorch-master\scripts\temp_disassemble_path\bin1\fcn.0040a4c5"
-    n2 = r"H:\programming2026\ResearchWorkCUDA\asm2vec-pytorch-master\scripts\temp_disassemble_path\bin1\fcn.0040a4c5"
-    pp = cli(n, n2, "D:\\programming2025\\asm2vec-pytorch-master\\model.pt", 30, "auto", 0.02)
+    #n = r"H:\programming2026\ResearchWorkCUDA\asm2vec-pytorch-master\scripts\temp_disassemble_path\bin1\fcn.0040a4c5"
+    #n2 = r"H:\programming2026\ResearchWorkCUDA\asm2vec-pytorch-master\scripts\temp_disassemble_path\bin1\fcn.0040a4c5"
+    #pp = cli(n, n2, "D:\\programming2025\\asm2vec-pytorch-master\\model.pt", 30, "auto", 0.02)

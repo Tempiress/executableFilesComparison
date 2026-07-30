@@ -1,215 +1,189 @@
+"""
+ResearchWorkCUDA — Binary Comparison Runner.
+
+Entry point for single-pair and batch comparisons.
+Usage:
+    python run.py             # single pair (edit paths inside)
+    python run_batch_final.py # batch with multiprocessing
+"""
+
 import datetime
 import glob
 import os
-import random
-import subprocess
 from pathlib import Path
 
 import numpy as np
 import torch
 
-from cfglinks_partition import links_two_program
-from config import AnalysisConfig
-from memory_cfg_from_exe_generator import CFGAnalyzer
-from similarity import evaluate_matching
-from similarity import hemming_prog
+from src.batch import run, run_comparison, extract_features
+from src.cfg import CfgAnalyzer
+from src.core import AnalysisConfig, evaluate_matching
+from src.core.similarity_engine import compute_program_similarity
+from src.cfg import link_two_programs
+from src.comparison.lancedb_cache import create_lancedb
 
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
-def set_seed(seed=42):
+def set_seed(seed: int = 42):
+    import random
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
 
 set_seed(42)
 
-def deletefiles(dir):
-    files = glob.glob((os.path.join(dir, '*')))
 
-    # Удаление каждого файла
-    for file in files:
-        if os.path.isfile(file):
-            os.remove(file)
-            # print(f"Deleted file: {file}") # Для отладки очищения файлов рабочих директорий
-        else:
-            print(f"skip dir: {file}")
+def clean_directory(dir_path: str):
+    """Delete all files in *dir_path* (skips subdirectories)."""
+    for file_path in glob.glob(os.path.join(dir_path, '*')):
+        if os.path.isfile(file_path):
+            os.remove(file_path)
 
 
-
-def cfg_adder(call_graph, p_funcs):
-    exiting_names = {func["name"] for func in call_graph}
-
-    for p_func in p_funcs.values():
-        pfunc_name = p_func['cfg'][0]['name']
-        if pfunc_name not in exiting_names:
-            new_item = {
-                "name": p_func["name"],
-                "size": p_func["cfg"][0]["size"],
-                "imports": {}
-            }
-            call_graph.append(new_item)
-            exiting_names.add(pfunc_name)
-
-    return call_graph
-
-
-def extract_features(p1, p2):
-    p1, p2 = str(p1), str(p2)
-    print("Compare two programs:" + p1 + " " + p2)
-    cfg_analyzer = CFGAnalyzer()
-    print("Analyze Executable...")
-    print("Analyze Executable p1...")
-    p1_funcs = cfg_analyzer.analyze_executable(p1)
-    print("Analyze Executable p2...")
-    p2_funcs = cfg_analyzer.analyze_executable(p2)
-
-    print("get call graphs...")
-    lks1 = cfg_adder(cfg_analyzer.get_call_graph(p1), p1_funcs)
-    lks2 = cfg_adder(cfg_analyzer.get_call_graph(p2), p2_funcs)
-    return p1_funcs, p2_funcs, lks1, lks2
-
-def run_with_features(p1_funcs, p2_funcs, lks1, lks2, config):
-    matrix1, matrix2, p1_nodes, p2_nodes = links_two_program(p1_funcs, p2_funcs, lks1, lks2, config=config)
-
-    if len(matrix1) < len(matrix2):
-        hh = hemming_prog(matrix1, matrix2, max(len(matrix1), len(matrix2)), p1_funcs, p2_funcs, config=config)
-    else:
-        hh = hemming_prog(matrix2, matrix1, max(len(matrix1), len(matrix2)), p2_funcs, p1_funcs, config=config)
-
-    return hh, p1_nodes, p2_nodes
-
-
-
-
-def run_asm2vec_comparison(exe_path1, exe_path2):
-    # 1. Путь к Python в виртуальном окружении с PyTorch
-    venv_python = r".\venv2\Scripts\python.exe"
-
-    # 2. Путь к скрипту сравнения
-    script_path = r".\asm2vec-pytorch-master\compare_full_binaries.py"
-    # 3. Путь к модели
-    model_path = r".\asm2vec-pytorch-master\model_optim.pt"
-
-    cmd = [
-        venv_python,
-        script_path,
-        "--bin1", exe_path1,
-        "--bin2", exe_path2,
-        "--model", model_path
-    ]
-
-
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-
-        output = result.stdout
-        return output
-    except subprocess.SubprocessError as e:
-        print(f"Ошибка при запуске скрипта: {e}")
-        return 0.0
-
+# ---------------------------------------------------------------------------
+# Main block
+# ---------------------------------------------------------------------------
 
 if __name__ == '__main__':
-     start = datetime.datetime.now()
+    #create_lancedb()
+    start_time = datetime.datetime.now()
 
-     obf_p1 = "./all_obf/3mm"
+    # ---- Quick single-pair comparison ----
 
+    # config = AnalysisConfig(
+    #     hash_type='ssdeep',
+    #     instructions_mode='group_only',
+    #     bin1_path=bin_a,
+    #     bin2_path=bin_b,
+    #     compare_mode='GPU',
+    # )
+    #
+    # funcs_a, funcs_b, cg_a, cg_b = extract_features(Path(bin_a), Path(bin_b))
+    # score, matched_a, matched_b = run_comparison(funcs_a, funcs_b, cg_a, cg_b, config)
+    # eval_result = evaluate_matching(matched_a, matched_b, total_p1=len(funcs_a))
 
-     p1 = "./coreutils-polybench-hashcat/aoc/O0/3mm"
-     #p2 = "./coreutils-polybench-hashcat/g10/O2/3mm"
-     p2 = "./coreutils-polybench-hashcat/aoc/O2/3mm"
+    # print(
+    #     f"Custom: correct: {eval_result['correct']} "
+    #     f"total_matched: {eval_result['total_matched']} "
+    #     f"precision: {eval_result['precision']} "
+    #     f"recall: {eval_result['recall']}"
+    # )
+    # print("Results:", round(score, 4))
+    #
+    # finish = datetime.datetime.now()
+    # print(f'Elapsed: {finish - start_time}')
 
+    # ---- Batch clear-vs-obfuscated sweep ----
+    work_dir = Path(__file__).parent
+    Files = [Path(work_dir, "coreutils-polybench-hashcat/aoc/Os/3mm"), Path(work_dir, "coreutils-polybench-hashcat/aoc/Os/combinatorX")]
+    Files2 = ["basename"]
+    clear_dir_path = work_dir / "coreutils-polybench-hashcat/aoc/Os/"
+    obf_dir_path = work_dir / "OBF/coreutils-polybench-hashcat-obf/"
 
-     p_cp1 = "./coreutils-polybench-hashcat/aoc/O0/combinatorX"
-     p_cp2 = "./coreutils-polybench-hashcat/aoc/O2/combinatorX"
+    results_path = work_dir / "Debug/results_generalize.txt"
+    errors_path = work_dir / "Debug/error_generalize.txt"
 
-     exe1 = r"H:\ResearchWorkCUDA\asm2vec-pytorch-master\pycharm64.exe"
-     exe2 = r"H:\ResearchWorkCUDA\asm2vec-pytorch-master\Cleanmgr+.exe"
+    clear_files = os.listdir(clear_dir_path)
+    obf_dirs = os.listdir(obf_dir_path)[:2]
 
+    # Resume checkpoint: skip already-processed files
+    if os.path.exists(results_path):
+        with open(results_path, "r", encoding="utf-8") as f:
+            results_content = f.read()
+        clear_files = list(filter(
+            lambda x: f"filename: {x}" not in results_content, clear_files
+        ))
 
-     p5 = "./coreutils-polybench-hashcat/g10/O2/expr"
-     p6 = "./coreutils-polybench-hashcat/aoc/O2/expr"
-
-     python1 = "./train_programs/python-3.12.7-amd64.exe"
-     python2 = "./train_programs/python-3.14.3-amd64.exe"
-     #score = run_asm2vec_comparison(p1, p2)
-
-     #print(f"{'-' * 10}\n Asm2vecCuda resut:\n{score}{'-'* 10}")
-     #cfg1 = AnalysisConfig(hash_type='nilsimsa', instructions_mode='generalize')
-
-     cfg1 = AnalysisConfig(hash_type='ssdeep', instructions_mode='group_only', bin1_path=p1, bin2_path=p2, compare_mode='GPU')
-     p1_funcs, p2_funcs, lks1, lks2 = extract_features(p1, p2)
-     # q = run_with_features(p5, p6, cfg1)
-     q, p1_nodes, p2_nodes = run_with_features(p1_funcs, p2_funcs, lks1, lks2, cfg1)
-     e_m = evaluate_matching(p1_nodes, p2_nodes, total_p1=len(p1_funcs))
-     print(f"Custom: correct: {e_m['correct']} total_matched: {e_m['total_matched']} precision: {e_m['precision']} recall: {e_m['recall']}")
-     print("Results:", round(q, 4))
-
-     finish = datetime.datetime.now()
-     print('Время работы: ' + str(finish - start))
-
-
-     # -----------------------------------------------------------------------------------------
-
-     clear_files_dir = Path("./coreutils-polybench-hashcat/aoc/O0/")
-     obf_files_dir = Path("./all_obf/")
-     
-     clear_files = os.listdir(clear_files_dir)
-     
-     
-     path_to_results = "./Debug/results_generalize.txt"
-     path_to_error = "./Debug/error_generalize.txt"
-     
-     if os.path.exists(path_to_results):
-         with open(path_to_results, "r", encoding="utf-8") as f:
-             results_content = f.read()
-         #clear_files = list(filter(lambda x: x not in results_content, clear_files))
-         clear_files = list(filter(lambda x: f"filename: {x}" not in results_content, clear_files))
-     
-     hash_types = ['ssdeep', 'nilsimsa']
-     instructions_modes = ['none', 'generalize', 'group', 'group_only', 'both']
-     compare_modes = ['GPU', 'custom']
-     with open(path_to_results, "a", encoding="utf-8") as f:
-        with open(path_to_error, "a", encoding="utf-8") as err_f:
-            for filename in clear_files:
-                print("-" * 50)
-                if filename in os.listdir(obf_files_dir):
-                    p1_path = Path.joinpath(clear_files_dir, filename)
-                    p2_path = Path.joinpath(obf_files_dir, filename)
-     
-                    try:
-                        print(f"Extracting features for {filename}...")
-                        p1_funcs, p2_funcs, lks1, lks2 = extract_features(p1_path, p2_path)
-                    except Exception as e:
-                        print(f"Failed to extract features for {filename}: {e}")
-                        err_f.write(f"Feature extraction error: {str(filename)}: {e} \n")
-                        err_f.flush()
-                        continue
-     
-                    for hash_type in hash_types:
-                        for instruction_mode in instructions_modes:
-                            for compare_mode in compare_modes:
-                                try:
-                                    #if instruction_mode == 'group_only' and hash_type == 'nilsimsa':
-                                        #continue
-                                    cfg = AnalysisConfig(hash_type = hash_type, instructions_mode = instruction_mode, compare_mode = compare_mode, bin1_path = str(p1_path), bin2_path = str(p2_path))
-                                    res, p1_nodes, p2_nodes = run_with_features(p1_funcs, p2_funcs, lks1, lks2, cfg)
-                                    e_m = evaluate_matching(p1_nodes, p2_nodes)
-                                    print(f"correct: {e_m['correct']} total_matched: {e_m['total_matched']} precision: {e_m['precision']} recall: {e_m['recall']}")
-                                    print(f"=========> result: {res} h_type: {hash_type} // i_mode: {instruction_mode} // c_mode: {compare_mode} // filename: {str(filename)}: {round(res, 4)} <=========")
-                                    f.write(f"filename: {str(filename)} // result: {round(res, 4)} // h_type: {hash_type} // i_mode: {instruction_mode} // c_mode: {compare_mode}  // correct: {e_m['correct']} // total_matched: {e_m['total_matched']} // precision: {e_m['precision']} // recall: {e_m['recall']} \n")
-                                    f.flush()
-                                except Exception as e:
-                                    print(f"=========> error: h_type: {hash_type} // i_mode: {instruction_mode} // c_mode: {compare_mode} // filename: {str(filename)}: {e} <=========")
-                                    err_f.write(f"error: h_type: {hash_type} // i_mode: {instruction_mode} // c_mode: {compare_mode} // filename: {str(filename)}: {e} \n")
-                                    err_f.flush()
-        print("-" * 50)
-        
-        
-
-     
+    if len(clear_files) == 1:
+        print("Нет файлов для сравнения")
 
 
+    hash_types = ['ssdeep', 'nilsimsa']
+    instructions_modes = ['none', 'generalize', 'group', 'group_only', 'both']
+    compare_modes = ['GPU', 'custom']
 
+    total_comparisons = len(hash_types) * len(instructions_modes) * len(compare_modes) * len(obf_dirs)
+    print(f"total_comparisons: {total_comparisons}")
+    k = 0
+    with open(results_path, "a", encoding="utf-8") as out_f, \
+         open(errors_path, "a", encoding="utf-8") as err_f:
 
+        for filename in Files2:
+            for obf_dir in obf_dirs:
+                obf_bin_path = obf_dir_path / obf_dir
+
+                if filename not in os.listdir(obf_bin_path):
+                    print(f"файл {filename} не найден. Пропуск.")
+                    continue
+
+                clear_bin_path = clear_dir_path / filename
+                obf_bin_path = obf_bin_path / filename
+
+                try:
+                    print(f"Extracting features for {filename}...")
+                    funcs_a, funcs_b, cg_a, cg_b = extract_features(clear_bin_path, obf_bin_path)
+                except Exception as exc:
+                    print(f"Failed: {exc}")
+                    err_f.write(f"Feature extraction error: {filename}: {exc}\n")
+                    err_f.flush()
+                    continue
+
+                for hash_type in hash_types:
+                    for instr_mode in instructions_modes:
+                        for cmp_mode in compare_modes:
+                            try:
+                                cfg = AnalysisConfig(
+                                    hash_type=hash_type,
+                                    instructions_mode=instr_mode,
+                                    compare_mode=cmp_mode,
+                                    bin1_path=str(clear_bin_path),
+                                    bin2_path=str(obf_bin_path),
+                                )
+                                print(f"[{k}/ {total_comparisons}] file:{filename}, obf:{obf_dir}, hash_type: {hash_type},  instr_mode:{instr_mode} cmp_mode: {cmp_mode}")
+
+                                res, matched_a, matched_b = run_comparison(
+                                    funcs_a, funcs_b, cg_a, cg_b, cfg,
+                                )
+                                eval_res = evaluate_matching(matched_a, matched_b, total_p1=len(funcs_a))
+                                # print(
+                                #     f"correct: {eval_res['correct']} "
+                                #     f"total_matched: {eval_res['total_matched']} "
+                                #     f"precision: {eval_res['precision']} "
+                                #     f"recall: {eval_res['recall']}"
+                                # )
+                                # print(
+                                #     f"=========> result: {res} h_type: {hash_type} "
+                                #     f"// i_mode: {instr_mode} // c_mode: {cmp_mode} "
+                                #     f"// filename: {filename}: {round(res, 4)} <========="
+                                # )
+                                k += 1
+                                out_f.write(
+                                    f"filename: {filename};result: {round(res, 4)};"
+                                    f"obf_type: {obf_dir}"
+                                    f"h_type: {hash_type};i_mode: {instr_mode};"
+                                    f"c_mode: {cmp_mode};"
+                                    f"correct:{eval_res['correct']};"
+                                    f"total_matched: {eval_res['total_matched']};"
+                                    f"precision: {eval_res['precision']};"
+                                    f"recall: {eval_res['recall']}\n"
+                                )
+                                out_f.flush()
+                            except Exception as exc:
+                                print(
+                                    f"=========> error: h_type: {hash_type} "
+                                    f"// i_mode: {instr_mode} // c_mode: {cmp_mode} "
+                                    f"// filename: {filename}: {exc} <========="
+                                )
+                                err_f.write(
+                                    f"error: filename {filename};obf_type {obf_dir};" 
+                                    f"h_type: {hash_type};i_mode: {instr_mode};"
+                                    f"c_mode: {cmp_mode};filename: {filename}: {exc}\n"
+                                )
+                                err_f.flush()
+    finish = datetime.datetime.now()
+    print(f'Elapsed: {finish - start_time}')

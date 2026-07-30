@@ -23,7 +23,7 @@ import shutil
 import tempfile
 import torch
 import logging
-from opcodeparser import generalize_opcode
+from src.core.instruction_parser import generalize_instruction as generalize_opcode
 import asm2vec
 
 # Настройка логирования
@@ -58,21 +58,21 @@ def normalize(opcode):
 
 
 def fn2asm(pdf, minlen):
-    # 1. Проверка на пустоту
+    # Проверка на пустоту
     if pdf is None or 'ops' not in pdf:
         return None
 
     ops = pdf['ops']
 
-    # 2. Фильтр по длине
+    # Фильтр по длине
     if len(ops) < minlen:
         return None
 
-    # 3. Фильтр невалидных инструкций
+    # Фильтр невалидных инструкций
     if 'invalid' in [op.get('type', '') for op in ops]:
         return None
 
-    # 4. Нормализация адресов и сбор меток
+    # Нормализация адресов и сбор меток
     labels = {}
     scope = set()
 
@@ -89,7 +89,7 @@ def fn2asm(pdf, minlen):
         if target is not None and target in scope:
             labels.setdefault(target, i)
 
-    # 5. Генерация текста
+    # Генерация текста
     output = ''
     for op in ops:
         cur_addr = op['addr']
@@ -208,10 +208,10 @@ def bin2asm(filename, opath, minlen):
             if raw_ops:
                 ops_json = {'ops': raw_ops, 'name': func_name}
         else:
-            # 1. Пробуем умный дизассемблинг (граф)
+            # Пробуем умный дизассемблинг (граф)
             ops_json = r.cmdj(f'pdfj @ {func_addr}')
 
-            # 2. Fallback: если граф не построился, берем линейный дамп
+            # Fallback: если граф не построился, берем линейный дамп
             if not ops_json or not ops_json.get('ops'):
                 if func_size > 0:
                     try:
@@ -248,21 +248,21 @@ def bin2asm(filename, opath, minlen):
 
 
 def fn2asm_transformed(pdf, minlen):
-    # 1. Проверка на пустоту
+    # Проверка на пустоту
     if pdf is None or 'ops' not in pdf:
         return None
 
     ops = pdf['ops']
 
-    # 2. Фильтр по длине
+    # Фильтр по длине
     if len(ops) < minlen:
         return None
 
-    # 3. Фильтр невалидных инструкций
+    # Фильтр невалидных инструкций
     if 'invalid' in [op.get('type', '') for op in ops]:
         return None
 
-    # 4. Нормализация адресов и сбор меток
+    # Нормализация адресов и сбор меток
     labels = {}
     scope = set()
 
@@ -279,7 +279,7 @@ def fn2asm_transformed(pdf, minlen):
         if target is not None and target in scope:
             labels.setdefault(target, i)
 
-    # 5. Генерация текста
+    # Генерация текста
     output = ''
     for op in ops:
         cur_addr = op['addr']
@@ -346,6 +346,7 @@ def bin2asm_transformed(filename, opath, minlen):
             logging.error(f"Failed to open {filename} via Radare2: {e}")
             return 0
 
+    count = 0
     if not functions:
         logging.warning(f"No functions found in {filename}")
         if r:

@@ -22,7 +22,7 @@ import shutil
 import tempfile
 import torch
 import logging
-from opcodeparser import generalize_opcode
+from src.core.instruction_parser import generalize_instruction as generalize_opcode
 import asm2vec
 
 # Настройка логирования

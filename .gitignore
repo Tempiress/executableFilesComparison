@@ -31,3 +31,10 @@ sandbox/
 /train_data/*
 /scienseWorkdNotes/
 .r2_cache/*
+.lancedb/*
+for_presentations/
+plans/
+MdFiles/
+results/
+src/rustcode/target/debug/*
+src/rustcode/target/release/*

@@ -16,3 +16,8 @@ scipy
 Cython
 six
 click
+lancedb
+pyarrow
+line-profiler-pycharm
+pyghidra
+ghidra-stubs
