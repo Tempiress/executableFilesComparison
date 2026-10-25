@@ -38,3 +38,8 @@ MdFiles/
 results/
 src/rustcode/target/debug/*
 src/rustcode/target/release/*
+*.7z
+*.tar.gz
+*.log
+src/rustcode/target/
+old_results/
