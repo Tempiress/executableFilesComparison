@@ -152,7 +152,8 @@ def _get_processed_pairs(checkpoint_path: Path) -> set:
                 i_mode = row.get("instructions_mode", "")
                 c_mode = row.get("compare_mode", "")
                 if program and obf and engine and h_type and i_mode and c_mode:
-                    processed.add((program, obf, engine, h_type, i_mode, c_mode))
+                    if not row.get("error"):
+                        processed.add((program, obf, engine, h_type, i_mode, c_mode))
     except Exception:
         # Fallback: try old format
         try:
@@ -289,7 +290,7 @@ def process_file_pair_worker(args):
 
         completed_keys.append((h_type, i_mode, c_mode))
         task_completed_dict[(program_name, obfuscation_name)] = completed_keys
-
+    
     return completed_keys
 
 
@@ -297,7 +298,7 @@ def process_file_pair_worker(args):
 # Main CLI
 # ---------------------------------------------------------------------------
 
-def main():
+def main(args=None):
     try:
         import multiprocessing
         multiprocessing.set_start_method('spawn', force=True)
@@ -305,15 +306,19 @@ def main():
         pass
 
     parser = argparse.ArgumentParser(description='GPU-aware batch binary comparison')
-    #parser.add_argument('--batch-size', type=int, default=2)
     parser.add_argument('--workers', type=int, default=4)
+    parser.add_argument('--clear-dir', type=str, default='./coreutils-polybench-hashcat/aoc/Os/')
+    parser.add_argument('--target-dir', type=str, default='./OBF/coreutils-polybench-hashcat-obf/', help='Target directory base (obfuscated or deobfuscated)')
     parser.add_argument('--log-file', type=str, default='./results/logs/resource_os.log')
     parser.add_argument('--checkpoint-file', type=str, default='./results/logs/checkpoint_os.log')
     parser.add_argument('--comparison-log', type=str, default='./results/logs/batch_results_os.log')
     parser.add_argument('--test', action='store_true', help='Run on small test set')
+    parser.add_argument('--programs', nargs='+', default=None, help='Filter programs')
+    parser.add_argument('--obfuscations', nargs='+', default=None, help='Filter obfuscation techniques')
 
-    args = parser.parse_args()
-    print(args.checkpoint_file)
+    parsed_args = parser.parse_args(args)
+    args = parsed_args
+    print(f"Checkpoint file: {args.checkpoint_file}")
 
     # Ensure log dirs exist
     for d in [os.path.dirname(args.log_file), os.path.dirname(args.checkpoint_file)]:
@@ -328,29 +333,39 @@ def main():
     instructions_modes = ['none', 'generalize', 'group', 'group_only', 'both']
     compare_modes = ['GPU', 'custom']
 
+    clear_dir = Path(args.clear_dir)
+    target_base = Path(args.target_dir)
+
+    if not clear_dir.exists():
+        print(f"Error: clear directory {clear_dir} does not exist")
+        return
+    if not target_base.exists():
+        print(f"Error: target directory {target_base} does not exist")
+        return
+
     # Build file pairs
     if args.test:
-        pairs = [
-            (Path("./coreutils-polybench-hashcat/aoc/Os/basename"),
-             Path("./OBF/coreutils-polybench-hashcat-obf/bcf/basename")),
-            (Path("./coreutils-polybench-hashcat/aoc/Os/combinatorX"),
-             Path("./OBF/coreutils-polybench-hashcat-obf/bcf/combinatorX")),
-        ]
+        sample_progs = [p for p in ["2mm", "combinatorX", "basename", "atax"] if (clear_dir / p).is_file()]
+        target_techs = sorted(d.name for d in target_base.iterdir() if d.is_dir() and d.name != "all")
+        test_tech = target_techs[0] if target_techs else "bcf"
+        pairs = []
+        for p in sample_progs[:2]:
+            target_bin = target_base / test_tech / p
+            if target_bin.is_file():
+                pairs.append((clear_dir / p, target_bin))
     else:
-        clear_dir = Path("./coreutils-polybench-hashcat/aoc/Os/")
-        obf_base = Path("./OBF/coreutils-polybench-hashcat-obf/")
+        target_techs = sorted(d.name for d in target_base.iterdir() if d.is_dir() and d.name != "all")
+        if args.obfuscations:
+            target_techs = [t for t in target_techs if t in args.obfuscations]
 
-        if not obf_base.exists():
-            print(f"Error: obfuscated dir {obf_base} does not exist")
-            return
-
-        obf_techs = [d.name for d in obf_base.iterdir() if d.is_dir() and d.name != "all"]
         clear_files = sorted(f for f in os.listdir(clear_dir) if (clear_dir / f).is_file())
+        if args.programs:
+            clear_files = [f for f in clear_files if f in args.programs]
 
         pairs = []
         for filename in clear_files:
-            for tech in sorted(obf_techs):
-                tech_dir = obf_base / tech
+            for tech in target_techs:
+                tech_dir = target_base / tech
                 if (tech_dir / filename).is_file():
                     pairs.append((clear_dir / filename, tech_dir / filename))
 
@@ -380,6 +395,7 @@ def main():
         for h_type in hash_types:
             for i_mode in instructions_modes:
                 for c_mode in compare_modes:
+                    if i_mode == 'group_only' and h_type != 'ssdeep': continue
                     key = (path_a.name, path_b.parent.name, "cfg_hash", h_type, i_mode, c_mode)
                     if key in processed_set:
                         continue
@@ -400,6 +416,7 @@ def main():
         for h_type in hash_types:
             for i_mode in instructions_modes:
                 for c_mode in compare_modes:
+                    if i_mode == 'group_only' and h_type != 'ssdeep': continue
                     key = (path_a.name, path_b.parent.name, "cfg_hash", h_type, i_mode, c_mode)
                     if key in processed_set:
                         continue

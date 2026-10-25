@@ -7,9 +7,21 @@ Usage: python run_batch_final.py --workers 3 --test
 """
 
 import multiprocessing
+import os
 import sys
 import datetime
-from line_profiler_pycharm import profile
+from pathlib import Path
+
+# Ensure working directory is set to project root
+PROJECT_ROOT = Path(__file__).resolve().parent
+os.chdir(PROJECT_ROOT)
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+try:
+    from line_profiler_pycharm import profile
+except ImportError:
+    pass
 
 try:
     multiprocessing.set_start_method('spawn', force=True)
