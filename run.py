@@ -81,7 +81,7 @@ if __name__ == '__main__':
     # ---- Batch clear-vs-obfuscated sweep ----
     work_dir = Path(__file__).parent
     Files = [Path(work_dir, "coreutils-polybench-hashcat/aoc/Os/3mm"), Path(work_dir, "coreutils-polybench-hashcat/aoc/Os/combinatorX")]
-    Files2 = ["basename"]
+    Files2 = ["pr", "readlink"]
     clear_dir_path = work_dir / "coreutils-polybench-hashcat/aoc/Os/"
     obf_dir_path = work_dir / "OBF/coreutils-polybench-hashcat-obf/"
 
@@ -136,6 +136,8 @@ if __name__ == '__main__':
                 for hash_type in hash_types:
                     for instr_mode in instructions_modes:
                         for cmp_mode in compare_modes:
+                            if instr_mode == 'group_only' and hash_type != 'ssdeep':
+                                continue
                             try:
                                 cfg = AnalysisConfig(
                                     hash_type=hash_type,

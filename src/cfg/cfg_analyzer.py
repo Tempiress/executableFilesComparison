@@ -47,10 +47,11 @@ class CfgAnalyzer:
             for func in functions:
                 if func.get("nbbs", 0) < 2:
                     continue
-                func_name = func.get("name", f"unnamed_{func['addr']}")
-                cfg_json = r2_pipe.cmdj(f"agj {func['addr']}")
+                func_addr = func.get("offset", func.get("addr", 0))
+                func_name = func.get("name", f"unnamed_{func_addr}")
+                cfg_json = r2_pipe.cmdj(f"agj {func_addr}")
                 cfg_data[func_name] = {
-                    "addr": func["addr"], "cfg": cfg_json, "name": func_name,
+                    "addr": func_addr, "cfg": cfg_json, "name": func_name,
                 }
 
             self._cfg_cache[binary_path] = cfg_data
