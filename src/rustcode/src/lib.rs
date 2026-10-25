@@ -2,6 +2,39 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use strsim::levenshtein;
 use std::collections::HashSet;
+use regex::Regex;
+use lazy_static::lazy_static;
+use nilsimsa::Nilsimsa;
+
+
+#[pyfunction]
+fn nilsimsa_hasher_rust(text: &str) -> String{
+    let mut hasher = Nilsimsa::new();
+    hasher.update(text);
+    hasher.digest()
+}
+
+
+
+
+lazy_static! {
+    static ref REG_REGEX: Regex = Regex::new(r"(?i)\b(rax|rbx|rcx|rdx|rsi|rdi|rbp|rsp|r8|r9|r10|r11|r12|r13|r14|r15|eax|ebx|ecx|edx|esi|edi|ebp|esp|ax|bx|cx|dx|si|di|bp|sp|al|bl|cl|dl|ah|bh|ch|dh|rip|eflags|flags)\b").unwrap();
+    static ref MEM_PTR_REGEX: Regex = Regex::new(r"(?i)ptr \[.*\]").unwrap();
+    static ref MEM_BRACKET_REGEX: Regex = Regex::new(r"(?i)\[.*\]").unwrap();
+    static ref CONST_HEX_REGEX: Regex = Regex::new(r"(?i)0x[0-9a-fA-F]+").unwrap();
+    static ref CONST_DEC_REGEX: Regex = Regex::new(r"\b\d+\b").unwrap();
+}
+
+#[pyfunction]
+fn generalize_instruction_rust(opcode: &str) -> String {
+    let s1 = REG_REGEX.replace_all(opcode, "REG");
+    let s2 = MEM_PTR_REGEX.replace_all(&s1, "MEM");
+    let s3 = MEM_BRACKET_REGEX.replace_all(&s2, "MEM");
+    let s4 = CONST_HEX_REGEX.replace_all(&s3, "CONST");
+    let s5 = CONST_DEC_REGEX.replace_all(&s4, "CONST");
+    s5.to_string()
+}
+
 
 // Структура для хранения данных одного базового блока
 struct BlockData {
@@ -205,5 +238,7 @@ fn match_similar_blocks_rust(
 #[pymodule]
 fn code_rust(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(match_similar_blocks_rust, m)?)?;
+    m.add_function(wrap_pyfunction!(generalize_instruction_rust, m)?)?;
+    m.add_function(wrap_pyfunction!(nilsimsa_hasher_rust, m)?)?;
     Ok(())
 }

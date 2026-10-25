@@ -140,7 +140,7 @@ def parse_function_blocks(func_cfg: dict, config: AnalysisConfig) -> dict:
                 opcode = base_opcode
 
                 if config.instructions_mode in ('generalize', 'both'):
-                    opcode = generalize_instruction(base_opcode)
+                    opcode = code_rust.generalize_instruction_rust(base_opcode) # generalize_instruction(base_opcode)
 
                 if config.instructions_mode in ('group', 'group_only', 'both'):
                     op_type = op.get("type", "null")
@@ -180,7 +180,7 @@ def parse_function_blocks(func_cfg: dict, config: AnalysisConfig) -> dict:
             opcodes_str = "; ".join(normalised_opcodes) + "; " if normalised_opcodes else ""
             parsed_blocks[block_index] = {
                 'id': block_index,
-                'block': block["addr"],
+                'block': block.get("offset", block.get("addr", 0)),
                 'opcodes': opcodes_str,
                 'fuzzyhash': (
                     hasher(opcodes_str.encode())
